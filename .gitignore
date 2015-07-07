@@ -1,0 +1,12 @@
+.project
+.cproject
+
+Debug/*
+Debug
+
+Release/*
+Release
+
+build/*
+build
+
