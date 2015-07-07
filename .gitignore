@@ -1,6 +1,9 @@
 .project
 .cproject
 
+logs/*
+logs
+
 Debug/*
 Debug
 

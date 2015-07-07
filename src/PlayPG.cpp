@@ -25,36 +25,20 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <cstdlib>
-#include <cstdint>
-
-#include <chrono>
-
-#include <APG/APGeasylogging.hpp>
-INITIALIZE_EASYLOGGINGPP
-
 #include "PlayPG.hpp"
 
-int main(int argc, char *argv[]) {
-	START_EASYLOGGINGPP(argc, argv);
+PlayPG::PlayPG() :
+		APG::SDLGame("PlayPG", 1280u, 720u) {
 
-	{
-		auto playPG = std::make_unique<PlayPG>();
+}
 
-		bool done = false;
+bool PlayPG::init() {
+	return true;
+}
 
-		auto startTime = std::chrono::high_resolution_clock::now();
-		std::vector<float> timesTaken;
+void PlayPG::render(float deltaTime) {
+	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
 
-		while (!done) {
-			auto timeNow = std::chrono::high_resolution_clock::now();
-			float deltaTime = std::chrono::duration_cast<std::chrono::milliseconds>(timeNow - startTime).count()
-			        / 1000.0f;
-
-			startTime = timeNow;
-
-			done = playPG->update(deltaTime);
-		}
-	}
-	return EXIT_SUCCESS;
+	SDL_GL_SwapWindow(window.get());
 }
