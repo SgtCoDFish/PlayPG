@@ -1,0 +1,44 @@
+cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
+set(CMAKE_LEGACY_CYGWIN32 0)
+
+project(PlayPG)
+
+set(VERSION_MAJOR 0)
+set(VERSION_MINOR 2)
+set(VERSION_PATCH 0)
+
+set(VERSION "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
+message("Configuring PlayPG version ${VERSION}")
+
+set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+
+find_package(SDL2 REQUIRED)
+find_package(SDL2_image REQUIRED)
+find_package(SDL2_mixer REQUIRED)
+
+find_package(OpenGL REQUIRED)
+find_package(GLEW REQUIRED)
+
+find_package(TmxParser REQUIRED)
+
+find_package(APG REQUIRED)
+
+file(GLOB_RECURSE PlayPG_SOURCES ${PROJECT_SOURCE_DIR}/src/*.cpp)
+file(GLOB_RECURSE PlayPG_HEADERS ${PROJECT_SOURCE_DIR}/include/*.hpp)
+
+set(CMAKE_CXX_COMPILER_ARG1 "-std=c++1y")
+set(CMAKE_CXX_FLAGS_BASE "-Wall -Wextra -Wno-unused-parameter")
+
+set(PlayPG_DEBUG_FLAGS "-g3 -O0")
+set(PlayPG_RELEASE_FLAGS "-g0 -O3")
+
+include_directories("include" ${APG_INCLUDE_DIR} ${SDL2_INCLUDE_DIR} ${SDL2_IMAGE_INCLUDE_DIR} ${SDL2_MIXER_INCLUDE_DIR} ${OPENGL_INCLUDE_DIR} ${GLEW_INCLUDE_DIRS} ${TMXPARSER_INCLUDE_DIR})
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_BASE} ${PlayPG_DEBUG_FLAGS}")
+add_executable(PlayPG-d ${PlayPG_SOURCES})
+target_link_libraries(PlayPG-d ${APG_DEBUG_LIBRARY} ${SDL2_LIBRARY} ${SDL2_IMAGE_LIBRARY} ${SDL2_MIXER_LIBRARY} ${OPENGL_LIBRARIES} ${GLEW_LIBRARIES} ${TMXPARSER_LIBRARY})
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_BASE} ${PlayPG_RELEASE_FLAGS}")
+add_executable(PlayPG ${PlayPG_SOURCES})
+target_link_libraries(PlayPG ${APG_LIBRARY} ${SDL2_LIBRARY} ${SDL2_IMAGE_LIBRARY} ${SDL2_MIXER_LIBRARY} ${OPENGL_LIBRARIES} ${GLEW_LIBRARIES} ${TMXPARSER_LIBRARY})
+
