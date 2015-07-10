@@ -36,6 +36,8 @@
 
 #include <APG/SDLGame.hpp>
 #include <APG/GLTmxRenderer.hpp>
+#include <APG/Camera.hpp>
+#include <APG/SpriteBatch.hpp>
 
 #include "Map.hpp"
 
@@ -53,6 +55,7 @@ private:
 	APG::GLTmxRenderer *currentRenderer = nullptr;
 	Map * currentMap = nullptr;
 
+	std::unique_ptr<APG::Camera> camera;
 	std::unique_ptr<APG::SpriteBatch> batch;
 
 	std::unique_ptr<APG::Texture> playerTexture;

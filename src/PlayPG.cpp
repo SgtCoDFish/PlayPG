@@ -42,6 +42,8 @@ PlayPG::PlayPG::PlayPG() :
 }
 
 bool PlayPG::PlayPG::init() {
+	camera = std::make_unique<Camera>();
+	camera->setToOrtho(false, screenWidth, screenHeight);
 	batch = std::make_unique<SpriteBatch>();
 
 	indoorTMXMap = std::make_unique<Tmx::Map>();
@@ -99,8 +101,8 @@ void PlayPG::PlayPG::handleInput() {
 		doMove(1, 1);
 	} else if (inputManager->isKeyJustPressed(SDL_SCANCODE_SPACE)) {
 		doInteraction();
-	} else if(inputManager->isKeyJustPressed(SDL_SCANCODE_RETURN)) {
-		if(currentRenderer == outdoorRenderer.get()) {
+	} else if (inputManager->isKeyJustPressed(SDL_SCANCODE_RETURN)) {
+		if (currentRenderer == outdoorRenderer.get()) {
 			currentRenderer = indoorRenderer.get();
 			currentMap = indoorMap.get();
 
@@ -151,17 +153,24 @@ void PlayPG::PlayPG::doInteraction() {
 		logger->info("Interesting to the east...");
 	} else if (currentMap->isInteresting(xTile + 1, yTile + 1)) {
 		logger->info("Interesting to the south-east...");
-	}else if (currentMap->isInteresting(xTile + 0, yTile + 1)) {
+	} else if (currentMap->isInteresting(xTile + 0, yTile + 1)) {
 		logger->info("Interesting to the south...");
-	}else if (currentMap->isInteresting(xTile - 1, yTile + 1)) {
+	} else if (currentMap->isInteresting(xTile - 1, yTile + 1)) {
 		logger->info("Interesting to the south-west...");
-	} else if (currentMap->isInteresting(xTile +0, yTile +0)) {
+	} else if (currentMap->isInteresting(xTile + 0, yTile + 0)) {
 		logger->info("Interesting right here...");
 	}
 }
 
 void PlayPG::PlayPG::render(float deltaTime) {
 	handleInput();
+
+	camera->position.x = playerPos.x - screenWidth / 2.0f;
+	camera->position.y = playerPos.y - screenHeight / 2.0f;
+
+	camera->update();
+
+	batch->setProjectionMatrix(camera->combinedMatrix);
 
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
