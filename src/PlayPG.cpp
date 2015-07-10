@@ -68,6 +68,7 @@ bool PlayPG::PlayPG::init() {
 	outdoorRenderer = std::make_unique<GLTmxRenderer>(outdoorTMXMap, batch);
 
 	currentRenderer = outdoorRenderer.get();
+	currentMap = outdoorMap.get();
 
 	playerTexture = std::make_unique<Texture>("assets/player.png");
 	player = std::make_unique<Sprite>(playerTexture);
@@ -101,12 +102,14 @@ void PlayPG::PlayPG::handleInput() {
 	} else if(inputManager->isKeyJustPressed(SDL_SCANCODE_RETURN)) {
 		if(currentRenderer == outdoorRenderer.get()) {
 			currentRenderer = indoorRenderer.get();
+			currentMap = indoorMap.get();
 
 			const auto &spawnPoint = indoorMap->getSpawnPoint();
 			playerPos.x = spawnPoint.x * indoorMap->getTileWidth();
 			playerPos.y = spawnPoint.y * indoorMap->getTileHeight();
 		} else {
 			currentRenderer = outdoorRenderer.get();
+			currentMap = outdoorMap.get();
 
 			const auto &spawnPoint = outdoorMap->getSpawnPoint();
 			playerPos.x = spawnPoint.x * outdoorMap->getTileWidth();
@@ -116,12 +119,12 @@ void PlayPG::PlayPG::handleInput() {
 }
 
 void PlayPG::PlayPG::doMove(int32_t xTiles, int32_t yTiles) {
-	const int tileWidth = indoorMap->getTileWidth(), tileHeight = indoorMap->getTileHeight();
+	const int tileWidth = currentMap->getTileWidth(), tileHeight = currentMap->getTileHeight();
 
 	const float xDest = playerPos.x / tileWidth + xTiles;
 	const float yDest = playerPos.y / tileHeight + yTiles;
 
-	const bool solid = indoorMap->isSolid(xDest, yDest);
+	const bool solid = currentMap->isSolid(xDest, yDest);
 
 	logger->info("Moving (%v, %v) -> (%v, %v) (%v blocked).", playerPos.x, playerPos.y, xDest, yDest,
 	        (solid ? "is" : "not"));
@@ -133,26 +136,26 @@ void PlayPG::PlayPG::doMove(int32_t xTiles, int32_t yTiles) {
 }
 
 void PlayPG::PlayPG::doInteraction() {
-	const float xTile = playerPos.x / indoorMap->getTileWidth();
-	const float yTile = playerPos.y / indoorMap->getTileHeight();
+	const float xTile = playerPos.x / currentMap->getTileWidth();
+	const float yTile = playerPos.y / currentMap->getTileHeight();
 
-	if (indoorMap->isInteresting(xTile - 1, yTile + 0)) {
+	if (currentMap->isInteresting(xTile - 1, yTile + 0)) {
 		logger->info("Interesting to the west...");
-	} else if (indoorMap->isInteresting(xTile - 1, yTile - 1)) {
+	} else if (currentMap->isInteresting(xTile - 1, yTile - 1)) {
 		logger->info("Interesting to the north-west...");
-	} else if (indoorMap->isInteresting(xTile + 0, yTile - 1)) {
+	} else if (currentMap->isInteresting(xTile + 0, yTile - 1)) {
 		logger->info("Interesting to the north...");
-	} else if (indoorMap->isInteresting(xTile + 1, yTile - 1)) {
+	} else if (currentMap->isInteresting(xTile + 1, yTile - 1)) {
 		logger->info("Interesting to the north-east...");
-	} else if (indoorMap->isInteresting(xTile + 1, yTile + 0)) {
+	} else if (currentMap->isInteresting(xTile + 1, yTile + 0)) {
 		logger->info("Interesting to the east...");
-	} else if (indoorMap->isInteresting(xTile + 1, yTile + 1)) {
+	} else if (currentMap->isInteresting(xTile + 1, yTile + 1)) {
 		logger->info("Interesting to the south-east...");
-	}else if (indoorMap->isInteresting(xTile + 0, yTile + 1)) {
+	}else if (currentMap->isInteresting(xTile + 0, yTile + 1)) {
 		logger->info("Interesting to the south...");
-	}else if (indoorMap->isInteresting(xTile - 1, yTile + 1)) {
+	}else if (currentMap->isInteresting(xTile - 1, yTile + 1)) {
 		logger->info("Interesting to the south-west...");
-	} else if (indoorMap->isInteresting(xTile +0, yTile +0)) {
+	} else if (currentMap->isInteresting(xTile +0, yTile +0)) {
 		logger->info("Interesting right here...");
 	}
 }

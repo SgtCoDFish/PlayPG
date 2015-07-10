@@ -62,9 +62,9 @@ void PlayPG::Map::parseMap() {
 					const auto tmxTile = map->GetTileset(layer->GetTileTilesetIndex(x, y))->GetTile(
 					        layer->GetTileId(x, y));
 					if (tmxTile != nullptr) {
-						const auto &tilePs = tmxTile->GetProperties();
+						const auto &tilePs = tmxTile->GetProperties().GetStringProperty("interesting");
 
-						if (!tilePs.Empty()) {
+						if (tilePs != "") {
 							logger->verbose(1, "Interesting tile at (x, y) = (%v, %v).", x, y);
 							interesting = true;
 						}

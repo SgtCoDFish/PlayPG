@@ -51,6 +51,7 @@ private:
 	std::unique_ptr<APG::GLTmxRenderer> outdoorRenderer;
 
 	APG::GLTmxRenderer *currentRenderer = nullptr;
+	Map * currentMap = nullptr;
 
 	std::unique_ptr<APG::SpriteBatch> batch;
 
