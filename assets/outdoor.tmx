@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" renderorder="right-down" width="100" height="100" tilewidth="16" tileheight="16">
+ <tileset firstgid="1" name="Roguelike" tilewidth="16" tileheight="16" spacing="1">
+  <image source="roguelike_sheet.png" width="969" height="527"/>
+  <tile id="153">
+   <properties>
+    <property name="interesting" value="yes"/>
+   </properties>
+  </tile>
+  <tile id="166">
+   <properties>
+    <property name="solid" value="true"/>
+   </properties>
+  </tile>
+ </tileset>
+ <layer name="Wall" width="100" height="100">
+  <data encoding="base64" compression="zlib">
+   eJzt2VtuwyAQBVDvfyPdZj/606aAmQHbyJwjRY0SZwzc8Ih6HAAAAAAA9/ha/LGblfu8ctuu0vvdLI1NZLwyYyuP/HpRym80U3nk5shV4yaPv+P7+be31udns+Mqj3omI/Wz18hjbhYj7Xnq/k+bsZ/X9vJWvZF582bRPHrHcSTb3X8PZs5Xn897HqV7n7VnN7PWq0weR+F1ecTnRqRGpl7kmrepnasiZ5yZ61Xk/Tc6yyP6+ZG1r9SO3ZT6nx3DzPyonQuOY+88zrJorWfZeSGP/8722t7veGaN6slrN6N9Ht0zWm2QR/213lq956kZ5683aq1VmVrRuXFWbzczxi6yX0Tr7mbG2h09H//+TOt+8mhfV1vzM2uUPMpm5BGt1Use7euy59lWreOoz5Wd8+j97Tbr7NRj5zzuvl9k799JdA++kzzWqGf/yL8/677Ouz/u6PPZ74zstW+0cp9XbttVVu7zym27ysp9XrltV1m5zyu37Spn/997+gEAAAAAAAAAAAAAAAAAAAAAAAAAGd8cnz0a
+  </data>
+ </layer>
+ <layer name="Ground/terrain" width="100" height="100">
+  <data encoding="base64" compression="zlib">
+   eJzt100KwjAQgNGA1kOptZfy5/pGEKyhdiXOYN7i7Qc+ZkKmUsoEAAAAAAD8pV0jep6etS000QM9svnUQY9cXaLn6d2m2jaGBHP16liNjVOCuXrR7sNZj1BL+6CHHuiRzePtWHov9Iixthv76vp0SzBrD9Z62Im8PfzVf+NSXjfpUN5vlRsVa74rblW8+a7YDQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD4njvz4JUG
+  </data>
+ </layer>
+ <layer name="Ground overlay" width="100" height="100">
+  <data encoding="base64" compression="zlib">
+   eJzt2FtqwkAYhuHBXHjalFXX4WEdbdfR1l2pGzLBDIRAYRA1v/I88N0P8zIEkhIAAAAAANzPdJTSrN18NPRpWNYNVu3WBT22VUq73vbV48/57vK7WHW2KHgjv/Xd//V20ONmucNHr0XpG9Hjvpb/dMj70uOpPts7n/Q6jOt9F3w/9HiM3CWvpEVDj1j0iEWPWPSIRY9Y9IhFj1j0iKP5d/jT3r0ewzvV977xPkI5Vtcu3Z31AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAl3IBNuxGyw==
+  </data>
+ </layer>
+ <layer name="__playerSpawn" width="100" height="100">
+  <data encoding="base64" compression="zlib">
+   eJztzgEJAAAIA7BjJvtnM4ZwtgRLAAAAAAAAAAAAAAAAAAAAAAAAoMPO9wAAAAAAAAAAAAAAAAAAAAAAAAAAaHCtVQA3
+  </data>
+ </layer>
+ <layer name="Objects" width="100" height="100">
+  <properties>
+   <property name="solid" value="true"/>
+  </properties>
+  <data encoding="base64" compression="zlib">
+   eJzt2s1qFEEQwPHsF+gpJ0UREvXkI0SfIODFrIIvoOLGkw8gElhFjaIXDV71ruJDJIIRwYtXxYP6Fnaz3aS2prpnZmfBZPb/g2Z2PnY3dE11dc9maQkAAAAAAAAAjqaN7v/+C9rhctfe6vNlx7wnxvGhOPa6U//vWyS+X8ddexuNjT62jkUjd25TnN9OxGOdfCpIxUL3dyofvNPq3Bu3/7ZrXyPjsUU8CsryI26tfPjhjv0Mx3VOpI4xXuXl8sPKkxSZE987xWPfOpP2inhkzRKL3DxKnrtvnNf5scyYNSUVg7gtm8NWrcnxOh8P6nhaWd3Q12pVa/KWiAd1PC03Vum1RNVakpOr5+9ce+/ah+Zfc2RVWX94Z2aIxTPjPTEe/vP0uPXbtT+u/a3/Va1RpZZb49TqjLmSW3+cdefOuXZ+gedgVeZVen8l7MuYvBhU+z4fD+ZUada8KubD3X76fSs1+nTNfc5ub/I65gcxsVnzKqt+RNY4tZaJm8b6PK/pujyyares1zGOuXiMXA7d6dX73raxxiodC9lPQ7e9Gl5fC1srFp61zojx0H1/xdWfW27/9oLHI1e745hVtZ+uh+ufZ2q7j8eNLn1flawbO52D54AfG9Rf+cxFj1e/atSeRaPHqia1V8+/TojPfDwotqcV58ttl/sdMBUPeb/vuvt7z7VP4T6XNTzGRObZV/G6rC0iax61ruZCus+lzd5B83I1PCX32yOmn8V6ss/3VGxG4Xhunlq2BpzHc8q2ic9yrdrr+/xRf9LnFweTdimM936edFPMlazfNlgDNrOh8mPUm84RnQ/+ulPhtc+tYUkdOu5ie6GXbseYc5liPz7oT3LAt4f96XyQ18U4bmfiUfbcirErLfbjZ7fdD+1Lp3i/l81hyY/mdjJzU31c779U+/fCPc8z3dk1+T+QsvpNftQ3y5xoWc0DUnL/H0z9sPk+PdngvZHs69T/OsZ91oVpTdYM8r3jGvc+uZE2r3hgPojH4UI8DhfiAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA5uEfya7ESg==
+  </data>
+ </layer>
+ <layer name="Doors/windows/roof" width="100" height="100">
+  <data encoding="base64" compression="zlib">
+   eJzt17EuBEEYB/A5uSvwDBqd3qFGhUaj8QxEQ6vRewuOxyCh5SHo1Uh8m4hcuLu1uTm7Ob9fMslmtpjJ/9vZbzclAAAAAAAAABjfZoz5ujfBl6VWSi91bwLGtDBT9w7ot6cewD/30E7psV33LprvJjK6zZzT9+zv4nq2k9JcJ+860+goMnrLXI8i+9O+7Nfiej3GhnqUWo6MuplzGpT9cfwPnrTyrjNtriOfpxjPcmqkXf8ejVb0+vsJ9HuGG5X5azH3i35/4FxlMyrzote/t8v7/YV6ZFOW+U7FXn8YtVlRn4nZHzB3PiLvy7jX67vfU5vKtv7oe3dbbSpnsDjmequx3tXnml3vrh/OGpKHszFZw/JdHTLflOdiWpXlO6hezkh9nAcAAAAAAAAAAAAAAAAAAAAAAAAAAACAaj4AcbclqQ==
+  </data>
+ </layer>
+ <layer name="Roof object" width="100" height="100">
+  <data encoding="base64" compression="zlib">
+   eJztzgENAAAIA6CbyP7tjKGbkIAEAAAAAAAAAAAAAG7q2h4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHw3dOgAx
+  </data>
+ </layer>
+</map>

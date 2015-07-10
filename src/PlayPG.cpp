@@ -42,34 +42,128 @@ PlayPG::PlayPG::PlayPG() :
 }
 
 bool PlayPG::PlayPG::init() {
-	tmxMap = std::make_unique<Tmx::Map>();
-	tmxMap->ParseFile("assets/room1.tmx");
+	batch = std::make_unique<SpriteBatch>();
 
-	if (tmxMap->HasError()) {
-		logger->fatal("Couldn't load room1.tmx");
+	indoorTMXMap = std::make_unique<Tmx::Map>();
+	indoorTMXMap->ParseFile("assets/room1.tmx");
+
+	if (indoorTMXMap->HasError()) {
+		logger->fatal("Couldn't load room1.tmx: %v", indoorTMXMap->GetErrorText());
 		return false;
 	}
 
-	map = std::make_unique<Map>(tmxMap);
+	indoorMap = std::make_unique<Map>(indoorTMXMap);
 
-	batch = std::make_unique<SpriteBatch>();
-	renderer = std::make_unique<GLTmxRenderer>(tmxMap, batch);
+	outdoorTMXMap = std::make_unique<Tmx::Map>();
+	outdoorTMXMap->ParseFile("assets/outdoor.tmx");
+
+	if (outdoorTMXMap->HasError()) {
+		logger->fatal("Couldn't load room1.tmx: %v", outdoorTMXMap->GetErrorText());
+		return false;
+	}
+
+	outdoorMap = std::make_unique<Map>(outdoorTMXMap);
+
+	indoorRenderer = std::make_unique<GLTmxRenderer>(indoorTMXMap, batch);
+	outdoorRenderer = std::make_unique<GLTmxRenderer>(outdoorTMXMap, batch);
+
+	currentRenderer = outdoorRenderer.get();
 
 	playerTexture = std::make_unique<Texture>("assets/player.png");
 	player = std::make_unique<Sprite>(playerTexture);
 
-	const auto &spawnPoint = map->getSpawnPoint();
-	playerPos.x = spawnPoint.x * map->getTileWidth();
-	playerPos.y = spawnPoint.y * map->getTileHeight();
+	const auto &spawnPoint = outdoorMap->getSpawnPoint();
+	playerPos.x = spawnPoint.x * outdoorMap->getTileWidth();
+	playerPos.y = spawnPoint.y * outdoorMap->getTileHeight();
 
 	return true;
 }
 
+void PlayPG::PlayPG::handleInput() {
+	if (inputManager->isKeyJustPressed(SDL_SCANCODE_W) || inputManager->isKeyJustPressed(SDL_SCANCODE_KP_8)) {
+		doMove(0, -1);
+	} else if (inputManager->isKeyJustPressed(SDL_SCANCODE_A) || inputManager->isKeyJustPressed(SDL_SCANCODE_KP_4)) {
+		doMove(-1, 0);
+	} else if (inputManager->isKeyJustPressed(SDL_SCANCODE_S) || inputManager->isKeyJustPressed(SDL_SCANCODE_KP_2)) {
+		doMove(0, 1);
+	} else if (inputManager->isKeyJustPressed(SDL_SCANCODE_D) || inputManager->isKeyJustPressed(SDL_SCANCODE_KP_6)) {
+		doMove(1, 0);
+	} else if (inputManager->isKeyJustPressed(SDL_SCANCODE_KP_7)) {
+		doMove(-1, -1);
+	} else if (inputManager->isKeyJustPressed(SDL_SCANCODE_KP_9)) {
+		doMove(1, -1);
+	} else if (inputManager->isKeyJustPressed(SDL_SCANCODE_KP_1)) {
+		doMove(-1, 1);
+	} else if (inputManager->isKeyJustPressed(SDL_SCANCODE_KP_3)) {
+		doMove(1, 1);
+	} else if (inputManager->isKeyJustPressed(SDL_SCANCODE_SPACE)) {
+		doInteraction();
+	} else if(inputManager->isKeyJustPressed(SDL_SCANCODE_RETURN)) {
+		if(currentRenderer == outdoorRenderer.get()) {
+			currentRenderer = indoorRenderer.get();
+
+			const auto &spawnPoint = indoorMap->getSpawnPoint();
+			playerPos.x = spawnPoint.x * indoorMap->getTileWidth();
+			playerPos.y = spawnPoint.y * indoorMap->getTileHeight();
+		} else {
+			currentRenderer = outdoorRenderer.get();
+
+			const auto &spawnPoint = outdoorMap->getSpawnPoint();
+			playerPos.x = spawnPoint.x * outdoorMap->getTileWidth();
+			playerPos.y = spawnPoint.y * outdoorMap->getTileHeight();
+		}
+	}
+}
+
+void PlayPG::PlayPG::doMove(int32_t xTiles, int32_t yTiles) {
+	const int tileWidth = indoorMap->getTileWidth(), tileHeight = indoorMap->getTileHeight();
+
+	const float xDest = playerPos.x / tileWidth + xTiles;
+	const float yDest = playerPos.y / tileHeight + yTiles;
+
+	const bool solid = indoorMap->isSolid(xDest, yDest);
+
+	logger->info("Moving (%v, %v) -> (%v, %v) (%v blocked).", playerPos.x, playerPos.y, xDest, yDest,
+	        (solid ? "is" : "not"));
+
+	if (!solid) {
+		playerPos.x = xDest * tileWidth;
+		playerPos.y = yDest * tileHeight;
+	}
+}
+
+void PlayPG::PlayPG::doInteraction() {
+	const float xTile = playerPos.x / indoorMap->getTileWidth();
+	const float yTile = playerPos.y / indoorMap->getTileHeight();
+
+	if (indoorMap->isInteresting(xTile - 1, yTile + 0)) {
+		logger->info("Interesting to the west...");
+	} else if (indoorMap->isInteresting(xTile - 1, yTile - 1)) {
+		logger->info("Interesting to the north-west...");
+	} else if (indoorMap->isInteresting(xTile + 0, yTile - 1)) {
+		logger->info("Interesting to the north...");
+	} else if (indoorMap->isInteresting(xTile + 1, yTile - 1)) {
+		logger->info("Interesting to the north-east...");
+	} else if (indoorMap->isInteresting(xTile + 1, yTile + 0)) {
+		logger->info("Interesting to the east...");
+	} else if (indoorMap->isInteresting(xTile + 1, yTile + 1)) {
+		logger->info("Interesting to the south-east...");
+	}else if (indoorMap->isInteresting(xTile + 0, yTile + 1)) {
+		logger->info("Interesting to the south...");
+	}else if (indoorMap->isInteresting(xTile - 1, yTile + 1)) {
+		logger->info("Interesting to the south-west...");
+	} else if (indoorMap->isInteresting(xTile +0, yTile +0)) {
+		logger->info("Interesting right here...");
+	}
+}
+
 void PlayPG::PlayPG::render(float deltaTime) {
+	handleInput();
+
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	renderer->renderAll(deltaTime);
+	currentRenderer->renderAll(deltaTime);
 
 	batch->begin();
 	batch->draw(player, playerPos.x, playerPos.y);

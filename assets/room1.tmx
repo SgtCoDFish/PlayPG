@@ -16,14 +16,14 @@
    eJzt1jEOwjAMBdCoPSuI0iMiuFXbFTiAnRCppcN7UkZn+B6+SwEAAPi/51DKI3mv4fe5aIa65ZPdfYzfGmS+JXOLfXT7ZncZ4zcFmc/JjH30q2V3DTK/jf1/EtsjO/voZx/nsu6Q3WYf3aK+brmTottsTrqFXNTXLXdSdJtlXU+/ln1wHPs4l1rX6+1jTZUe0NvHyrpebwMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAANDqDdGoR30=
   </data>
  </layer>
- <layer name="__playerSpawn" width="100" height="100" visible="0" opacity="0">
-  <data encoding="base64" compression="zlib">
-   eJztzjENAAAIA7Dh3zQiRsLTKmgCAAAAAAAAAFyZ7wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABQWxkHAAI=
-  </data>
- </layer>
  <layer name="Floor" width="100" height="100">
   <data encoding="base64" compression="zlib">
    eJzt17sNwjAUBVCLzAriswBMwyAI5mCRkBZSWCDEc4IFgeIcyVJSvObd4topAQAA/N5xltKhcE6z9+eiGYa1t92tm/hcgp13hblWHtX63c2b+KyCnW8KM/Ko1+9ul+KzCHa+bOIZedQbymNbOPL4PHn8l6iv8z2plEd0x+rkUS339T7duzp/twN55LvZ82zf9dTJfX1O967O32PyeDW7lMdXjMmD6cjjv5S6Xm9PL3qbP77RmU7u+t7j2zz/620AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADGuAIj5oRg
+  </data>
+ </layer>
+ <layer name="__playerSpawn" width="100" height="100" visible="0" opacity="0">
+  <data encoding="base64" compression="zlib">
+   eJztzjENAAAIA7Dh3zQiRsLTKmgCAAAAAAAAAFyZ7wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABQWxkHAAI=
   </data>
  </layer>
  <layer name="Carpet" width="100" height="100">
@@ -33,7 +33,7 @@
  </layer>
  <layer name="Objects" width="100" height="100">
   <properties>
-   <property name="chest" value=""/>
+   <property name="solid" value="true"/>
   </properties>
   <data encoding="base64" compression="zlib">
    eJzt1MEJwjAYBtBUlxBBwZMr6CY6gkdX8KjgBoIn11AQFNzAs4sYaMWClVYsFPE9+PhKEspPoQkBAAAAXo2SEDaxLyHtkOsytyTtacyk9sn+0zz7pu3kuTZsPZ+3b/qhF9PPwvcWJfvXN70qOLuuZSKq2LWK148xs6R4j8+V/R9VdGM6NbyHava50LxTzDlmnN1LyyaHIRxyAQB+16DpAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPhJd9VVFOY=

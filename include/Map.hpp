@@ -42,10 +42,11 @@ namespace PlayPG {
 
 struct MapTile {
 	const bool isSolid;
+	const bool isInteresting;
 	const bool isSpawn;
 
-	explicit MapTile(bool isSolid = false, bool isSpawn = false) :
-			isSolid { isSolid }, isSpawn { isSpawn } {
+	explicit MapTile(bool isSolid = false, bool isInteresting = false, bool isSpawn = false) :
+			isSolid { isSolid }, isInteresting { isInteresting }, isSpawn { isSpawn } {
 	}
 };
 
@@ -68,7 +69,13 @@ public:
 	}
 	explicit Map(Tmx::Map * const map);
 
-	bool isSolid(uint32_t x, uint32_t y) const;
+	bool isSolid(uint32_t x, uint32_t y) const {
+		return getTile(x, y).isSolid;
+	}
+
+	bool isInteresting(uint32_t x, uint32_t y) const {
+		return getTile(x, y).isInteresting;
+	}
 
 	const glm::ivec2 &getSpawnPoint() const {
 		return spawnPoint;

@@ -42,15 +42,25 @@
 namespace PlayPG {
 class PlayPG : public APG::SDLGame {
 private:
-	std::unique_ptr<Tmx::Map> tmxMap;
-	std::unique_ptr<Map> map;
+	std::unique_ptr<Tmx::Map> indoorTMXMap;
+	std::unique_ptr<Map> indoorMap;
+	std::unique_ptr<APG::GLTmxRenderer> indoorRenderer;
+
+	std::unique_ptr<Tmx::Map> outdoorTMXMap;
+	std::unique_ptr<Map> outdoorMap;
+	std::unique_ptr<APG::GLTmxRenderer> outdoorRenderer;
+
+	APG::GLTmxRenderer *currentRenderer = nullptr;
 
 	std::unique_ptr<APG::SpriteBatch> batch;
-	std::unique_ptr<APG::GLTmxRenderer> renderer;
 
 	std::unique_ptr<APG::Texture> playerTexture;
 	std::unique_ptr<APG::SpriteBase> player;
 	glm::vec2 playerPos;
+
+	void handleInput();
+	void doMove(int32_t xTiles, int32_t yTiles);
+	void doInteraction();
 
 public:
 	static el::Logger *logger;

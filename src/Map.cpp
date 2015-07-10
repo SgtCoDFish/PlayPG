@@ -36,43 +36,52 @@ PlayPG::Map::Map(Tmx::Map * const map) :
 	parseMap();
 }
 
-bool PlayPG::Map::isSolid(uint32_t x, uint32_t y) const {
-	return getTile(x, y).isSolid;
-}
-
 const PlayPG::MapTile &PlayPG::Map::getTile(uint32_t x, uint32_t y) const {
 	return tiles[resolveTileLoc(x, y)];
 }
 
 void PlayPG::Map::parseMap() {
-	const auto logger= el::Loggers::getLogger("PlayPG");
+	const auto logger = el::Loggers::getLogger("PlayPG");
 
-	const size_t mapArea =map->GetWidth() * map->GetHeight();
+	const size_t mapArea = map->GetWidth() * map->GetHeight();
 	tiles.reserve(mapArea);
 
-	for(int y = 0; y < map->GetHeight(); ++y) {
-		for(int x = 0; x < map->GetWidth(); ++x) {
-			bool solid = false, spawn = false;
+	for (int y = 0; y < map->GetHeight(); ++y) {
+		for (int x = 0; x < map->GetWidth(); ++x) {
+			bool solid = false, interesting = false, spawn = false;
 
-			for(const auto &layer : map->GetTileLayers()) {
-				const auto &properties  = layer->GetProperties();
-				const auto solidProp = properties.GetStringProperty("solid");
+			for (const auto &layer : map->GetTileLayers()) {
+				if (layer->GetTileTilesetIndex(x, y) != -1) {
+					const auto &properties = layer->GetProperties();
+					const auto solidProp = properties.GetStringProperty("solid");
 
-				if(solidProp != "") {
-					solid = true;
-				}
+					if (solidProp != "") {
+						solid = true;
+					}
 
-				if(layer->GetName() == "__playerSpawn" && layer->GetTileTilesetIndex(x, y) != -1) {
-					// any laid tile counts as a spawn point on a __playerSpawn level.
+					const auto tmxTile = map->GetTileset(layer->GetTileTilesetIndex(x, y))->GetTile(
+					        layer->GetTileId(x, y));
+					if (tmxTile != nullptr) {
+						const auto &tilePs = tmxTile->GetProperties();
 
-					// at the moment, the last detected spawn point will be used as the definitive point.
-					logger->info("Found spawn point at (x, y) = (%v, %v).", x, y);
-					spawnPoint.x = x;
-					spawnPoint.y = y;
+						if (!tilePs.Empty()) {
+							logger->verbose(1, "Interesting tile at (x, y) = (%v, %v).", x, y);
+							interesting = true;
+						}
+					}
+
+					if (layer->GetName() == "__playerSpawn") {
+						// any laid tile counts as a spawn point on a __playerSpawn level.
+
+						// at the moment, the last detected spawn point will be used as the definitive point.
+						logger->verbose(1, "Found spawn point at (x, y) = (%v, %v).", x, y);
+						spawnPoint.x = x;
+						spawnPoint.y = y;
+					}
 				}
 			}
 
-			tiles.emplace_back(solid, spawn);
+			tiles.emplace_back(solid, interesting, spawn);
 		}
 	}
 }

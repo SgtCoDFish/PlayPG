@@ -26,9 +26,13 @@ find_package(APG REQUIRED)
 
 file(GLOB_RECURSE PlayPG_SOURCES ${PROJECT_SOURCE_DIR}/src/*.cpp)
 file(GLOB_RECURSE PlayPG_HEADERS ${PROJECT_SOURCE_DIR}/include/*.hpp)
+file(GLOB_RECURSE PlayPG_TEST_ASSETS ${PROJECT_SOURCE_DIR}/assets/*)
 
 set(CMAKE_CXX_COMPILER_ARG1 "-std=c++1y")
 set(CMAKE_CXX_FLAGS_BASE "-Wall -Wextra -Wno-unused-parameter")
+
+file(MAKE_DIRECTORY assets)
+file(COPY ${PlayPG_TEST_ASSETS} DESTINATION assets)
 
 set(PlayPG_DEBUG_FLAGS "-g3 -O0")
 set(PlayPG_RELEASE_FLAGS "-g0 -O3")
