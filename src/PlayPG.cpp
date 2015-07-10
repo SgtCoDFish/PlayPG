@@ -25,20 +25,55 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <utility>
+
+#include <APG/APGeasylogging.hpp>
+
 #include "PlayPG.hpp"
+#include "Map.hpp"
 
-PlayPG::PlayPG() :
+using namespace APG;
+
+el::Logger *PlayPG::PlayPG::logger = nullptr;
+
+PlayPG::PlayPG::PlayPG() :
 		APG::SDLGame("PlayPG", 1280u, 720u) {
-
+	PlayPG::logger = el::Loggers::getLogger("PlayPG");
 }
 
-bool PlayPG::init() {
+bool PlayPG::PlayPG::init() {
+	tmxMap = std::make_unique<Tmx::Map>();
+	tmxMap->ParseFile("assets/room1.tmx");
+
+	if (tmxMap->HasError()) {
+		logger->fatal("Couldn't load room1.tmx");
+		return false;
+	}
+
+	map = std::make_unique<Map>(tmxMap);
+
+	batch = std::make_unique<SpriteBatch>();
+	renderer = std::make_unique<GLTmxRenderer>(tmxMap, batch);
+
+	playerTexture = std::make_unique<Texture>("assets/player.png");
+	player = std::make_unique<Sprite>(playerTexture);
+
+	const auto &spawnPoint = map->getSpawnPoint();
+	playerPos.x = spawnPoint.x * map->getTileWidth();
+	playerPos.y = spawnPoint.y * map->getTileHeight();
+
 	return true;
 }
 
-void PlayPG::render(float deltaTime) {
-	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+void PlayPG::PlayPG::render(float deltaTime) {
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
+
+	renderer->renderAll(deltaTime);
+
+	batch->begin();
+	batch->draw(player, playerPos.x, playerPos.y);
+	batch->end();
 
 	SDL_GL_SwapWindow(window.get());
 }

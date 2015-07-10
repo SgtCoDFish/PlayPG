@@ -25,43 +25,66 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef INCLUDE_PLAYPG_HPP_
-#define INCLUDE_PLAYPG_HPP_
+#ifndef INCLUDE_MAP_HPP_
+#define INCLUDE_MAP_HPP_
 
-#include <utility>
+#include <cstdint>
 
-#include <tmxparser/Tmx.h>
+#include <vector>
 
 #include <glm/vec2.hpp>
 
-#include <APG/SDLGame.hpp>
-#include <APG/GLTmxRenderer.hpp>
-
-#include "Map.hpp"
+namespace Tmx {
+class Map;
+}
 
 namespace PlayPG {
-class PlayPG : public APG::SDLGame {
+
+struct MapTile {
+	const bool isSolid;
+	const bool isSpawn;
+
+	explicit MapTile(bool isSolid = false, bool isSpawn = false) :
+			isSolid { isSolid }, isSpawn { isSpawn } {
+	}
+};
+
+class Map {
 private:
-	std::unique_ptr<Tmx::Map> tmxMap;
-	std::unique_ptr<Map> map;
+	Tmx::Map * map;
 
-	std::unique_ptr<APG::SpriteBatch> batch;
-	std::unique_ptr<APG::GLTmxRenderer> renderer;
+	std::vector<MapTile> tiles;
+	glm::ivec2 spawnPoint;
 
-	std::unique_ptr<APG::Texture> playerTexture;
-	std::unique_ptr<APG::SpriteBase> player;
-	glm::vec2 playerPos;
+	inline size_t resolveTileLoc(uint32_t x, uint32_t y) const {
+		return x + map->GetWidth() * y;
+	}
+
+	void parseMap();
 
 public:
-	static el::Logger *logger;
+	explicit Map(const std::unique_ptr<Tmx::Map> &map) :
+			Map(map.get()) {
+	}
+	explicit Map(Tmx::Map * const map);
 
-	explicit PlayPG();
-	virtual ~PlayPG() = default;
+	bool isSolid(uint32_t x, uint32_t y) const;
 
-	bool init() override;
-	void render(float deltaTime) override;
+	const glm::ivec2 &getSpawnPoint() const {
+		return spawnPoint;
+	}
+
+	inline int getTileWidth() const {
+		return map->GetTileWidth();
+	}
+
+	inline int getTileHeight() const {
+		return map->GetTileHeight();
+	}
+
+	const MapTile &getTile(uint32_t x, uint32_t y) const;
 };
 
 }
 
-#endif /* INCLUDE_PLAYPG_HPP_ */
+#endif /* INCLUDE_MAP_HPP_ */

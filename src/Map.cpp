@@ -25,43 +25,54 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef INCLUDE_PLAYPG_HPP_
-#define INCLUDE_PLAYPG_HPP_
-
-#include <utility>
-
 #include <tmxparser/Tmx.h>
 
-#include <glm/vec2.hpp>
-
-#include <APG/SDLGame.hpp>
-#include <APG/GLTmxRenderer.hpp>
+#include <APG/APGeasylogging.hpp>
 
 #include "Map.hpp"
 
-namespace PlayPG {
-class PlayPG : public APG::SDLGame {
-private:
-	std::unique_ptr<Tmx::Map> tmxMap;
-	std::unique_ptr<Map> map;
-
-	std::unique_ptr<APG::SpriteBatch> batch;
-	std::unique_ptr<APG::GLTmxRenderer> renderer;
-
-	std::unique_ptr<APG::Texture> playerTexture;
-	std::unique_ptr<APG::SpriteBase> player;
-	glm::vec2 playerPos;
-
-public:
-	static el::Logger *logger;
-
-	explicit PlayPG();
-	virtual ~PlayPG() = default;
-
-	bool init() override;
-	void render(float deltaTime) override;
-};
-
+PlayPG::Map::Map(Tmx::Map * const map) :
+		map { map } {
+	parseMap();
 }
 
-#endif /* INCLUDE_PLAYPG_HPP_ */
+bool PlayPG::Map::isSolid(uint32_t x, uint32_t y) const {
+	return getTile(x, y).isSolid;
+}
+
+const PlayPG::MapTile &PlayPG::Map::getTile(uint32_t x, uint32_t y) const {
+	return tiles[resolveTileLoc(x, y)];
+}
+
+void PlayPG::Map::parseMap() {
+	const auto logger= el::Loggers::getLogger("PlayPG");
+
+	const size_t mapArea =map->GetWidth() * map->GetHeight();
+	tiles.reserve(mapArea);
+
+	for(int y = 0; y < map->GetHeight(); ++y) {
+		for(int x = 0; x < map->GetWidth(); ++x) {
+			bool solid = false, spawn = false;
+
+			for(const auto &layer : map->GetTileLayers()) {
+				const auto &properties  = layer->GetProperties();
+				const auto solidProp = properties.GetStringProperty("solid");
+
+				if(solidProp != "") {
+					solid = true;
+				}
+
+				if(layer->GetName() == "__playerSpawn" && layer->GetTileTilesetIndex(x, y) != -1) {
+					// any laid tile counts as a spawn point on a __playerSpawn level.
+
+					// at the moment, the last detected spawn point will be used as the definitive point.
+					logger->info("Found spawn point at (x, y) = (%v, %v).", x, y);
+					spawnPoint.x = x;
+					spawnPoint.y = y;
+				}
+			}
+
+			tiles.emplace_back(solid, spawn);
+		}
+	}
+}

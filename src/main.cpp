@@ -37,9 +37,14 @@ INITIALIZE_EASYLOGGINGPP
 
 int main(int argc, char *argv[]) {
 	START_EASYLOGGINGPP(argc, argv);
+	APG::Game::setLoggerToAPGStyle("PlayPG");
 
 	{
-		auto playPG = std::make_unique<PlayPG>();
+		auto playPG = std::make_unique<PlayPG::PlayPG>();
+
+		if(!playPG->init()) {
+			return EXIT_FAILURE;
+		}
 
 		bool done = false;
 
