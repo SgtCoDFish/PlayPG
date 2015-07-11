@@ -12,6 +12,12 @@
     <property name="solid" value="true"/>
    </properties>
   </tile>
+  <tile id="469">
+   <animation>
+    <frame tileid="470" duration="250"/>
+    <frame tileid="471" duration="250"/>
+   </animation>
+  </tile>
  </tileset>
  <layer name="Ground/terrain" width="100" height="100">
   <data encoding="base64" compression="zlib">
@@ -30,12 +36,12 @@
  </layer>
  <layer name="Objects" width="100" height="100">
   <data encoding="base64" compression="zlib">
-   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
+   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
   </data>
  </layer>
  <layer name="Doors/windows/roof" width="100" height="100">
   <data encoding="base64" compression="zlib">
-   eJzt17EuBFEUBuC7slvgGTyA3lo1KjQavQcgGqVo9HoPwPIYJLQ8BL0aiTOi2LC7Y+ysmYzvS252MlPcm//M3TM3JQAAAAAAAACY3HqM+RhHVS+ED4utlJ7jd7dV9Urg9xZmql4Bg3bUA/jn7tspPbSrXkX9XUdGNyXn9DX727ie7aQ01yl3niY6iIxeS65Hlv3xQPYrcb0aY009ci1FRt2ScxqW/WGcA8/KnaZxriKjxxhPzsy1tO3sUWtZr7+bQr9ntHGZv2T3ftDv9+yr0ozLPOv1b+38fn+uHqXJy3yrYK/fj9osq8/UDPtGPR2T90U86w8876tNYRt/9L27qTaFM5j0zNaL+S4/5+z67/rmpCZ52BvTNSrf3oj7dXkvmiov32H1skeqYz8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAFPMOIFknYg==
+   eJzt1zEyA1EYB/AXsylwBgfQi6hRodHoHYBxAaPR6x2AcAxmaDkEvRozvjWKDJK1ySa7E7/fzJvd2S3em/+Xl29fSgAAAAAAAAAwvs0YizGO614In5ZbKb3Edb9V90pgdEtzda+AfnvqAfxzD1lKj1ndq2i+m8jotuKcvmd/F/fz7ZQW2tXOM4uOIqO3iuuRZ3/Sl/1a3K/H2FCPQiuRUafinGQ/mus4Kz/FeHZmbqRdZ49Gy3v9/QT6PYMNy/w1f/aHfn9gX1VmWOZ5r3/Pivv9hXpUpijznZK9/jBqs6o+U3U2JO/LeNfre99Tm9K2pvS9u602pTM4H3O+bsx39TVnx3/XD6cNycPemKxB+XYHPG/K72JWFeX7W73skfrYDwAAAAAAAAAAAAAAAAAAAAAAAAAAAADlfABAMyW4
   </data>
  </layer>
  <layer name="Roof object" width="100" height="100">
@@ -51,4 +57,10 @@
    eJzt2FluwyAUBVD2v5Fusx/9aRMzvAeOqDlHiholGAM3DG4pAAAAAACf8bX56zQ793nntt1l9Ld5NTaR8cqMrTzy68VVfrOZyiM3R+4aN3n8Hd/Xv6N1vV6bHVd51DOZqT9bRh5rs1jRntOs2M9re3mrvpl582TRPEbHcSZb8yN+vnp9P/K6unevPadZtV5l8igXn8sjPjcidWTqi5R5mtq5KnLGWrleRb5/ol4e0etn1r6rdpzmqv/ZMczMj9q5oJSz8+hl0VrPsvNCHu96e+3obzyzRo3kdZrZPs/uGa02yKP+2Whdo+epFeevJ2qtVZm6onOjV99pVozd6D4cvc+peUQ+r5WNnI9/X9O6nzza5WprfuuM3KuvVVYe7XK9PXj1c4M82uWiz3ojdZVSnysn5zH67NbKIfv80WvbST7d58hvXx7rys5cs+La/2p1n1c8Y9g/8t+vuq/z7o9P9Ln3nJEt+0Q793nntt1l5z7v3La77Nznndt2l537vHPb7lL7P8guLwAAAAAAAAAAAAAAAAAAAAAAAADI+AYD+ETu
   </data>
  </layer>
+ <objectgroup color="#ffffff" name="doors">
+  <object name="INDOOR_1" type="door" gid="91" x="544" y="592"/>
+  <object name="INDOOR2_2" type="door" gid="376" x="848" y="480"/>
+  <object name="INDOOR2_1" type="door" gid="375" x="832" y="480"/>
+  <object type="door" x="768" y="448" width="16" height="32"/>
+ </objectgroup>
 </map>

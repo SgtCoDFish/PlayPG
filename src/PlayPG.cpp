@@ -128,8 +128,8 @@ void PlayPG::PlayPG::doMove(int32_t xTiles, int32_t yTiles) {
 
 	const bool solid = currentMap->isSolid(xDest, yDest);
 
-	logger->info("Moving (%v, %v) -> (%v, %v) (%v blocked).", playerPos.x, playerPos.y, xDest, yDest,
-	        (solid ? "is" : "not"));
+//	logger->info("Moving (%v, %v) -> (%v, %v) (%v blocked).", playerPos.x, playerPos.y, xDest, yDest,
+//	        (solid ? "is" : "not"));
 
 	if (!solid) {
 		playerPos.x = xDest * tileWidth;

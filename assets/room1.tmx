@@ -36,7 +36,7 @@
    <property name="solid" value="true"/>
   </properties>
   <data encoding="base64" compression="zlib">
-   eJzt1MEJwjAYBtBUlxBBwZMr6CY6gkdX8KjgBoIn11AQFNzAs4sYaMWClVYsFPE9+PhKEspPoQkBAAAAXo2SEDaxLyHtkOsytyTtacyk9sn+0zz7pu3kuTZsPZ+3b/qhF9PPwvcWJfvXN70qOLuuZSKq2LWK148xs6R4j8+V/R9VdGM6NbyHava50LxTzDlmnN1LyyaHIRxyAQB+16DpAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPhJd9VVFOY=
+   eJzt1MEJwjAYBtBUlxBBwS10Ex3Boyt4VHADwZNrKAgKbuDZRQy0QsGWViyU4nvw8UETwk8gDQEAAAA+TZMQ9rHvIe2Q6yrPJO1FzLzxyf7TKrvTflK8fijpt1HMOAu/W1esP0p6W7B318hE1HHsFX+/xCxL3hbfq3ofdQxjBg2cQz2nXGjfNeYWM8v+S5s2hyGccwEAumvS9gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB00gtWwRS9
   </data>
  </layer>
  <layer name="Details" width="100" height="100">
@@ -44,4 +44,8 @@
    eJztziEBACAMAMEBMchICZJTYGJuiDvz9iMAAAAgt0deoObM7gMq7uo+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH7zAKpOAUk=
   </data>
  </layer>
+ <objectgroup name="chests">
+  <object type="chest" gid="609" x="208" y="176"/>
+  <object type="chest" gid="609" x="208" y="176"/>
+ </objectgroup>
 </map>
