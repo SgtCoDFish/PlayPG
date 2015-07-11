@@ -35,7 +35,7 @@
  </layer>
  <layer name="Doors/windows/roof" width="100" height="100">
   <data encoding="base64" compression="zlib">
-   eJzt17EyA0EYB/CNSQo8g0anF1GjQqPRqDwAo6EzGr23IDwGM7Q8BL0aM74zigzJncjF3cTvN7OTm71id/5fNl82JQAAAAAAAAAY3VqM2RjHVW+EDwuNlJ7jc7dR9U7g9+amqt4BvbbVA/jn7pspPTSr3kX9XUdGNyXn9DX723iebqU00yp3nUl0EBm9llyPLPuTnuyX43klxqp6FFqMjNol59Qv+8O4Bx65C+a6inweYzzJqZa23D1qLev1d2Po9wyWl/lLNveDfr/nXJUmL/Os1781i/v9uXqUpijzzSF7/X7UZkl9xmanz9xZTt4X8a7b876rNkNb/6P/uxtqM3QG8yOu14n1Lj/XbPvt+ua0Jnk4G+M1KN/OgPm6fC8mVVG+/erljFTHeQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYzjtiQSaI
+   eJzt17EuBFEUBuC7slvgGTyA3lo1KjQavQcgGqVo9HoPwPIYJLQ8BL0aiTOi2LC7Y+ysmYzvS252MlPcm//M3TM3JQAAAAAAAACY3HqM+RhHVS+ED4utlJ7jd7dV9Urg9xZmql4Bg3bUA/jn7tspPbSrXkX9XUdGNyXn9DX727ie7aQ01yl3niY6iIxeS65Hlv3xQPYrcb0aY009ci1FRt2ScxqW/WGcA8/KnaZxriKjxxhPzsy1tO3sUWtZr7+bQr9ntHGZv2T3ftDv9+yr0ozLPOv1b+38fn+uHqXJy3yrYK/fj9osq8/UDPtGPR2T90U86w8876tNYRt/9L27qTaFM5j0zNaL+S4/5+z67/rmpCZ52BvTNSrf3oj7dXkvmiov32H1skeqYz8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAFPMOIFknYg==
   </data>
  </layer>
  <layer name="Roof object" width="100" height="100">
