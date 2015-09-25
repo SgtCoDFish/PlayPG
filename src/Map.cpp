@@ -32,7 +32,7 @@
 #include "Map.hpp"
 
 PlayPG::Map::Map(Tmx::Map * const map) :
-		map { map } {
+		        map { map } {
 	parseMap();
 }
 
