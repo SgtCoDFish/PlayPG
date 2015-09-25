@@ -45,7 +45,18 @@
   </data>
  </layer>
  <objectgroup name="chests">
+  <properties>
+   <property name="interesting" value="true"/>
+  </properties>
   <object type="chest" gid="609" x="208" y="176"/>
   <object type="chest" gid="609" x="208" y="176"/>
  </objectgroup>
+ <layer name="fireplace" width="100" height="100">
+  <properties>
+   <property name="interesting" value="true"/>
+  </properties>
+  <data encoding="base64" compression="zlib">
+   eJztzgENAAAIA6DbP7TGcDpIQAIAAAB81rU9AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIBbBuhzAQE=
+  </data>
+ </layer>
 </map>

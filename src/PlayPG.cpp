@@ -37,7 +37,7 @@ using namespace APG;
 el::Logger *PlayPG::PlayPG::logger = nullptr;
 
 PlayPG::PlayPG::PlayPG() :
-		APG::SDLGame("PlayPG", 1280u, 720u) {
+		        APG::SDLGame("PlayPG", 1280u, 720u) {
 	PlayPG::logger = el::Loggers::getLogger("PlayPG");
 }
 

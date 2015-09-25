@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
 	{
 		auto playPG = std::make_unique<PlayPG::PlayPG>();
 
-		if(!playPG->init()) {
+		if (!playPG->init()) {
 			return EXIT_FAILURE;
 		}
 

@@ -46,7 +46,9 @@ struct MapTile {
 	const bool isSpawn;
 
 	explicit MapTile(bool isSolid = false, bool isInteresting = false, bool isSpawn = false) :
-			isSolid { isSolid }, isInteresting { isInteresting }, isSpawn { isSpawn } {
+			        isSolid { isSolid },
+			        isInteresting { isInteresting },
+			        isSpawn { isSpawn } {
 	}
 };
 
@@ -65,7 +67,7 @@ private:
 
 public:
 	explicit Map(const std::unique_ptr<Tmx::Map> &map) :
-			Map(map.get()) {
+			        Map(map.get()) {
 	}
 	explicit Map(Tmx::Map * const map);
 
