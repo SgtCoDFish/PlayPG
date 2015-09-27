@@ -2,9 +2,9 @@
 <map version="1.0" orientation="orthogonal" renderorder="right-down" width="100" height="100" tilewidth="16" tileheight="16" backgroundcolor="#000000">
  <tileset firstgid="1" name="roguelikeSheet_transparent" tilewidth="16" tileheight="16" spacing="1">
   <image source="roguelike_sheet.png" width="969" height="527"/>
-  <tile id="550">
+  <tile id="202">
    <properties>
-    <property name="chest" value=""/>
+    <property name="interesting" value="true"/>
    </properties>
   </tile>
  </tileset>
@@ -44,19 +44,22 @@
    eJztziEBACAMAMEBMchICZJTYGJuiDvz9iMAAAAgt0deoObM7gMq7uo+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH7zAKpOAUk=
   </data>
  </layer>
- <objectgroup name="chests">
+ <objectgroup color="#a40002" name="chests">
   <properties>
    <property name="interesting" value="true"/>
   </properties>
-  <object type="chest" gid="609" x="208" y="176"/>
-  <object type="chest" gid="609" x="208" y="176"/>
+  <object type="chest" gid="609" x="208" y="176">
+   <properties>
+    <property name="chest" value="true"/>
+   </properties>
+  </object>
  </objectgroup>
- <layer name="fireplace" width="100" height="100">
+ <layer name="pans" width="100" height="100">
   <properties>
    <property name="interesting" value="true"/>
   </properties>
   <data encoding="base64" compression="zlib">
-   eJztzgENAAAIA6DbP7TGcDpIQAIAAAB81rU9AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIBbBuhzAQE=
+   eJztzgENAAAIA6D3r2YpY3w6SEACAAAAfDbtAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAcs9ytAMw=
   </data>
  </layer>
 </map>

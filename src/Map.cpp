@@ -29,6 +29,8 @@
 
 #include <APG/APGeasylogging.hpp>
 
+#include <glm/glm.hpp>
+
 #include "Map.hpp"
 
 PlayPG::Map::Map(Tmx::Map * const map) :
@@ -82,6 +84,13 @@ void PlayPG::Map::parseMap() {
 			}
 
 			tiles.emplace_back(solid, interesting, spawn);
+		}
+	}
+
+	for (const auto &objectGroup : map->GetObjectGroups()) {
+		for (const auto &object : objectGroup->GetObjects()) {
+			glm::vec2 objectCentre { object->GetX() + object->GetWidth() / 2, object->GetY() + object->GetHeight() / 2 };
+			logger->info("Object \"%v\" located at (%v, %v).", object->GetName(), objectCentre.x, objectCentre.y);
 		}
 	}
 }
