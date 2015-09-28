@@ -73,11 +73,14 @@ bool PlayPG::PlayPG::init() {
 	currentMap = outdoorMap.get();
 
 	playerTexture = std::make_unique<Texture>("assets/player.png");
-	player = std::make_unique<Sprite>(playerTexture);
+	playerSprite = std::make_unique<Sprite>(playerTexture);
 
 	const auto &spawnPoint = outdoorMap->getSpawnPoint();
-	playerPos.x = spawnPoint.x * outdoorMap->getTileWidth();
-	playerPos.y = spawnPoint.y * outdoorMap->getTileHeight();
+
+	engine = std::make_unique<ashley::Engine>();
+	player = engine->addEntity();
+
+	player->add<Position>(spawnPoint.x * outdoorMap->getTileWidth(), spawnPoint.y * outdoorMap->getTileHeight());
 
 	return true;
 }
@@ -102,20 +105,22 @@ void PlayPG::PlayPG::handleInput() {
 	} else if (inputManager->isKeyJustPressed(SDL_SCANCODE_SPACE)) {
 		doInteraction();
 	} else if (inputManager->isKeyJustPressed(SDL_SCANCODE_RETURN)) {
+		const auto &positionComponent = ashley::ComponentMapper<Position>::getMapper().get(player);
+
 		if (currentRenderer == outdoorRenderer.get()) {
 			currentRenderer = indoorRenderer.get();
 			currentMap = indoorMap.get();
 
 			const auto &spawnPoint = indoorMap->getSpawnPoint();
-			playerPos.x = spawnPoint.x * indoorMap->getTileWidth();
-			playerPos.y = spawnPoint.y * indoorMap->getTileHeight();
+			positionComponent->p.x = spawnPoint.x * indoorMap->getTileWidth();
+			positionComponent->p.y = spawnPoint.y * indoorMap->getTileHeight();
 		} else {
 			currentRenderer = outdoorRenderer.get();
 			currentMap = outdoorMap.get();
 
 			const auto &spawnPoint = outdoorMap->getSpawnPoint();
-			playerPos.x = spawnPoint.x * outdoorMap->getTileWidth();
-			playerPos.y = spawnPoint.y * outdoorMap->getTileHeight();
+			positionComponent->p.x = spawnPoint.x * outdoorMap->getTileWidth();
+			positionComponent->p.y = spawnPoint.y * outdoorMap->getTileHeight();
 		}
 	}
 }
@@ -123,8 +128,10 @@ void PlayPG::PlayPG::handleInput() {
 void PlayPG::PlayPG::doMove(int32_t xTiles, int32_t yTiles) {
 	const int tileWidth = currentMap->getTileWidth(), tileHeight = currentMap->getTileHeight();
 
-	const float xDest = playerPos.x / tileWidth + xTiles;
-	const float yDest = playerPos.y / tileHeight + yTiles;
+	const auto &positionComponent = ashley::ComponentMapper<Position>::getMapper().get(player);
+
+	const float xDest = positionComponent->p.x / tileWidth + xTiles;
+	const float yDest = positionComponent->p.y / tileHeight + yTiles;
 
 	const bool solid = currentMap->isSolid(xDest, yDest);
 
@@ -132,14 +139,15 @@ void PlayPG::PlayPG::doMove(int32_t xTiles, int32_t yTiles) {
 //	        (solid ? "is" : "not"));
 
 	if (!solid) {
-		playerPos.x = xDest * tileWidth;
-		playerPos.y = yDest * tileHeight;
+		positionComponent->p.x = xDest * tileWidth;
+		positionComponent->p.y = yDest * tileHeight;
 	}
 }
 
 void PlayPG::PlayPG::doInteraction() {
-	const float xTile = playerPos.x / currentMap->getTileWidth();
-	const float yTile = playerPos.y / currentMap->getTileHeight();
+	const auto &positionComponent = ashley::ComponentMapper<Position>::getMapper().get(player);
+	const float xTile = positionComponent->p.x / currentMap->getTileWidth();
+	const float yTile = positionComponent->p.y / currentMap->getTileHeight();
 
 	if (currentMap->isInteresting(xTile - 1, yTile + 0)) {
 		logger->info("Interesting to the west...");
@@ -165,8 +173,9 @@ void PlayPG::PlayPG::doInteraction() {
 void PlayPG::PlayPG::render(float deltaTime) {
 	handleInput();
 
-	camera->position.x = playerPos.x - screenWidth / 2.0f;
-	camera->position.y = playerPos.y - screenHeight / 2.0f;
+	const auto &positionComponent = ashley::ComponentMapper<Position>::getMapper().get(player);
+	camera->position.x = positionComponent->p.x - screenWidth / 2.0f;
+	camera->position.y = positionComponent->p.y - screenHeight / 2.0f;
 
 	camera->update();
 
@@ -178,7 +187,7 @@ void PlayPG::PlayPG::render(float deltaTime) {
 	currentRenderer->renderAll(deltaTime);
 
 	batch->begin();
-	batch->draw(player, playerPos.x, playerPos.y);
+	batch->draw(playerSprite, positionComponent->p.x, positionComponent->p.y);
 	batch->end();
 
 	SDL_GL_SwapWindow(window.get());

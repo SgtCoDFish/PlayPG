@@ -25,29 +25,10 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef INCLUDE_COMPONENTS_TILEDLAYERRENDERABLE_HPP_
-#define INCLUDE_COMPONENTS_TILEDLAYERRENDERABLE_HPP_
+#include "systems/RenderSystem.hpp"
 
-#include "Renderable.hpp"
+#include "Mappers.hpp"
 
-namespace Tmx {
-class TileLayer;
-}
-
-namespace PlayPG {
-
-class TiledLayerRenderable : public Renderable<TiledLayerRenderable> {
-public:
-	Tmx::TileLayer * layer;
-
-	explicit TiledLayerRenderable(Tmx::TileLayer * const layerToRender) : layer { layerToRender } {
-	}
-
-	void doRender() {
-
-	}
-};
+void PlayPG::RenderSystem::processEntity(ashley::Entity * const &entity, float deltaTime) {
 
 }
-
-#endif /* INCLUDE_COMPONENTS_TILEDLAYERRENDERABLE_HPP_ */

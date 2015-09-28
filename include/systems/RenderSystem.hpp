@@ -25,17 +25,27 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef INCLUDE_COMPONENTS_RENDERABLE_HPP_
-#define INCLUDE_COMPONENTS_RENDERABLE_HPP_
+#ifndef INCLUDE_SYSTEMS_RENDERSYSTEM_HPP_
+#define INCLUDE_SYSTEMS_RENDERSYSTEM_HPP_
+
+#include <typeinfo>
 
 #include <Ashley/AshleyCore.hpp>
 
+#include "components/Renderable.hpp"
+#include "components/Position.hpp"
+
 namespace PlayPG {
 
-class Renderable : public ashley::Component {
+class RenderSystem : public ashley::IteratingSystem {
 public:
+	explicit RenderSystem() :
+			        IteratingSystem(ashley::Family::getFor( { typeid(Renderable), typeid(Position) })) {
+	}
+
+	virtual void processEntity(ashley::Entity * const &entity, float deltaTime) override;
 };
 
 }
 
-#endif /* INCLUDE_COMPONENTS_RENDERABLE_HPP_ */
+#endif /* INCLUDE_SYSTEMS_RENDERSYSTEM_HPP_ */

@@ -39,10 +39,22 @@
 #include <APG/Camera.hpp>
 #include <APG/SpriteBatch.hpp>
 
+#include <Ashley/AshleyCore.hpp>
+
 #include "Map.hpp"
+#include "Mappers.hpp"
 
 namespace PlayPG {
 class PlayPG : public APG::SDLGame {
+public:
+	static el::Logger *logger;
+
+	explicit PlayPG();
+	virtual ~PlayPG() = default;
+
+	bool init() override;
+	void render(float deltaTime) override;
+
 private:
 	std::unique_ptr<Tmx::Map> indoorTMXMap;
 	std::unique_ptr<Map> indoorMap;
@@ -59,21 +71,15 @@ private:
 	std::unique_ptr<APG::SpriteBatch> batch;
 
 	std::unique_ptr<APG::Texture> playerTexture;
-	std::unique_ptr<APG::SpriteBase> player;
-	glm::vec2 playerPos;
+	std::unique_ptr<APG::SpriteBase> playerSprite;
+
+	std::unique_ptr<ashley::Engine> engine;
+
+	ashley::Entity *player = nullptr;
 
 	void handleInput();
 	void doMove(int32_t xTiles, int32_t yTiles);
 	void doInteraction();
-
-public:
-	static el::Logger *logger;
-
-	explicit PlayPG();
-	virtual ~PlayPG() = default;
-
-	bool init() override;
-	void render(float deltaTime) override;
 };
 
 }
