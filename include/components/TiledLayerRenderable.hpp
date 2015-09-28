@@ -25,57 +25,29 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef INCLUDE_PLAYPG_HPP_
-#define INCLUDE_PLAYPG_HPP_
+#ifndef INCLUDE_COMPONENTS_TILEDLAYERRENDERABLE_HPP_
+#define INCLUDE_COMPONENTS_TILEDLAYERRENDERABLE_HPP_
 
-#include <utility>
+#include "Renderable.hpp"
 
-#include <tmxparser/Tmx.h>
-
-#include <glm/vec2.hpp>
-
-#include <APG/SDLGame.hpp>
-#include <APG/GLTmxRenderer.hpp>
-#include <APG/Camera.hpp>
-#include <APG/SpriteBatch.hpp>
-
-#include "Map.hpp"
+namespace Tmx {
+class TileLayer;
+}
 
 namespace PlayPG {
-class PlayPG : public APG::SDLGame {
-private:
-	std::unique_ptr<Tmx::Map> indoorTMXMap;
-	std::unique_ptr<Map> indoorMap;
-	std::unique_ptr<APG::GLTmxRenderer> indoorRenderer;
 
-	std::unique_ptr<Tmx::Map> outdoorTMXMap;
-	std::unique_ptr<Map> outdoorMap;
-	std::unique_ptr<APG::GLTmxRenderer> outdoorRenderer;
-
-	APG::GLTmxRenderer *currentRenderer = nullptr;
-	Map * currentMap = nullptr;
-
-	std::unique_ptr<APG::Camera> camera;
-	std::unique_ptr<APG::SpriteBatch> batch;
-
-	std::unique_ptr<APG::Texture> playerTexture;
-	std::unique_ptr<APG::SpriteBase> player;
-	glm::vec2 playerPos;
-
-	void handleInput();
-	void doMove(int32_t xTiles, int32_t yTiles);
-	void doInteraction();
-
+class TiledLayerRenderable : public Renderable<TiledLayerRenderable> {
 public:
-	static el::Logger *logger;
+	Tmx::TileLayer * layer;
 
-	explicit PlayPG();
-	virtual ~PlayPG() = default;
+	explicit TiledLayerRenderable(Tmx::TileLayer * const layerToRender) : layer { layerToRender } {
+	}
 
-	bool init() override;
-	void render(float deltaTime) override;
+	void doRender() {
+
+	}
 };
 
 }
 
-#endif /* INCLUDE_PLAYPG_HPP_ */
+#endif /* INCLUDE_COMPONENTS_TILEDLAYERRENDERABLE_HPP_ */

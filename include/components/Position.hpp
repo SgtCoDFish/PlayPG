@@ -25,57 +25,24 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef INCLUDE_PLAYPG_HPP_
-#define INCLUDE_PLAYPG_HPP_
+#ifndef INCLUDE_COMPONENTS_POSITION_HPP_
+#define INCLUDE_COMPONENTS_POSITION_HPP_
 
-#include <utility>
+#include <glm/glm.hpp>
 
-#include <tmxparser/Tmx.h>
-
-#include <glm/vec2.hpp>
-
-#include <APG/SDLGame.hpp>
-#include <APG/GLTmxRenderer.hpp>
-#include <APG/Camera.hpp>
-#include <APG/SpriteBatch.hpp>
-
-#include "Map.hpp"
+#include <Ashley/AshleyCore.hpp>
 
 namespace PlayPG {
-class PlayPG : public APG::SDLGame {
-private:
-	std::unique_ptr<Tmx::Map> indoorTMXMap;
-	std::unique_ptr<Map> indoorMap;
-	std::unique_ptr<APG::GLTmxRenderer> indoorRenderer;
 
-	std::unique_ptr<Tmx::Map> outdoorTMXMap;
-	std::unique_ptr<Map> outdoorMap;
-	std::unique_ptr<APG::GLTmxRenderer> outdoorRenderer;
-
-	APG::GLTmxRenderer *currentRenderer = nullptr;
-	Map * currentMap = nullptr;
-
-	std::unique_ptr<APG::Camera> camera;
-	std::unique_ptr<APG::SpriteBatch> batch;
-
-	std::unique_ptr<APG::Texture> playerTexture;
-	std::unique_ptr<APG::SpriteBase> player;
-	glm::vec2 playerPos;
-
-	void handleInput();
-	void doMove(int32_t xTiles, int32_t yTiles);
-	void doInteraction();
-
+class Position : public ashley::Component {
 public:
-	static el::Logger *logger;
+	glm::vec2 p;
 
-	explicit PlayPG();
-	virtual ~PlayPG() = default;
-
-	bool init() override;
-	void render(float deltaTime) override;
+	explicit Position(float x, float y) :
+			        p { x, y } {
+	}
 };
 
 }
 
-#endif /* INCLUDE_PLAYPG_HPP_ */
+#endif /* INCLUDE_COMPONENTS_POSITION_HPP_ */

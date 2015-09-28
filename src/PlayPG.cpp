@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 Ashley Davis (SgtCoDFish)
+ * Copyright (c) 2015 See AUTHORS file.
  * All rights reserved.
 
  * Redistribution and use in source and binary forms, with or without
@@ -37,7 +37,7 @@ using namespace APG;
 el::Logger *PlayPG::PlayPG::logger = nullptr;
 
 PlayPG::PlayPG::PlayPG() :
-		        APG::SDLGame("PlayPG", 1280u, 720u) {
+		        APG::SDLGame("PlayPG", 1280u, 720u, 4, 5) {
 	PlayPG::logger = el::Loggers::getLogger("PlayPG");
 }
 
