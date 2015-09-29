@@ -61,6 +61,5 @@
   <object name="INDOOR_1" type="door" gid="91" x="544" y="592"/>
   <object name="INDOOR2_2" type="door" gid="376" x="848" y="480"/>
   <object name="INDOOR2_1" type="door" gid="375" x="832" y="480"/>
-  <object type="door" x="768" y="448" width="16" height="32"/>
  </objectgroup>
 </map>
