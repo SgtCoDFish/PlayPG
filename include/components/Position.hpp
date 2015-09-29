@@ -30,11 +30,11 @@
 
 #include <glm/glm.hpp>
 
-#include <Ashley/AshleyCore.hpp>
+#include <Ashley/Ashley.hpp>
 
 namespace PlayPG {
 
-class Position : public ashley::Component {
+class Position final : public ashley::Component {
 public:
 	glm::vec2 p;
 

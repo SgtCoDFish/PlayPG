@@ -30,7 +30,7 @@
 
 #include <typeinfo>
 
-#include <Ashley/AshleyCore.hpp>
+#include <Ashley/Ashley.hpp>
 
 #include "components/Renderable.hpp"
 #include "components/Position.hpp"
@@ -42,7 +42,7 @@ class TmxRenderer;
 
 namespace PlayPG {
 
-class RenderSystem : public ashley::IteratingSystem {
+class RenderSystem final : public ashley::IteratingSystem {
 public:
 	APG::SpriteBatch * batch;
 

@@ -28,7 +28,7 @@
 #ifndef INCLUDE_COMPONENTS_TILEDRENDERABLE_HPP_
 #define INCLUDE_COMPONENTS_TILEDRENDERABLE_HPP_
 
-#include <Ashley/AshleyCore.hpp>
+#include <Ashley/Ashley.hpp>
 
 namespace Tmx {
 class TileLayer;
@@ -36,7 +36,7 @@ class TileLayer;
 
 namespace PlayPG {
 
-class TiledRenderable : public ashley::Component {
+class TiledRenderable final : public ashley::Component {
 public:
 	Tmx::TileLayer *layer;
 

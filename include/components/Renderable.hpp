@@ -30,7 +30,7 @@
 
 #include <memory>
 
-#include <Ashley/AshleyCore.hpp>
+#include <Ashley/Ashley.hpp>
 
 namespace APG {
 class SpriteBase;
@@ -38,7 +38,7 @@ class SpriteBase;
 
 namespace PlayPG {
 
-class Renderable : public ashley::Component {
+class Renderable final : public ashley::Component {
 public:
 	APG::SpriteBase * sprite;
 	explicit Renderable(APG::SpriteBase * const spriteToRender) :

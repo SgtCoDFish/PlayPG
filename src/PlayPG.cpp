@@ -27,7 +27,7 @@
 
 #include <utility>
 
-#include <APG/APGeasylogging.hpp>
+#include <APG/APG.hpp>
 
 #include "PlayPG.hpp"
 #include "Map.hpp"
@@ -42,53 +42,24 @@ PlayPG::PlayPG::PlayPG() :
 }
 
 bool PlayPG::PlayPG::init() {
-	camera = std::make_unique<Camera>();
+	camera = std::make_unique<Camera>(screenWidth, screenHeight);
 	camera->setToOrtho(false, screenWidth, screenHeight);
 	batch = std::make_unique<SpriteBatch>();
-
-	indoorTMXMap = std::make_unique<Tmx::Map>();
-	indoorTMXMap->ParseFile("assets/room1.tmx");
-
-	if (indoorTMXMap->HasError()) {
-		logger->fatal("Couldn't load room1.tmx: %v", indoorTMXMap->GetErrorText());
-		return false;
-	}
-
-	indoorMap = std::make_unique<Map>(indoorTMXMap);
-
-	outdoorTMXMap = std::make_unique<Tmx::Map>();
-	outdoorTMXMap->ParseFile("assets/outdoor.tmx");
-
-	if (outdoorTMXMap->HasError()) {
-		logger->fatal("Couldn't load room1.tmx: %v", outdoorTMXMap->GetErrorText());
-		return false;
-	}
-
-	outdoorMap = std::make_unique<Map>(outdoorTMXMap);
-
-	indoorRenderer = std::make_unique<GLTmxRenderer>(indoorTMXMap, batch);
-	outdoorRenderer = std::make_unique<GLTmxRenderer>(outdoorTMXMap, batch);
-
-	currentRenderer = outdoorRenderer.get();
-	currentMap = outdoorMap.get();
+//	indoorTMXMap->ParseFile("assets/room1.tmx");
+//	outdoorTMXMap->ParseFile("assets/outdoor.tmx");
 
 	playerTexture = std::make_unique<Texture>("assets/player.png");
 	playerSprite = std::make_unique<Sprite>(playerTexture);
 
-	const auto &spawnPoint = outdoorMap->getSpawnPoint();
-
 	engine = std::make_unique<ashley::Engine>();
-
-	engine->addSystem<RenderSystem>(batch.get(), currentRenderer/*renderer */, 1000);
 
 	player = engine->addEntity();
 
-	player->add<Position>(spawnPoint.x * outdoorMap->getTileWidth(), spawnPoint.y * outdoorMap->getTileHeight());
+	player->add<Position>();
 	player->add<Renderable>(playerSprite);
 
 	return true;
 }
-
 
 void PlayPG::PlayPG::handleInput() {
 	if (inputManager->isKeyJustPressed(SDL_SCANCODE_W) || inputManager->isKeyJustPressed(SDL_SCANCODE_KP_8)) {
@@ -109,70 +80,15 @@ void PlayPG::PlayPG::handleInput() {
 		doMove(1, 1);
 	} else if (inputManager->isKeyJustPressed(SDL_SCANCODE_SPACE)) {
 		doInteraction();
-	} else if (inputManager->isKeyJustPressed(SDL_SCANCODE_RETURN)) {
-		const auto &positionComponent = ashley::ComponentMapper<Position>::getMapper().get(player);
-
-		if (currentRenderer == outdoorRenderer.get()) {
-			currentRenderer = indoorRenderer.get();
-			currentMap = indoorMap.get();
-
-			const auto &spawnPoint = indoorMap->getSpawnPoint();
-			positionComponent->p.x = spawnPoint.x * indoorMap->getTileWidth();
-			positionComponent->p.y = spawnPoint.y * indoorMap->getTileHeight();
-		} else {
-			currentRenderer = outdoorRenderer.get();
-			currentMap = outdoorMap.get();
-
-			const auto &spawnPoint = outdoorMap->getSpawnPoint();
-			positionComponent->p.x = spawnPoint.x * outdoorMap->getTileWidth();
-			positionComponent->p.y = spawnPoint.y * outdoorMap->getTileHeight();
-		}
 	}
 }
 
 void PlayPG::PlayPG::doMove(int32_t xTiles, int32_t yTiles) {
-	const int tileWidth = currentMap->getTileWidth(), tileHeight = currentMap->getTileHeight();
 
-	const auto &positionComponent = ashley::ComponentMapper<Position>::getMapper().get(player);
-
-	const float xDest = positionComponent->p.x / tileWidth + xTiles;
-	const float yDest = positionComponent->p.y / tileHeight + yTiles;
-
-	const bool solid = currentMap->isSolid(xDest, yDest);
-
-//	logger->info("Moving (%v, %v) -> (%v, %v) (%v blocked).", playerPos.x, playerPos.y, xDest, yDest,
-//	        (solid ? "is" : "not"));
-
-	if (!solid) {
-		positionComponent->p.x = xDest * tileWidth;
-		positionComponent->p.y = yDest * tileHeight;
-	}
 }
 
 void PlayPG::PlayPG::doInteraction() {
-	const auto &positionComponent = ashley::ComponentMapper<Position>::getMapper().get(player);
-	const float xTile = positionComponent->p.x / currentMap->getTileWidth();
-	const float yTile = positionComponent->p.y / currentMap->getTileHeight();
 
-	if (currentMap->isInteresting(xTile - 1, yTile + 0)) {
-		logger->info("Interesting to the west...");
-	} else if (currentMap->isInteresting(xTile - 1, yTile - 1)) {
-		logger->info("Interesting to the north-west...");
-	} else if (currentMap->isInteresting(xTile + 0, yTile - 1)) {
-		logger->info("Interesting to the north...");
-	} else if (currentMap->isInteresting(xTile + 1, yTile - 1)) {
-		logger->info("Interesting to the north-east...");
-	} else if (currentMap->isInteresting(xTile + 1, yTile + 0)) {
-		logger->info("Interesting to the east...");
-	} else if (currentMap->isInteresting(xTile + 1, yTile + 1)) {
-		logger->info("Interesting to the south-east...");
-	} else if (currentMap->isInteresting(xTile + 0, yTile + 1)) {
-		logger->info("Interesting to the south...");
-	} else if (currentMap->isInteresting(xTile - 1, yTile + 1)) {
-		logger->info("Interesting to the south-west...");
-	} else if (currentMap->isInteresting(xTile + 0, yTile + 0)) {
-		logger->info("Interesting right here...");
-	}
 }
 
 void PlayPG::PlayPG::render(float deltaTime) {
@@ -188,8 +104,6 @@ void PlayPG::PlayPG::render(float deltaTime) {
 
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
-
-	currentRenderer->renderAll(deltaTime);
 
 	batch->begin();
 	batch->draw(playerSprite, positionComponent->p.x, positionComponent->p.y);

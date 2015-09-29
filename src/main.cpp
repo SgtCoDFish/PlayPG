@@ -30,7 +30,7 @@
 
 #include <chrono>
 
-#include <APG/APGeasylogging.hpp>
+#include <APG/APG.hpp>
 INITIALIZE_EASYLOGGINGPP
 
 #include "PlayPG.hpp"

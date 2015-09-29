@@ -34,16 +34,14 @@
 
 #include <glm/vec2.hpp>
 
-#include <APG/GLTmxRenderer.hpp>
-#include <APG/SpriteBatch.hpp>
-
+#include <Ashley/Ashley.hpp>
 #include <tmxparser/Tmx.h>
 
-#include <Ashley/AshleyCore.hpp>
+#include <APG/APGGraphics.hpp>
 
 namespace PlayPG {
 
-struct MapTile {
+struct MapTile final {
 	const bool isSolid;
 	const bool isInteresting;
 	const bool isSpawn;
@@ -55,7 +53,7 @@ struct MapTile {
 	}
 };
 
-class Map {
+class Map final {
 public:
 	explicit Map(APG::SpriteBatch * const batch_, std::unique_ptr<Tmx::Map> &&map_);
 	explicit Map(APG::SpriteBatch * const batch_, const std::string &mapFileName);
@@ -80,11 +78,11 @@ public:
 		return map->GetTileHeight();
 	}
 
-	inline const std::vector& getLayerEntities() const {
+	inline const std::vector<ashley::Entity>& getLayerEntities() const {
 		return layerEntities;
 	}
 
-	APG::GLTmxRenderer &getRenderer() const {
+	APG::GLTmxRenderer * getRenderer() const {
 		return renderer.get();
 	}
 

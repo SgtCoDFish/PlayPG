@@ -27,13 +27,13 @@
 
 #include <utility>
 
-#include <Ashley/AshleyCore.hpp>
+#include <glm/glm.hpp>
+
+#include <Ashley/Ashley.hpp>
 
 #include <tmxparser/Tmx.h>
 
-#include <APG/APGeasylogging.hpp>
-
-#include <glm/glm.hpp>
+#include <APG/APG.hpp>
 
 #include "Map.hpp"
 
@@ -55,7 +55,7 @@ const PlayPG::MapTile &PlayPG::Map::getTile(uint32_t x, uint32_t y) const {
 }
 
 void PlayPG::Map::parseMap() {
-	renderer = std::make_unique<APG::GLTmxRenderer>(map, batch);
+	renderer = std::make_unique<APG::GLTmxRenderer>(map.get(), batch);
 	const auto logger = el::Loggers::getLogger("PlayPG");
 
 	const size_t mapArea = map->GetWidth() * map->GetHeight();
@@ -72,15 +72,15 @@ void PlayPG::Map::parseMap() {
 }
 
 void PlayPG::Map::parseLayers(el::Logger * const logger) {
-	Tmx::TileLayer * layer = nullptr;
-
+//	Tmx::TileLayer * layer = nullptr;
+//
 	for(int i = 0; i < map->GetNumTileLayers(); ++i) {
-		layer = map->GetTileLayer(i);
-
-		layerEntities.emplace_back();
-
-		layerEntities.back().add<Position>();
-		layerEntities.back().add<Renderable>(layer);
+//		layer = map->GetTileLayer(i);
+//
+//		layerEntities.emplace_back();
+//
+//		layerEntities.back().add<Position>();
+//		layerEntities.back().add<Renderable>(layer);
 	}
 }
 

@@ -28,18 +28,16 @@
 #ifndef INCLUDE_PLAYPG_HPP_
 #define INCLUDE_PLAYPG_HPP_
 
+#include <vector>
 #include <utility>
 
 #include <tmxparser/Tmx.h>
 
 #include <glm/vec2.hpp>
 
-#include <APG/SDLGame.hpp>
-#include <APG/GLTmxRenderer.hpp>
-#include <APG/Camera.hpp>
-#include <APG/SpriteBatch.hpp>
+#include <APG/APG.hpp>
 
-#include <Ashley/AshleyCore.hpp>
+#include <Ashley/Ashley.hpp>
 
 #include "components/Position.hpp"
 #include "components/Renderable.hpp"
@@ -49,7 +47,8 @@
 #include "Map.hpp"
 
 namespace PlayPG {
-class PlayPG : public APG::SDLGame {
+
+class PlayPG final : public APG::SDLGame {
 public:
 	static el::Logger *logger;
 
@@ -60,17 +59,6 @@ public:
 	void render(float deltaTime) override;
 
 private:
-	std::unique_ptr<Tmx::Map> indoorTMXMap;
-	std::unique_ptr<Map> indoorMap;
-	std::unique_ptr<APG::GLTmxRenderer> indoorRenderer;
-
-	std::unique_ptr<Tmx::Map> outdoorTMXMap;
-	std::unique_ptr<Map> outdoorMap;
-	std::unique_ptr<APG::GLTmxRenderer> outdoorRenderer;
-
-	APG::GLTmxRenderer *currentRenderer = nullptr;
-	Map * currentMap = nullptr;
-
 	std::unique_ptr<APG::Camera> camera;
 	std::unique_ptr<APG::SpriteBatch> batch;
 
