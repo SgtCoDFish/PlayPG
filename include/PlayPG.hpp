@@ -44,6 +44,8 @@
 #include "components/Position.hpp"
 #include "components/Renderable.hpp"
 
+#include "systems/RenderSystem.hpp"
+
 #include "Map.hpp"
 
 namespace PlayPG {

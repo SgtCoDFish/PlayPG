@@ -34,9 +34,12 @@
 
 #include <glm/vec2.hpp>
 
-namespace Tmx {
-class Map;
-}
+#include <APG/GLTmxRenderer.hpp>
+#include <APG/SpriteBatch.hpp>
+
+#include <tmxparser/Tmx.h>
+
+#include <Ashley/AshleyCore.hpp>
 
 namespace PlayPG {
 
@@ -53,23 +56,9 @@ struct MapTile {
 };
 
 class Map {
-private:
-	Tmx::Map * map;
-
-	std::vector<MapTile> tiles;
-	glm::ivec2 spawnPoint;
-
-	inline size_t resolveTileLoc(uint32_t x, uint32_t y) const {
-		return x + map->GetWidth() * y;
-	}
-
-	void parseMap();
-
 public:
-	explicit Map(const std::unique_ptr<Tmx::Map> &map) :
-			        Map(map.get()) {
-	}
-	explicit Map(Tmx::Map * const map);
+	explicit Map(APG::SpriteBatch * const batch_, std::unique_ptr<Tmx::Map> &&map_);
+	explicit Map(APG::SpriteBatch * const batch_, const std::string &mapFileName);
 
 	bool isSolid(uint32_t x, uint32_t y) const {
 		return getTile(x, y).isSolid;
@@ -91,7 +80,33 @@ public:
 		return map->GetTileHeight();
 	}
 
+	inline const std::vector& getLayerEntities() const {
+		return layerEntities;
+	}
+
+	APG::GLTmxRenderer &getRenderer() const {
+		return renderer.get();
+	}
+
 	const MapTile &getTile(uint32_t x, uint32_t y) const;
+
+private:
+	std::unique_ptr<Tmx::Map> map;
+	std::unique_ptr<APG::GLTmxRenderer> renderer;
+
+	APG::SpriteBatch * batch;
+
+	std::vector<ashley::Entity> layerEntities;
+	std::vector<MapTile> tiles;
+	glm::ivec2 spawnPoint;
+
+	inline size_t resolveTileLoc(uint32_t x, uint32_t y) const {
+		return x + map->GetWidth() * y;
+	}
+
+	void parseMap();
+	void parseLayers(el::Logger * const logger);
+	void parseTiles(el::Logger * const logger);
 };
 
 }

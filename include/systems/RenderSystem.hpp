@@ -45,15 +45,12 @@ namespace PlayPG {
 class RenderSystem : public ashley::IteratingSystem {
 public:
 	APG::SpriteBatch * batch;
-	APG::TmxRenderer * tmxRenderer;
 
-	explicit RenderSystem(APG::SpriteBatch * const targetBatch, APG::TmxRenderer * const targetTmxRenderer,
-	        uint64_t priority = 0u) :
+	explicit RenderSystem(APG::SpriteBatch * const targetBatch, uint64_t priority = 0u) :
 			        IteratingSystem(ashley::Family::getFor( { typeid(Renderable), typeid(Position) }), priority),
-			        batch { targetBatch },
-			        tmxRenderer { targetTmxRenderer } {
+			        batch { targetBatch } {
 	}
-	~RenderSystem() = default;
+	virtual ~RenderSystem() = default;
 
 	virtual void processEntity(ashley::Entity * const &entity, float deltaTime) override;
 };

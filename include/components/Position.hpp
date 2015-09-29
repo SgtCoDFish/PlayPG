@@ -38,7 +38,7 @@ class Position : public ashley::Component {
 public:
 	glm::vec2 p;
 
-	explicit Position(float x, float y) :
+	explicit Position(float x = 0.0f, float y = 0.0f) :
 			        p { x, y } {
 	}
 };
