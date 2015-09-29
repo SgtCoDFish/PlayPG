@@ -27,8 +27,6 @@
 
 #include "systems/RenderSystem.hpp"
 
-#include "Mappers.hpp"
-
 void PlayPG::RenderSystem::processEntity(ashley::Entity * const &entity, float deltaTime) {
 
 }

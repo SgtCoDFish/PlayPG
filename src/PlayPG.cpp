@@ -78,12 +78,17 @@ bool PlayPG::PlayPG::init() {
 	const auto &spawnPoint = outdoorMap->getSpawnPoint();
 
 	engine = std::make_unique<ashley::Engine>();
+
+	engine->addSystem<RenderSystem>(batch.get(), currentRenderer/*renderer */, 1000);
+
 	player = engine->addEntity();
 
 	player->add<Position>(spawnPoint.x * outdoorMap->getTileWidth(), spawnPoint.y * outdoorMap->getTileHeight());
+	player->add<Renderable>(playerSprite);
 
 	return true;
 }
+
 
 void PlayPG::PlayPG::handleInput() {
 	if (inputManager->isKeyJustPressed(SDL_SCANCODE_W) || inputManager->isKeyJustPressed(SDL_SCANCODE_KP_8)) {

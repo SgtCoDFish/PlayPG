@@ -41,8 +41,10 @@
 
 #include <Ashley/AshleyCore.hpp>
 
+#include "components/Position.hpp"
+#include "components/Renderable.hpp"
+
 #include "Map.hpp"
-#include "Mappers.hpp"
 
 namespace PlayPG {
 class PlayPG : public APG::SDLGame {

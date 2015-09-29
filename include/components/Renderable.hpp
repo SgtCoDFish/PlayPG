@@ -28,12 +28,26 @@
 #ifndef INCLUDE_COMPONENTS_RENDERABLE_HPP_
 #define INCLUDE_COMPONENTS_RENDERABLE_HPP_
 
+#include <memory>
+
 #include <Ashley/AshleyCore.hpp>
+
+namespace APG {
+class SpriteBase;
+}
 
 namespace PlayPG {
 
 class Renderable : public ashley::Component {
 public:
+	APG::SpriteBase * sprite;
+	explicit Renderable(APG::SpriteBase * const spriteToRender) :
+			        sprite { spriteToRender } {
+	}
+
+	explicit Renderable(const std::unique_ptr<APG::SpriteBase> &spriteToRender) :
+			        Renderable(spriteToRender.get()) {
+	}
 };
 
 }

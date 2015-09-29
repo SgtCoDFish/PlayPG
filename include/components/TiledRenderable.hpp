@@ -25,39 +25,26 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef INCLUDE_SYSTEMS_RENDERSYSTEM_HPP_
-#define INCLUDE_SYSTEMS_RENDERSYSTEM_HPP_
-
-#include <typeinfo>
+#ifndef INCLUDE_COMPONENTS_TILEDRENDERABLE_HPP_
+#define INCLUDE_COMPONENTS_TILEDRENDERABLE_HPP_
 
 #include <Ashley/AshleyCore.hpp>
 
-#include "components/Renderable.hpp"
-#include "components/Position.hpp"
-
-namespace APG {
-class SpriteBatch;
-class TmxRenderer;
+namespace Tmx {
+class TileLayer;
 }
 
 namespace PlayPG {
 
-class RenderSystem : public ashley::IteratingSystem {
+class TiledRenderable : public ashley::Component {
 public:
-	APG::SpriteBatch * batch;
-	APG::TmxRenderer * tmxRenderer;
+	Tmx::TileLayer *layer;
 
-	explicit RenderSystem(APG::SpriteBatch * const targetBatch, APG::TmxRenderer * const targetTmxRenderer,
-	        uint64_t priority = 0u) :
-			        IteratingSystem(ashley::Family::getFor( { typeid(Renderable), typeid(Position) }), priority),
-			        batch { targetBatch },
-			        tmxRenderer { targetTmxRenderer } {
+	explicit TiledRenderable(Tmx::TileLayer * const layerToRender) :
+			        layer { layerToRender } {
 	}
-	~RenderSystem() = default;
-
-	virtual void processEntity(ashley::Entity * const &entity, float deltaTime) override;
 };
 
 }
 
-#endif /* INCLUDE_SYSTEMS_RENDERSYSTEM_HPP_ */
+#endif /* INCLUDE_COMPONENTS_TILEDRENDERABLE_HPP_ */
