@@ -35,27 +35,23 @@
 
 #include <APG/APG.hpp>
 
+#include "components/Position.hpp"
+#include "components/Renderable.hpp"
 #include "Map.hpp"
 
-PlayPG::Map::Map(APG::SpriteBatch * const batch_, std::unique_ptr<Tmx::Map> &&map_) :
-		        map { std::move(map_) },
-		        batch { batch_ } {
+namespace PlayPG {
+
+Map::Map(APG::GLTmxRenderer * const renderer_) :
+		        renderer { renderer_ },
+		        map { renderer->getMap() } {
 	parseMap();
 }
 
-PlayPG::Map::Map(APG::SpriteBatch * const batch_, const std::string &mapFileName) :
-		        map { std::make_unique<Tmx::Map>() },
-		        batch { batch_ } {
-	map->ParseFile(mapFileName);
-	parseMap();
-}
-
-const PlayPG::MapTile &PlayPG::Map::getTile(uint32_t x, uint32_t y) const {
+const MapTile &Map::getTile(uint32_t x, uint32_t y) const {
 	return tiles[resolveTileLoc(x, y)];
 }
 
-void PlayPG::Map::parseMap() {
-	renderer = std::make_unique<APG::GLTmxRenderer>(map.get(), batch);
+void Map::parseMap() {
 	const auto logger = el::Loggers::getLogger("PlayPG");
 
 	const size_t mapArea = map->GetWidth() * map->GetHeight();
@@ -71,20 +67,11 @@ void PlayPG::Map::parseMap() {
 	}
 }
 
-void PlayPG::Map::parseLayers(el::Logger * const logger) {
-//	Tmx::TileLayer * layer = nullptr;
-//
-	for(int i = 0; i < map->GetNumTileLayers(); ++i) {
-//		layer = map->GetTileLayer(i);
-//
-//		layerEntities.emplace_back();
-//
-//		layerEntities.back().add<Position>();
-//		layerEntities.back().add<Renderable>(layer);
-	}
+void Map::parseLayers(el::Logger * const logger) {
+
 }
 
-void PlayPG::Map::parseTiles(el::Logger * const logger) {
+void Map::parseTiles(el::Logger * const logger) {
 	for (int y = 0; y < map->GetHeight(); ++y) {
 		for (int x = 0; x < map->GetWidth(); ++x) {
 			bool solid = false, interesting = false, spawn = false;
@@ -123,4 +110,25 @@ void PlayPG::Map::parseTiles(el::Logger * const logger) {
 			tiles.emplace_back(solid, interesting, spawn);
 		}
 	}
+}
+
+std::vector<std::unique_ptr<ashley::Entity>> Map::generateLayerEntities() const {
+	std::vector<std::unique_ptr<ashley::Entity>> layerEntities;
+
+	for (int i = 0; i < map->GetNumTileLayers(); ++i) {
+		const auto layer = map->GetTileLayer(i);
+
+		if(!layer->IsVisible()) {
+			continue;
+		}
+
+		layerEntities.emplace_back(std::make_unique<ashley::Entity>());
+
+		layerEntities.back()->add<Position>();
+		layerEntities.back()->add<Renderable>(renderer, i);
+	}
+
+	return layerEntities;
+}
+
 }

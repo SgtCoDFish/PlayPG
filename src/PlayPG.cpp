@@ -49,6 +49,7 @@ bool PlayPG::init() {
 	batch = std::make_unique<SpriteBatch>();
 
 	tmxRenderer = std::make_unique<GLTmxRenderer>("assets/outdoor.tmx", batch.get());
+	map = std::make_unique<Map>(tmxRenderer.get());
 //	indoorTMXMap->ParseFile("assets/room1.tmx");
 
 	playerTexture = std::make_unique<Texture>("assets/player.png");
@@ -57,10 +58,14 @@ bool PlayPG::init() {
 	engine = std::make_unique<ashley::Engine>();
 	engine->addSystem<RenderSystem>(batch.get(), 10000);
 
-	layer = engine->addEntity();
+	{
+		auto layerEntities = map->generateLayerEntities();
+		logger->info("Generated %v layer entities.", layerEntities.size());
 
-	layer->add<Position>();
-	layer->add<Renderable>(tmxRenderer.get(), 0u);
+		for(auto &ent : layerEntities) {
+			engine->addEntity(std::move(ent));
+		}
+	}
 
 	player = engine->addEntity();
 
@@ -108,7 +113,6 @@ void PlayPG::render(float deltaTime) {
 	camera->position.y = positionComponent->p.y - screenHeight / 2.0f;
 
 	camera->update();
-
 	batch->setProjectionMatrix(camera->combinedMatrix);
 
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);

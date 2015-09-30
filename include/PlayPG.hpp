@@ -62,6 +62,8 @@ private:
 	std::unique_ptr<APG::Camera> camera;
 	std::unique_ptr<APG::SpriteBatch> batch;
 
+	std::unique_ptr<Map> map;
+
 	std::unique_ptr<APG::Texture> playerTexture;
 	std::unique_ptr<APG::Sprite> playerSprite;
 
@@ -70,8 +72,6 @@ private:
 	std::unique_ptr<ashley::Engine> engine;
 
 	ashley::Entity *player = nullptr;
-	ashley::Entity *layer = nullptr;
-
 	void handleInput();
 	void doMove(int32_t xTiles, int32_t yTiles);
 	void doInteraction();

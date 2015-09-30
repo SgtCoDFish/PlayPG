@@ -55,8 +55,7 @@ struct MapTile final {
 
 class Map final {
 public:
-	explicit Map(APG::SpriteBatch * const batch_, std::unique_ptr<Tmx::Map> &&map_);
-	explicit Map(APG::SpriteBatch * const batch_, const std::string &mapFileName);
+	explicit Map(APG::GLTmxRenderer * renderer);
 
 	bool isSolid(uint32_t x, uint32_t y) const {
 		return getTile(x, y).isSolid;
@@ -78,23 +77,19 @@ public:
 		return map->GetTileHeight();
 	}
 
-	inline const std::vector<ashley::Entity>& getLayerEntities() const {
-		return layerEntities;
-	}
+	std::vector<std::unique_ptr<ashley::Entity>> generateLayerEntities() const;
 
 	APG::GLTmxRenderer * getRenderer() const {
-		return renderer.get();
+		return renderer;
 	}
 
 	const MapTile &getTile(uint32_t x, uint32_t y) const;
 
 private:
-	std::unique_ptr<Tmx::Map> map;
-	std::unique_ptr<APG::GLTmxRenderer> renderer;
+	APG::GLTmxRenderer *renderer;
 
-	APG::SpriteBatch * batch;
+	const Tmx::Map * map;
 
-	std::vector<ashley::Entity> layerEntities;
 	std::vector<MapTile> tiles;
 	glm::ivec2 spawnPoint;
 
