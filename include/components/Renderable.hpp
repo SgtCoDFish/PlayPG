@@ -34,20 +34,31 @@
 
 namespace APG {
 class SpriteBase;
+class Sprite;
+class AnimatedSprite;
+class TmxRenderer;
 }
 
 namespace PlayPG {
 
+enum class RenderableType {
+	TILED, SPRITE, ANIMATION
+};
+
 class Renderable final : public ashley::Component {
 public:
-	APG::SpriteBase * sprite;
-	explicit Renderable(APG::SpriteBase * const spriteToRender) :
-			        sprite { spriteToRender } {
-	}
+	explicit Renderable(APG::Sprite * const spriteToRender);
+	explicit Renderable(APG::AnimatedSprite * const animSprite);
+	explicit Renderable(APG::TmxRenderer * const renderer, unsigned int layerIndex);
+	~Renderable() = default;
 
-	explicit Renderable(const std::unique_ptr<APG::SpriteBase> &spriteToRender) :
-			        Renderable(spriteToRender.get()) {
-	}
+	RenderableType type;
+
+	APG::SpriteBase * sprite = nullptr;
+	APG::TmxRenderer * tmxRenderer = nullptr;
+	unsigned int layerIndex = 0;
+
+private:
 };
 
 }

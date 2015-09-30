@@ -44,15 +44,20 @@ namespace PlayPG {
 
 class RenderSystem final : public ashley::IteratingSystem {
 public:
-	APG::SpriteBatch * batch;
-
 	explicit RenderSystem(APG::SpriteBatch * const targetBatch, uint64_t priority = 0u) :
 			        IteratingSystem(ashley::Family::getFor( { typeid(Renderable), typeid(Position) }), priority),
 			        batch { targetBatch } {
 	}
 	virtual ~RenderSystem() = default;
 
+	virtual void update(float deltaTime) override;
 	virtual void processEntity(ashley::Entity * const &entity, float deltaTime) override;
+
+	APG::SpriteBatch * batch;
+
+private:
+	void drawSpriteBase(Position * const position, Renderable * const renderable);
+	void drawTiled(Position * const position, Renderable * const renderable);
 };
 
 }

@@ -25,26 +25,28 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef INCLUDE_COMPONENTS_TILEDRENDERABLE_HPP_
-#define INCLUDE_COMPONENTS_TILEDRENDERABLE_HPP_
+#include <APG/APG.hpp>
 
-#include <Ashley/Ashley.hpp>
-
-namespace Tmx {
-class TileLayer;
-}
+#include "components/Renderable.hpp"
 
 namespace PlayPG {
 
-class TiledRenderable final : public ashley::Component {
-public:
-	Tmx::TileLayer *layer;
+Renderable::Renderable(APG::Sprite * const spriteToRender) :
+		        type { RenderableType::SPRITE },
+		        sprite { spriteToRender } {
+}
 
-	explicit TiledRenderable(Tmx::TileLayer * const layerToRender) :
-			        layer { layerToRender } {
-	}
-};
+Renderable::Renderable(APG::AnimatedSprite * const animSprite) :
+		        type { RenderableType::ANIMATION },
+		        sprite { animSprite } {
 
 }
 
-#endif /* INCLUDE_COMPONENTS_TILEDRENDERABLE_HPP_ */
+Renderable::Renderable(APG::TmxRenderer * const renderer, unsigned int layerIndex) :
+		        type { RenderableType::TILED },
+		        tmxRenderer { renderer },
+		        layerIndex { layerIndex } {
+
+}
+
+}

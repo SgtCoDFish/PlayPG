@@ -25,8 +25,56 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <Ashley/Ashley.hpp>
+
+#include <APG/APG.hpp>
+
+#include "components/Renderable.hpp"
+#include "components/Position.hpp"
 #include "systems/RenderSystem.hpp"
 
-void PlayPG::RenderSystem::processEntity(ashley::Entity * const &entity, float deltaTime) {
+namespace PlayPG {
+
+void RenderSystem::processEntity(ashley::Entity * const &entity, float deltaTime) {
+	const auto positionMapper = ashley::ComponentMapper<Position>::getMapper();
+	const auto renderableMapper = ashley::ComponentMapper<Renderable>::getMapper();
+
+	const auto position = positionMapper.get(entity);
+	const auto renderable = renderableMapper.get(entity);
+
+	switch(renderable->type) {
+	case RenderableType::ANIMATION: {
+		static_cast<APG::AnimatedSprite*>(renderable->sprite)->update(deltaTime);
+		drawSpriteBase(position, renderable);
+		break;
+	}
+
+	case RenderableType::SPRITE: {
+		drawSpriteBase(position, renderable);
+		break;
+	}
+
+	case RenderableType::TILED: {
+		drawTiled(position, renderable);
+	}
+	}
+}
+
+void RenderSystem::update(float deltaTime) {
+	batch->begin();
+
+	IteratingSystem::update(deltaTime);
+
+	batch->end();
+}
+
+void RenderSystem::drawSpriteBase(Position * const position, Renderable * const renderable) {
+	batch->draw(renderable->sprite, position->p.x, position->p.y);
+}
+
+void RenderSystem::drawTiled(Position * const position, Renderable * const renderable) {
+	const auto layer = renderable->tmxRenderer->getMap()->GetTileLayer(renderable->layerIndex);
+	renderable->tmxRenderer->renderLayer(layer);
+}
 
 }

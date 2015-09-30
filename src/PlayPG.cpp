@@ -34,34 +34,43 @@
 
 using namespace APG;
 
-el::Logger *PlayPG::PlayPG::logger = nullptr;
+namespace PlayPG {
 
-PlayPG::PlayPG::PlayPG() :
+el::Logger *PlayPG::logger = nullptr;
+
+PlayPG::PlayPG() :
 		        APG::SDLGame("PlayPG", 1280u, 720u, 4, 5) {
 	PlayPG::logger = el::Loggers::getLogger("PlayPG");
 }
 
-bool PlayPG::PlayPG::init() {
+bool PlayPG::init() {
 	camera = std::make_unique<Camera>(screenWidth, screenHeight);
 	camera->setToOrtho(false, screenWidth, screenHeight);
 	batch = std::make_unique<SpriteBatch>();
+
+	tmxRenderer = std::make_unique<GLTmxRenderer>("assets/outdoor.tmx", batch.get());
 //	indoorTMXMap->ParseFile("assets/room1.tmx");
-//	outdoorTMXMap->ParseFile("assets/outdoor.tmx");
 
 	playerTexture = std::make_unique<Texture>("assets/player.png");
 	playerSprite = std::make_unique<Sprite>(playerTexture);
 
 	engine = std::make_unique<ashley::Engine>();
+	engine->addSystem<RenderSystem>(batch.get(), 10000);
+
+	layer = engine->addEntity();
+
+	layer->add<Position>();
+	layer->add<Renderable>(tmxRenderer.get(), 0u);
 
 	player = engine->addEntity();
 
-	player->add<Position>();
-	player->add<Renderable>(playerSprite);
+	player->add<Position>(32, 32);
+	player->add<Renderable>(playerSprite.get());
 
 	return true;
 }
 
-void PlayPG::PlayPG::handleInput() {
+void PlayPG::handleInput() {
 	if (inputManager->isKeyJustPressed(SDL_SCANCODE_W) || inputManager->isKeyJustPressed(SDL_SCANCODE_KP_8)) {
 		doMove(0, -1);
 	} else if (inputManager->isKeyJustPressed(SDL_SCANCODE_A) || inputManager->isKeyJustPressed(SDL_SCANCODE_KP_4)) {
@@ -83,15 +92,15 @@ void PlayPG::PlayPG::handleInput() {
 	}
 }
 
-void PlayPG::PlayPG::doMove(int32_t xTiles, int32_t yTiles) {
+void PlayPG::doMove(int32_t xTiles, int32_t yTiles) {
 
 }
 
-void PlayPG::PlayPG::doInteraction() {
+void PlayPG::doInteraction() {
 
 }
 
-void PlayPG::PlayPG::render(float deltaTime) {
+void PlayPG::render(float deltaTime) {
 	handleInput();
 
 	const auto &positionComponent = ashley::ComponentMapper<Position>::getMapper().get(player);
@@ -105,9 +114,9 @@ void PlayPG::PlayPG::render(float deltaTime) {
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	batch->begin();
-	batch->draw(playerSprite, positionComponent->p.x, positionComponent->p.y);
-	batch->end();
+	engine->update(deltaTime);
 
 	SDL_GL_SwapWindow(window.get());
+}
+
 }
