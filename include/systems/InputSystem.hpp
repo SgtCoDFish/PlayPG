@@ -25,55 +25,35 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef INCLUDE_PLAYPG_HPP_
-#define INCLUDE_PLAYPG_HPP_
-
-#include <vector>
-#include <utility>
-
-#include <tmxparser/Tmx.h>
-
-#include <glm/vec2.hpp>
-
-#include <APG/APG.hpp>
+#ifndef INCLUDE_SYSTEMS_INPUTSYSTEM_HPP_
+#define INCLUDE_SYSTEMS_INPUTSYSTEM_HPP_
 
 #include <Ashley/Ashley.hpp>
 
-#include "Map.hpp"
+#include "components/KeyboardInputListener.hpp"
+#include "components/NetworkInputListener.hpp"
+#include "components/Position.hpp"
 
-namespace ashley {
-class Entity;
+namespace APG {
+class InputManager;
 }
 
 namespace PlayPG {
 
-class PlayPG final : public APG::SDLGame {
+class InputSystem : public ashley::IteratingSystem {
 public:
-	static el::Logger *logger;
+	explicit InputSystem(APG::InputManager * const inputManager, int64_t priority);
+	virtual ~InputSystem() = default;
 
-	explicit PlayPG();
-	virtual ~PlayPG() = default;
+	virtual void processEntity(ashley::Entity * const &entity, float deltaTime) override;
 
-	bool init() override;
-	void render(float deltaTime) override;
+	APG::InputManager * inputManager;
 
 private:
-	std::unique_ptr<APG::Camera> camera;
-	std::unique_ptr<APG::SpriteBatch> batch;
-
-	std::unique_ptr<Map> map;
-
-	std::unique_ptr<APG::Texture> playerTexture;
-	std::unique_ptr<APG::Sprite> playerSprite;
-
-	std::unique_ptr<APG::GLTmxRenderer> tmxRenderer;
-
-	std::unique_ptr<ashley::Engine> engine;
-
-	ashley::Entity *player = nullptr;
-	void doInteraction();
+	void doMove(ashley::Entity * const &entity, float deltaTime, int32_t xTiles, int32_t yTiles);
+	void doInteraction(ashley::Entity * const &entity, float deltaTime);
 };
 
 }
 
-#endif /* INCLUDE_PLAYPG_HPP_ */
+#endif /* INCLUDE_SYSTEMS_INPUTSYSTEM_HPP_ */

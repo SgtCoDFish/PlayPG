@@ -25,64 +25,33 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <typeinfo>
+
 #include <Ashley/Ashley.hpp>
 
-#include <APG/APG.hpp>
+#include <APG/APGCore.hpp>
+#include <APG/APGGraphics.hpp>
 
-#include "components/Renderable.hpp"
 #include "components/Position.hpp"
-#include "systems/RenderSystem.hpp"
+#include "components/FocalPoint.hpp"
+
+#include "systems/CameraFocusSystem.hpp"
 
 namespace PlayPG {
 
-RenderSystem::RenderSystem(APG::SpriteBatch * const targetBatch, APG::Camera * const camera_, uint64_t priority) :
-		        IteratingSystem(ashley::Family::getFor( { typeid(Renderable), typeid(Position) }), priority),
-		        batch { targetBatch },
+CameraFocusSystem::CameraFocusSystem(APG::Camera * const camera_, int64_t priority_) :
+		        IteratingSystem(ashley::Family::getFor( { typeid(Position), typeid(FocalPoint) }), priority_),
 		        camera { camera_ } {
+
 }
 
-void RenderSystem::processEntity(ashley::Entity * const &entity, float deltaTime) {
-	const auto positionMapper = ashley::ComponentMapper<Position>::getMapper();
-	const auto renderableMapper = ashley::ComponentMapper<Renderable>::getMapper();
+void CameraFocusSystem::processEntity(ashley::Entity * const &entity, float deltaTime) {
+	const auto &position = ashley::ComponentMapper<Position>::getMapper().get(entity)->p;
 
-	const auto position = positionMapper.get(entity);
-	const auto renderable = renderableMapper.get(entity);
+	camera->position.x = position.x - APG::Game::screenWidth / 2.0f;
+	camera->position.y = position.y - APG::Game::screenHeight / 2.0f;
 
-	switch (renderable->type) {
-	case RenderableType::ANIMATION: {
-		static_cast<APG::AnimatedSprite*>(renderable->sprite)->update(deltaTime);
-		drawSpriteBase(position, renderable);
-		break;
-	}
-
-	case RenderableType::SPRITE: {
-		drawSpriteBase(position, renderable);
-		break;
-	}
-
-	case RenderableType::TILED: {
-		drawTiled(position, renderable);
-	}
-	}
-}
-
-void RenderSystem::update(float deltaTime) {
-	batch->setProjectionMatrix(camera->combinedMatrix);
-
-	batch->begin();
-
-	IteratingSystem::update(deltaTime);
-
-	batch->end();
-}
-
-void RenderSystem::drawSpriteBase(Position * const position, Renderable * const renderable) {
-	batch->draw(renderable->sprite, position->p.x, position->p.y);
-}
-
-void RenderSystem::drawTiled(Position * const position, Renderable * const renderable) {
-	const auto layer = renderable->tmxRenderer->getMap()->GetTileLayer(renderable->layerIndex);
-	renderable->tmxRenderer->renderLayer(layer);
+	camera->update();
 }
 
 }

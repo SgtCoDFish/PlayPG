@@ -25,55 +25,11 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef INCLUDE_PLAYPG_HPP_
-#define INCLUDE_PLAYPG_HPP_
+#ifndef INCLUDE_1002_SYSTEMS_HPP_
+#define INCLUDE_1002_SYSTEMS_HPP_
 
-#include <vector>
-#include <utility>
+#include "systems/CameraFocusSystem.hpp"
+#include "systems/InputSystem.hpp"
+#include "systems/RenderSystem.hpp"
 
-#include <tmxparser/Tmx.h>
-
-#include <glm/vec2.hpp>
-
-#include <APG/APG.hpp>
-
-#include <Ashley/Ashley.hpp>
-
-#include "Map.hpp"
-
-namespace ashley {
-class Entity;
-}
-
-namespace PlayPG {
-
-class PlayPG final : public APG::SDLGame {
-public:
-	static el::Logger *logger;
-
-	explicit PlayPG();
-	virtual ~PlayPG() = default;
-
-	bool init() override;
-	void render(float deltaTime) override;
-
-private:
-	std::unique_ptr<APG::Camera> camera;
-	std::unique_ptr<APG::SpriteBatch> batch;
-
-	std::unique_ptr<Map> map;
-
-	std::unique_ptr<APG::Texture> playerTexture;
-	std::unique_ptr<APG::Sprite> playerSprite;
-
-	std::unique_ptr<APG::GLTmxRenderer> tmxRenderer;
-
-	std::unique_ptr<ashley::Engine> engine;
-
-	ashley::Entity *player = nullptr;
-	void doInteraction();
-};
-
-}
-
-#endif /* INCLUDE_PLAYPG_HPP_ */
+#endif /* INCLUDE_SYSTEMS_HPP_ */

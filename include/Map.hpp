@@ -61,8 +61,16 @@ public:
 		return getTile(x, y).isSolid;
 	}
 
+	bool isSolid(const glm::ivec2 &pos) {
+		return getTile(pos.x, pos.y).isSolid;
+	}
+
 	bool isInteresting(uint32_t x, uint32_t y) const {
 		return getTile(x, y).isInteresting;
+	}
+
+	bool isInteresting(const glm::ivec2 &pos) {
+		return getTile(pos.x, pos.y).isInteresting;
 	}
 
 	const glm::ivec2 &getSpawnPoint() const {
@@ -77,7 +85,8 @@ public:
 		return map->GetTileHeight();
 	}
 
-	std::vector<std::unique_ptr<ashley::Entity>> generateLayerEntities() const;
+	std::vector<std::unique_ptr<ashley::Entity>> generateFrontLayerEntities() const;
+	std::vector<std::unique_ptr<ashley::Entity>> generateBackLayerEntities() const;
 
 	APG::GLTmxRenderer * getRenderer() const {
 		return renderer;

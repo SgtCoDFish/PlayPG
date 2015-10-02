@@ -27,7 +27,12 @@
 
 #include <utility>
 
+#include <Ashley/Ashley.hpp>
+
 #include <APG/APG.hpp>
+
+#include "Components.hpp"
+#include "Systems.hpp"
 
 #include "PlayPG.hpp"
 #include "Map.hpp"
@@ -56,49 +61,37 @@ bool PlayPG::init() {
 	playerSprite = std::make_unique<Sprite>(playerTexture);
 
 	engine = std::make_unique<ashley::Engine>();
-	engine->addSystem<RenderSystem>(batch.get(), 10000);
+	engine->addSystem<InputSystem>(inputManager.get(), 5000);
+	engine->addSystem<CameraFocusSystem>(camera.get(), 7500);
+	engine->addSystem<RenderSystem>(batch.get(), camera.get(), 10000);
 
 	{
-		auto layerEntities = map->generateLayerEntities();
-		logger->info("Generated %v layer entities.", layerEntities.size());
+		auto frontLayerEntities = map->generateFrontLayerEntities();
+		logger->info("Generated %v front layer entities.", frontLayerEntities.size());
 
-		for(auto &ent : layerEntities) {
+		for(auto &ent : frontLayerEntities) {
 			engine->addEntity(std::move(ent));
 		}
 	}
 
 	player = engine->addEntity();
 
-	player->add<Position>(32, 32);
+	const auto spawnPoint = map->getSpawnPoint() * glm::ivec2(map->getTileWidth(), map->getTileHeight());
+	player->add<Position>(spawnPoint.x, spawnPoint.y);
 	player->add<Renderable>(playerSprite.get());
+	player->add<KeyboardInputListener>();
+	player->add<FocalPoint>();
+
+	{
+		auto backLayerEntities = map->generateBackLayerEntities();
+		logger->info("Generated %v back layer entities.", backLayerEntities.size());
+
+		for(auto &ent : backLayerEntities) {
+			engine->addEntity(std::move(ent));
+		}
+	}
 
 	return true;
-}
-
-void PlayPG::handleInput() {
-	if (inputManager->isKeyJustPressed(SDL_SCANCODE_W) || inputManager->isKeyJustPressed(SDL_SCANCODE_KP_8)) {
-		doMove(0, -1);
-	} else if (inputManager->isKeyJustPressed(SDL_SCANCODE_A) || inputManager->isKeyJustPressed(SDL_SCANCODE_KP_4)) {
-		doMove(-1, 0);
-	} else if (inputManager->isKeyJustPressed(SDL_SCANCODE_S) || inputManager->isKeyJustPressed(SDL_SCANCODE_KP_2)) {
-		doMove(0, 1);
-	} else if (inputManager->isKeyJustPressed(SDL_SCANCODE_D) || inputManager->isKeyJustPressed(SDL_SCANCODE_KP_6)) {
-		doMove(1, 0);
-	} else if (inputManager->isKeyJustPressed(SDL_SCANCODE_KP_7)) {
-		doMove(-1, -1);
-	} else if (inputManager->isKeyJustPressed(SDL_SCANCODE_KP_9)) {
-		doMove(1, -1);
-	} else if (inputManager->isKeyJustPressed(SDL_SCANCODE_KP_1)) {
-		doMove(-1, 1);
-	} else if (inputManager->isKeyJustPressed(SDL_SCANCODE_KP_3)) {
-		doMove(1, 1);
-	} else if (inputManager->isKeyJustPressed(SDL_SCANCODE_SPACE)) {
-		doInteraction();
-	}
-}
-
-void PlayPG::doMove(int32_t xTiles, int32_t yTiles) {
-
 }
 
 void PlayPG::doInteraction() {
@@ -106,17 +99,12 @@ void PlayPG::doInteraction() {
 }
 
 void PlayPG::render(float deltaTime) {
-	handleInput();
-
-	const auto &positionComponent = ashley::ComponentMapper<Position>::getMapper().get(player);
-	camera->position.x = positionComponent->p.x - screenWidth / 2.0f;
-	camera->position.y = positionComponent->p.y - screenHeight / 2.0f;
-
-	camera->update();
 	batch->setProjectionMatrix(camera->combinedMatrix);
 
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
+
+	tmxRenderer->update(deltaTime);
 
 	engine->update(deltaTime);
 

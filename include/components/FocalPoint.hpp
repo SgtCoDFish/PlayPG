@@ -25,55 +25,19 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef INCLUDE_PLAYPG_HPP_
-#define INCLUDE_PLAYPG_HPP_
-
-#include <vector>
-#include <utility>
-
-#include <tmxparser/Tmx.h>
-
-#include <glm/vec2.hpp>
-
-#include <APG/APG.hpp>
+#ifndef INCLUDE_COMPONENTS_FOCALPOINT_HPP_
+#define INCLUDE_COMPONENTS_FOCALPOINT_HPP_
 
 #include <Ashley/Ashley.hpp>
 
-#include "Map.hpp"
-
-namespace ashley {
-class Entity;
-}
-
 namespace PlayPG {
 
-class PlayPG final : public APG::SDLGame {
+class FocalPoint : public ashley::Component {
 public:
-	static el::Logger *logger;
-
-	explicit PlayPG();
-	virtual ~PlayPG() = default;
-
-	bool init() override;
-	void render(float deltaTime) override;
-
-private:
-	std::unique_ptr<APG::Camera> camera;
-	std::unique_ptr<APG::SpriteBatch> batch;
-
-	std::unique_ptr<Map> map;
-
-	std::unique_ptr<APG::Texture> playerTexture;
-	std::unique_ptr<APG::Sprite> playerSprite;
-
-	std::unique_ptr<APG::GLTmxRenderer> tmxRenderer;
-
-	std::unique_ptr<ashley::Engine> engine;
-
-	ashley::Entity *player = nullptr;
-	void doInteraction();
+	explicit FocalPoint() {}
+	~FocalPoint() = default;
 };
 
 }
 
-#endif /* INCLUDE_PLAYPG_HPP_ */
+#endif /* INCLUDE_COMPONENTS_FOCALPOINT_HPP_ */

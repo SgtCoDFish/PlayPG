@@ -38,22 +38,21 @@
 namespace APG {
 class SpriteBatch;
 class TmxRenderer;
+class Camera;
 }
 
 namespace PlayPG {
 
 class RenderSystem final : public ashley::IteratingSystem {
 public:
-	explicit RenderSystem(APG::SpriteBatch * const targetBatch, uint64_t priority = 0u) :
-			        IteratingSystem(ashley::Family::getFor( { typeid(Renderable), typeid(Position) }), priority),
-			        batch { targetBatch } {
-	}
+	explicit RenderSystem(APG::SpriteBatch * const targetBatch, APG::Camera * const camera_, uint64_t priority);
 	virtual ~RenderSystem() = default;
 
 	virtual void update(float deltaTime) override;
 	virtual void processEntity(ashley::Entity * const &entity, float deltaTime) override;
 
 	APG::SpriteBatch * batch;
+	APG::Camera * camera;
 
 private:
 	void drawSpriteBase(Position * const position, Renderable * const renderable);
