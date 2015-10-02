@@ -145,9 +145,9 @@ std::vector<std::unique_ptr<ashley::Entity>> Map::generateBackLayerEntities() co
 		}
 
 		if (spawnFound) {
-//			if (!layer->IsVisible()) {
-//				continue;
-//			}
+			if (!layer->IsVisible()) {
+				continue;
+			}
 
 			layerEntities.emplace_back(std::make_unique<ashley::Entity>());
 

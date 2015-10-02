@@ -61,17 +61,20 @@ private:
 	std::unique_ptr<APG::Camera> camera;
 	std::unique_ptr<APG::SpriteBatch> batch;
 
-	std::unique_ptr<Map> map;
+	std::unique_ptr<Map> mapOutdoor;
+	std::unique_ptr<Map> mapIndoor;
+	bool indoor = false;
 
 	std::unique_ptr<APG::Texture> playerTexture;
 	std::unique_ptr<APG::Sprite> playerSprite;
 
-	std::unique_ptr<APG::GLTmxRenderer> tmxRenderer;
+	std::unique_ptr<APG::GLTmxRenderer> outdoorRenderer;
+	std::unique_ptr<APG::GLTmxRenderer> indoorRenderer;
 
 	std::unique_ptr<ashley::Engine> engine;
 
 	ashley::Entity *player = nullptr;
-	void doInteraction();
+	void changeToWorld(const std::unique_ptr<Map> &renderer);
 };
 
 }

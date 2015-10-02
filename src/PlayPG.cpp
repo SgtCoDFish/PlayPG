@@ -53,9 +53,11 @@ bool PlayPG::init() {
 	camera->setToOrtho(false, screenWidth, screenHeight);
 	batch = std::make_unique<SpriteBatch>();
 
-	tmxRenderer = std::make_unique<GLTmxRenderer>("assets/outdoor.tmx", batch.get());
-	map = std::make_unique<Map>(tmxRenderer.get());
-//	indoorTMXMap->ParseFile("assets/room1.tmx");
+	outdoorRenderer = std::make_unique<GLTmxRenderer>("assets/outdoor.tmx", batch.get());
+	mapOutdoor = std::make_unique<Map>(outdoorRenderer.get());
+
+	indoorRenderer = std::make_unique<GLTmxRenderer>("assets/room1.tmx", batch.get());
+	mapIndoor = std::make_unique<Map>(indoorRenderer.get());
 
 	playerTexture = std::make_unique<Texture>("assets/player.png");
 	playerSprite = std::make_unique<Sprite>(playerTexture);
@@ -64,6 +66,14 @@ bool PlayPG::init() {
 	engine->addSystem<InputSystem>(inputManager.get(), 5000);
 	engine->addSystem<CameraFocusSystem>(camera.get(), 7500);
 	engine->addSystem<RenderSystem>(batch.get(), camera.get(), 10000);
+
+	changeToWorld(mapOutdoor);
+
+	return true;
+}
+
+void PlayPG::changeToWorld(const std::unique_ptr<Map> &map) {
+	engine->removeAllEntities();
 
 	{
 		auto frontLayerEntities = map->generateFrontLayerEntities();
@@ -90,21 +100,23 @@ bool PlayPG::init() {
 			engine->addEntity(std::move(ent));
 		}
 	}
-
-	return true;
-}
-
-void PlayPG::doInteraction() {
-
 }
 
 void PlayPG::render(float deltaTime) {
-	batch->setProjectionMatrix(camera->combinedMatrix);
+	if(inputManager->isKeyJustPressed(SDL_SCANCODE_RETURN)) {
+		if(indoor) {
+			indoor = false;
+			changeToWorld(mapOutdoor);
+		} else {
+			indoor = true;
+			changeToWorld(mapIndoor);
+		}
+	}
 
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	tmxRenderer->update(deltaTime);
+	outdoorRenderer->update(deltaTime);
 
 	engine->update(deltaTime);
 

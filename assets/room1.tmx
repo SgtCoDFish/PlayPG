@@ -21,11 +21,6 @@
    eJzt17sNwjAUBVCLzAriswBMwyAI5mCRkBZSWCDEc4IFgeIcyVJSvObd4topAQAA/N5xltKhcE6z9+eiGYa1t92tm/hcgp13hblWHtX63c2b+KyCnW8KM/Ko1+9ul+KzCHa+bOIZedQbymNbOPL4PHn8l6iv8z2plEd0x+rkUS339T7duzp/twN55LvZ82zf9dTJfX1O967O32PyeDW7lMdXjMmD6cjjv5S6Xm9PL3qbP77RmU7u+t7j2zz/620AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADGuAIj5oRg
   </data>
  </layer>
- <layer name="__playerSpawn" width="100" height="100" visible="0" opacity="0">
-  <data encoding="base64" compression="zlib">
-   eJztzjENAAAIA7Dh3zQiRsLTKmgCAAAAAAAAAFyZ7wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABQWxkHAAI=
-  </data>
- </layer>
  <layer name="Carpet" width="100" height="100">
   <data encoding="base64" compression="zlib">
    eJzt1LEJgEAMBdCgtuperuUY6lbqPFpee6Cccu/B71J8EkgEAAAAAAA1WtqINcnWlm5Ut/3e/5HkdI+i+i5iSDJ2pRvVZWrenSfPnLnf3Hn4M//qW/wrAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAnnQBNkwK8g==
@@ -37,6 +32,11 @@
   </properties>
   <data encoding="base64" compression="zlib">
    eJzt1MEJwjAYBtBUlxBBwS10Ex3Boyt4VHADwZNrKAgKbuDZRQy0QsGWViyU4nvw8UETwk8gDQEAAAA+TZMQ9rHvIe2Q6yrPJO1FzLzxyf7TKrvTflK8fijpt1HMOAu/W1esP0p6W7B318hE1HHsFX+/xCxL3hbfq3ofdQxjBg2cQz2nXGjfNeYWM8v+S5s2hyGccwEAumvS9gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB00gtWwRS9
+  </data>
+ </layer>
+ <layer name="__playerSpawn" width="100" height="100" visible="0" opacity="0">
+  <data encoding="base64" compression="zlib">
+   eJztzjENAAAIA7Dh3zQiRsLTKmgCAAAAAAAAAFyZ7wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABQWxkHAAI=
   </data>
  </layer>
  <layer name="Details" width="100" height="100">
