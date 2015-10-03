@@ -16,6 +16,7 @@ find_package(SDL2 REQUIRED)
 find_package(SDL2_image REQUIRED)
 find_package(SDL2_mixer REQUIRED)
 find_package(SDL2_ttf REQUIRED)
+find_package(SDL2_net REQUIRED)
 
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
@@ -26,6 +27,8 @@ find_package(AshleyCPP REQUIRED)
 find_package(APG REQUIRED)
 
 file(GLOB_RECURSE PlayPG_SOURCES ${PROJECT_SOURCE_DIR}/src/*.cpp)
+file(GLOB_RECURSE PlayPG_CLIENT_SOURCES ${PROJECT_SOURCE_DIR}/client/*.cpp)
+file(GLOB_RECURSE PlayPG_SERVER_SOURCES ${PROJECT_SOURCE_DIR}/server/*.cpp)
 file(GLOB_RECURSE PlayPG_HEADERS ${PROJECT_SOURCE_DIR}/include/*.hpp)
 file(GLOB_RECURSE PlayPG_TEST_ASSETS ${PROJECT_SOURCE_DIR}/assets/*)
 
@@ -43,10 +46,17 @@ include_directories("include" ${APG_INCLUDE_DIR} ${SDL2_INCLUDE_DIR} ${SDL2_TTF_
 set(PlayPG_LIBS ${SDL2_LIBRARY} ${SDL2_IMAGE_LIBRARY} ${SDL2_TTF_LIBRARIES} ${SDL2_MIXER_LIBRARY} ${OPENGL_LIBRARIES} ${GLEW_LIBRARIES} ${TMXPARSER_LIBRARY})
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_BASE} ${PlayPG_DEBUG_FLAGS}")
-add_executable(PlayPG-d ${PlayPG_SOURCES})
+add_executable(PlayPG-d ${PlayPG_SOURCES} ${PlayPG_CLIENT_SOURCES})
 target_link_libraries(PlayPG-d ${APG_DEBUG_LIBRARY} ${AshleyCPP_DEBUG_LIBRARY} ${PlayPG_LIBS})
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_BASE} ${PlayPG_RELEASE_FLAGS}")
-add_executable(PlayPG ${PlayPG_SOURCES})
+add_executable(PlayPG ${PlayPG_SOURCES} ${PlayPG_CLIENT_SOURCES})
 target_link_libraries(PlayPG ${APG_LIBRARY} ${AshleyCPP_LIBRARY} ${PlayPG_LIBS})
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_BASE} ${PlayPG_DEBUG_FLAGS}")
+add_executable(serverPG-d ${PlayPG_SOURCES} ${PlayPG_SERVER_SOURCES})
+target_link_libraries(serverPG-d ${APG_DEBUG_LIBRARY} ${AshleyCPP_DEBUG_LIBRARY} ${PlayPG_LIBS})
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_BASE} ${PlayPG_RELEASE_FLAGS}")
+add_executable(serverPG ${PlayPG_SOURCES} ${PlayPG_SERVER_SOURCES})
+target_link_libraries(serverPG ${APG_LIBRARY} ${AshleyCPP_LIBRARY} ${PlayPG_LIBS})
