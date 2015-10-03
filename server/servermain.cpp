@@ -27,7 +27,7 @@
 
 #include <cstdlib>
 
-#include <iostream>
+#include <memory>
 
 #include <APG/APG.hpp>
 INITIALIZE_EASYLOGGINGPP
@@ -35,8 +35,46 @@ INITIALIZE_EASYLOGGINGPP
 int main(int argc, char *argv[]) {
 	START_EASYLOGGINGPP(argc, argv);
 	APG::Game::setLoggerToAPGStyle("ServPG");
+	auto logger = el::Loggers::getLogger("ServPG");
+	logger->info("ServPG started.");
 
-	el::Loggers::getLogger("ServPG")->info("ServPG started.");
+	APG::SDLGame::initialiseSDL();
 
+	auto inputManager = std::make_unique<APG::SDLInputManager>();
+
+	IPaddress ip;
+	TCPsocket socket;
+
+	if (SDLNet_ResolveHost(&ip, nullptr, 10419) == -1) {
+		logger->fatal("Couldn't resolve host: %v.", SDLNet_GetError());
+		return EXIT_FAILURE;
+	}
+
+	socket = SDLNet_TCP_Open(&ip);
+
+	if (socket == nullptr) {
+		logger->fatal("Couldn't open server socket: %v.", SDLNet_GetError());
+		return EXIT_FAILURE;
+	}
+
+	logger->info("Successfully listening on port 10419.");
+
+	TCPsocket accepted;
+
+	while ((accepted = SDLNet_TCP_Accept(socket)) == nullptr) {
+	}
+
+	logger->info("Accepted a connection!");
+
+	std::array<char, 5> buffer;
+
+	SDLNet_TCP_Recv(accepted, buffer.data(), buffer.size()-1);
+	buffer[buffer.size()-1] = '\0';
+
+	std::string str {buffer.data()};
+
+	logger->info("Got %v.", str);
+
+	APG::SDLGame::shutdownSDL();
 	return EXIT_SUCCESS;
 }
