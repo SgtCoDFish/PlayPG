@@ -24,28 +24,57 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef INCLUDE_SYSTEMS_MOVEMENTSYSTEM_HPP_
+#define INCLUDE_SYSTEMS_MOVEMENTSYSTEM_HPP_
 
-#ifndef INCLUDE_SYSTEMS_CAMERAFOCUSSYSTEM_HPP_
-#define INCLUDE_SYSTEMS_CAMERAFOCUSSYSTEM_HPP_
+#include <cstdint>
+
+#include <vector>
 
 #include <Ashley/Ashley.hpp>
 
-namespace APG{
-class Camera;
+namespace Tmx {
+class Map;
 }
 
 namespace PlayPG {
-class CameraFocusSystem : public ashley::IteratingSystem {
-public:
-	explicit CameraFocusSystem(APG::Camera * const camera, int64_t priority);
-	virtual ~CameraFocusSystem() = default;
+class Map;
 
-	virtual void processEntity(ashley::Entity * const entity, float deltaTime) override final;
+struct Move {
+	explicit Move(ashley::Entity * entity_, int32_t xTiles_, int32_t yTiles_) :
+			        entity { entity_ },
+			        xTiles { xTiles_ },
+			        yTiles { yTiles_ } {
+	}
+
+	~Move() = default;
+
+	ashley::Entity * const entity;
+	const int32_t xTiles;
+	const int32_t yTiles;
+};
+
+class MovementSystem : public ashley::EntitySystem {
+public:
+	explicit MovementSystem(Map * const map, int64_t priority);
+
+	virtual ~MovementSystem() = default;
+
+	void update(float deltaTime) override final;
+
+	void addMove(Move &&move);
+	void addMove(ashley::Entity * entity, int32_t xTiles, int32_t yTiles);
+
+	Map * getMap() const {
+		return map_;
+	}
 
 private:
-	APG::Camera * camera;
+	Map * map_;
+
+	std::vector<Move> moves_;
 };
+
 }
 
-
-#endif /* INCLUDE_SYSTEMS_CAMERAFOCUSSYSTEM_HPP_ */
+#endif /* INCLUDE_SYSTEMS_MOVEMENTSYSTEM_HPP_ */

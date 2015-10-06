@@ -63,7 +63,8 @@ bool PlayPG::init() {
 	playerSprite = std::make_unique<Sprite>(playerTexture);
 
 	engine = std::make_unique<ashley::Engine>();
-	engine->addSystem<InputSystem>(inputManager.get(), 5000);
+	auto movementSystem = engine->addSystem<MovementSystem>(mapOutdoor.get(), 6000);
+	engine->addSystem<InputSystem>(inputManager.get(), movementSystem, 5000);
 	engine->addSystem<CameraFocusSystem>(camera.get(), 7500);
 	engine->addSystem<RenderSystem>(batch.get(), camera.get(), 10000);
 

@@ -39,19 +39,22 @@ class InputManager;
 }
 
 namespace PlayPG {
+class MovementSystem;
 
 class InputSystem : public ashley::IteratingSystem {
 public:
-	explicit InputSystem(APG::InputManager * const inputManager, int64_t priority);
+	explicit InputSystem(APG::InputManager * const inputManager, MovementSystem * const movementSystem_, int64_t priority);
 	virtual ~InputSystem() = default;
 
-	virtual void processEntity(ashley::Entity * const &entity, float deltaTime) override;
+	virtual void processEntity(ashley::Entity * const entity, float deltaTime) override final;
 
 	APG::InputManager * inputManager;
 
 private:
-	void doMove(ashley::Entity * const &entity, float deltaTime, int32_t xTiles, int32_t yTiles);
-	void doInteraction(ashley::Entity * const &entity, float deltaTime);
+	MovementSystem * movementSystem_;
+
+	void doMove(ashley::Entity * const entity, float deltaTime, int32_t xTiles, int32_t yTiles);
+	void doInteraction(ashley::Entity * const entity, float deltaTime);
 };
 
 }

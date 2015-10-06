@@ -45,11 +45,11 @@ namespace PlayPG {
 
 class RenderSystem final : public ashley::IteratingSystem {
 public:
-	explicit RenderSystem(APG::SpriteBatch * const targetBatch, APG::Camera * const camera_, uint64_t priority);
+	explicit RenderSystem(APG::SpriteBatch * const targetBatch, APG::Camera * const camera_, int64_t priority);
 	virtual ~RenderSystem() = default;
 
-	virtual void update(float deltaTime) override;
-	virtual void processEntity(ashley::Entity * const &entity, float deltaTime) override;
+	virtual void update(float deltaTime) override final;
+	virtual void processEntity(ashley::Entity * const entity, float deltaTime) override final;
 
 	APG::SpriteBatch * batch;
 	APG::Camera * camera;

@@ -35,13 +35,13 @@
 
 namespace PlayPG {
 
-RenderSystem::RenderSystem(APG::SpriteBatch * const targetBatch, APG::Camera * const camera_, uint64_t priority) :
+RenderSystem::RenderSystem(APG::SpriteBatch * const targetBatch, APG::Camera * const camera_, int64_t priority) :
 		        IteratingSystem(ashley::Family::getFor( { typeid(Renderable), typeid(Position) }), priority),
 		        batch { targetBatch },
 		        camera { camera_ } {
 }
 
-void RenderSystem::processEntity(ashley::Entity * const &entity, float deltaTime) {
+void RenderSystem::processEntity(ashley::Entity * const entity, float deltaTime) {
 	const auto positionMapper = ashley::ComponentMapper<Position>::getMapper();
 	const auto renderableMapper = ashley::ComponentMapper<Renderable>::getMapper();
 

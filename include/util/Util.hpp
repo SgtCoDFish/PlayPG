@@ -25,27 +25,19 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef INCLUDE_SYSTEMS_CAMERAFOCUSSYSTEM_HPP_
-#define INCLUDE_SYSTEMS_CAMERAFOCUSSYSTEM_HPP_
+#ifndef INCLUDE_UTIL_UTIL_HPP_
+#define INCLUDE_UTIL_UTIL_HPP_
 
-#include <Ashley/Ashley.hpp>
-
-namespace APG{
-class Camera;
-}
+#include <type_traits>
 
 namespace PlayPG {
-class CameraFocusSystem : public ashley::IteratingSystem {
-public:
-	explicit CameraFocusSystem(APG::Camera * const camera, int64_t priority);
-	virtual ~CameraFocusSystem() = default;
+namespace util {
 
-	virtual void processEntity(ashley::Entity * const entity, float deltaTime) override final;
-
-private:
-	APG::Camera * camera;
-};
+template<typename T> constexpr auto to_integral(T t) -> typename std::underlying_type_t<T> {
+	return static_cast<typename std::underlying_type_t<T>>(t);
 }
 
+}
+}
 
-#endif /* INCLUDE_SYSTEMS_CAMERAFOCUSSYSTEM_HPP_ */
+#endif /* INCLUDE_UTIL_UTIL_HPP_ */

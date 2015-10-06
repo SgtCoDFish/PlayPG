@@ -25,8 +25,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef INCLUDE_MAP_HPP_
-#define INCLUDE_MAP_HPP_
+#ifndef INCLUDE_PLAYPGMAP_HPP_
+#define INCLUDE_PLAYPGMAP_HPP_
 
 #include <cstdint>
 
@@ -37,7 +37,7 @@
 #include <Ashley/Ashley.hpp>
 #include <tmxparser/Tmx.h>
 
-#include <APG/APGGraphics.hpp>
+#include <APG/APG.hpp>
 
 namespace PlayPG {
 
@@ -57,20 +57,36 @@ class Map final {
 public:
 	explicit Map(APG::GLTmxRenderer * renderer);
 
-	bool isSolid(uint32_t x, uint32_t y) const {
+	bool isSolidAtTile(uint32_t x, uint32_t y) const {
 		return getTile(x, y).isSolid;
 	}
 
-	bool isSolid(const glm::ivec2 &pos) {
+	bool isSolidAtTile(const glm::ivec2 &pos) {
 		return getTile(pos.x, pos.y).isSolid;
 	}
 
-	bool isInteresting(uint32_t x, uint32_t y) const {
+	bool isSolidAtCoord(float x, float y) const {
+		return getTile(x / getTileWidth(), y / getTileHeight()).isSolid;
+	}
+
+	bool isSolidAtCoord(const glm::vec2 &pos) {
+		return getTile(pos.x / getTileWidth(), pos.y / getTileHeight()).isSolid;
+	}
+
+	bool isInterestingAtTile(uint32_t x, uint32_t y) const {
 		return getTile(x, y).isInteresting;
 	}
 
-	bool isInteresting(const glm::ivec2 &pos) {
+	bool isInterestingAtTile(const glm::ivec2 &pos) {
 		return getTile(pos.x, pos.y).isInteresting;
+	}
+
+	bool isInterestingAtCoord(float x, float y) const {
+		return getTile(x / getTileWidth(), y / getTileHeight()).isInteresting;
+	}
+
+	bool isInterestingAtCoord(const glm::vec2 &pos) {
+		return getTile(pos.x / getTileWidth(), pos.y / getTileHeight()).isInteresting;
 	}
 
 	const glm::ivec2 &getSpawnPoint() const {

@@ -45,7 +45,7 @@ CameraFocusSystem::CameraFocusSystem(APG::Camera * const camera_, int64_t priori
 
 }
 
-void CameraFocusSystem::processEntity(ashley::Entity * const &entity, float deltaTime) {
+void CameraFocusSystem::processEntity(ashley::Entity * const entity, float deltaTime) {
 	const auto &position = ashley::ComponentMapper<Position>::getMapper().get(entity)->p;
 
 	camera->position.x = position.x - APG::Game::screenWidth / 2.0f;

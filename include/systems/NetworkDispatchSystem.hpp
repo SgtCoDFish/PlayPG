@@ -25,27 +25,23 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef INCLUDE_SYSTEMS_CAMERAFOCUSSYSTEM_HPP_
-#define INCLUDE_SYSTEMS_CAMERAFOCUSSYSTEM_HPP_
+#ifndef INCLUDE_SYSTEMS_NETWORKDISPATCHSYSTEM_HPP_
+#define INCLUDE_SYSTEMS_NETWORKDISPATCHSYSTEM_HPP_
+
+#include <cstdint>
 
 #include <Ashley/Ashley.hpp>
 
-namespace APG{
-class Camera;
-}
-
 namespace PlayPG {
-class CameraFocusSystem : public ashley::IteratingSystem {
+
+class NetworkDispatchSystem : public ashley::EntitySystem {
 public:
-	explicit CameraFocusSystem(APG::Camera * const camera, int64_t priority);
-	virtual ~CameraFocusSystem() = default;
+	explicit NetworkDispatchSystem(int64_t priority);
+	virtual ~NetworkDispatchSystem() = default;
 
-	virtual void processEntity(ashley::Entity * const entity, float deltaTime) override final;
-
-private:
-	APG::Camera * camera;
+	void update(float deltaTime) override final;
 };
+
 }
 
-
-#endif /* INCLUDE_SYSTEMS_CAMERAFOCUSSYSTEM_HPP_ */
+#endif /* INCLUDE_SYSTEMS_NETWORKDISPATCHSYSTEM_HPP_ */

@@ -30,16 +30,18 @@
 #include <APG/APGInput.hpp>
 
 #include "systems/InputSystem.hpp"
+#include "systems/MovementSystem.hpp"
 
 namespace PlayPG {
 
-InputSystem::InputSystem(APG::InputManager * const inputManager_, int64_t priority) :
+InputSystem::InputSystem(APG::InputManager * const inputManager_, MovementSystem * const movementSystem, int64_t priority) :
 		        IteratingSystem(ashley::Family::getFor( { typeid(KeyboardInputListener) }), priority),
-		        inputManager { inputManager_ } {
+		        inputManager { inputManager_ },
+		        movementSystem_ { movementSystem } {
 
 }
 
-void InputSystem::processEntity(ashley::Entity * const &entity, float deltaTime) {
+void InputSystem::processEntity(ashley::Entity * const entity, float deltaTime) {
 	if (inputManager->isKeyJustPressed(SDL_SCANCODE_W) || inputManager->isKeyJustPressed(SDL_SCANCODE_KP_8)) {
 		doMove(entity, deltaTime, 0, -1);
 	} else if (inputManager->isKeyJustPressed(SDL_SCANCODE_A) || inputManager->isKeyJustPressed(SDL_SCANCODE_KP_4)) {
@@ -61,18 +63,11 @@ void InputSystem::processEntity(ashley::Entity * const &entity, float deltaTime)
 	}
 }
 
-void InputSystem::doMove(ashley::Entity * const &entity, float deltaTime, int32_t xTiles, int32_t yTiles) {
-	const auto &pos = ashley::ComponentMapper<Position>::getMapper().get(entity);
-//
-//	if(!map->isSolid(pos->p.x / map->getTileWidth() + xTiles, pos->p.y / map->getTileHeight() + yTiles)) {
-//	pos->p.x += xTiles * map->getTileWidth();
-//	pos->p.y += yTiles * map->getTileHeight();
-	pos->p.x += xTiles * 16;
-	pos->p.y += yTiles * 16;
-//	}
+void InputSystem::doMove(ashley::Entity * const entity, float deltaTime, int32_t xTiles, int32_t yTiles) {
+	movementSystem_->addMove(entity, xTiles, yTiles);
 }
 
-void InputSystem::doInteraction(ashley::Entity * const &entity, float deltaTime) {
+void InputSystem::doInteraction(ashley::Entity * const entity, float deltaTime) {
 
 }
 

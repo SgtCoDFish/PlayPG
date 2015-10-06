@@ -25,34 +25,49 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef INCLUDE_NET_INPUTPACKET_HPP_
-#define INCLUDE_NET_INPUTPACKET_HPP_
-
 #include <cstdint>
 
-#include <type_traits>
+#include <vector>
+#include <utility>
+
+#include <Ashley/Ashley.hpp>
+
+#include <tmxparser/Tmx.h>
+
+#include "components/Position.hpp"
+#include "systems/MovementSystem.hpp"
+#include "Map.hpp"
 
 namespace PlayPG {
 
-enum InputType : uint16_t {
-	KEY_UP = 0u,
-	KEY_DOWN,
-	KEY_LEFT,
-	KEY_RIGHT
-};
-
-struct InputPacket {
-	static_assert(std::is_pod<InputPacket>::value, "InputPacket should be a POD");
-
-	uint32_t size; // 4 bytes
-
-	InputType inputType; // 1 byte
-
-	uint8_t inputExtra1; // 1 byte
-	uint8_t inputExtra2; // 1 byte
-	uint8_t inputExtra3; // 1 byte
-};
-
+MovementSystem::MovementSystem(Map * const map, int64_t priority) :
+		        EntitySystem(priority),
+		        map_ { map } {
 }
 
-#endif /* INCLUDE_NET_INPUTPACKET_HPP_ */
+void MovementSystem::update(float deltaTime) {
+	const auto mapper = ashley::ComponentMapper<Position>::getMapper();
+
+	for (const auto &move : moves_) {
+		const auto &position = mapper.get(move.entity);
+
+		const glm::vec2 destination =
+		        { position->p.x + move.xTiles * map_->getTileWidth(), position->p.y + move.yTiles * map_->getTileHeight() };
+
+		if (!map_->isSolidAtCoord(destination)) {
+			position->p = destination;
+		}
+	}
+
+	moves_.clear();
+}
+
+void MovementSystem::addMove(Move &&move) {
+	moves_.emplace_back(std::move(move));
+}
+
+void MovementSystem::addMove(ashley::Entity * entity, int32_t xTiles, int32_t yTiles) {
+	moves_.emplace_back(entity, xTiles, yTiles);
+}
+
+}

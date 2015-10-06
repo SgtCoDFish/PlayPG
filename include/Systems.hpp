@@ -31,5 +31,7 @@
 #include "systems/CameraFocusSystem.hpp"
 #include "systems/InputSystem.hpp"
 #include "systems/RenderSystem.hpp"
+#include "systems/MovementSystem.hpp"
+#include "systems/NetworkDispatchSystem.hpp"
 
 #endif /* INCLUDE_SYSTEMS_HPP_ */

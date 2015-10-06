@@ -25,27 +25,40 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef INCLUDE_SYSTEMS_CAMERAFOCUSSYSTEM_HPP_
-#define INCLUDE_SYSTEMS_CAMERAFOCUSSYSTEM_HPP_
+#ifndef INCLUDE_NET_PACKET_HPP_
+#define INCLUDE_NET_PACKET_HPP_
 
-#include <Ashley/Ashley.hpp>
+#include <cstdint>
 
-namespace APG{
-class Camera;
-}
+#include <type_traits>
+
+#include "util/Util.hpp"
 
 namespace PlayPG {
-class CameraFocusSystem : public ashley::IteratingSystem {
-public:
-	explicit CameraFocusSystem(APG::Camera * const camera, int64_t priority);
-	virtual ~CameraFocusSystem() = default;
 
-	virtual void processEntity(ashley::Entity * const entity, float deltaTime) override final;
+using msg_t = uint16_t;
 
-private:
-	APG::Camera * camera;
+enum class ClientMessage : msg_t {
+	LOGIN = 500u,
+	MOVE = 1000u,
 };
+
+enum class ServerMessage : msg_t {
+	LOGIN = 500u,
+	MOVE = 1000u
+};
+
+struct InputPacket {
+	static_assert(std::is_pod<InputPacket>::value, "InputPacket should be a POD");
+
+	uint32_t id; // 4 bytes
+
+	msg_t message; // 2 bytes
+
+	uint8_t extra1; // 1 byte
+	uint8_t extra2; // 1 byte
+};
+
 }
 
-
-#endif /* INCLUDE_SYSTEMS_CAMERAFOCUSSYSTEM_HPP_ */
+#endif /* INCLUDE_NET_PACKET_HPP_ */
