@@ -36,13 +36,21 @@
 
 #include "components/Position.hpp"
 #include "systems/MovementSystem.hpp"
+#include "net/Packet.hpp"
+#include "net/PacketFactory.hpp"
+#include "systems/NetworkDispatchSystem.hpp"
 #include "Map.hpp"
 
 namespace PlayPG {
 
 MovementSystem::MovementSystem(Map * const map, int64_t priority) :
+		        MovementSystem(map, nullptr, priority) {
+}
+
+MovementSystem::MovementSystem(Map * const map, NetworkDispatchSystem * const networkDispatchSystem, int64_t priority) :
 		        EntitySystem(priority),
 		        map_ { map } {
+	attachNetworkingSystem(networkDispatchSystem);
 }
 
 void MovementSystem::update(float deltaTime) {
@@ -51,15 +59,31 @@ void MovementSystem::update(float deltaTime) {
 	for (const auto &move : moves_) {
 		const auto &position = mapper.get(move.entity);
 
-		const glm::vec2 destination =
-		        { position->p.x + move.xTiles * map_->getTileWidth(), position->p.y + move.yTiles * map_->getTileHeight() };
+		const glm::vec2 destination = { position->p.x + move.xTiles * map_->getTileWidth(), position->p.y
+		        + move.yTiles * map_->getTileHeight() };
 
 		if (!map_->isSolidAtCoord(destination)) {
 			position->p = destination;
 		}
+
+		if(networkingAttached()) {
+			networkDispatchSystem_->queuePacket(PacketFactory::makeMovePacket(move));
+		}
 	}
 
 	moves_.clear();
+}
+
+MovementSystem &MovementSystem::attachNetworkingSystem(NetworkDispatchSystem * const networkDispatchSystem) {
+	networkDispatchSystem_ = networkDispatchSystem;
+
+	return *this;
+}
+
+MovementSystem &MovementSystem::detachNetworkingSystem() {
+	networkDispatchSystem_ = nullptr;
+
+	return *this;
 }
 
 void MovementSystem::addMove(Move &&move) {

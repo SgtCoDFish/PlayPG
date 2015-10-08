@@ -39,6 +39,7 @@ class Map;
 
 namespace PlayPG {
 class Map;
+class NetworkDispatchSystem;
 
 struct Move {
 	explicit Move(ashley::Entity * entity_, int32_t xTiles_, int32_t yTiles_) :
@@ -57,6 +58,7 @@ struct Move {
 class MovementSystem : public ashley::EntitySystem {
 public:
 	explicit MovementSystem(Map * const map, int64_t priority);
+	explicit MovementSystem(Map * const map, NetworkDispatchSystem * const networkDispatchSystem, int64_t priority);
 
 	virtual ~MovementSystem() = default;
 
@@ -65,12 +67,21 @@ public:
 	void addMove(Move &&move);
 	void addMove(ashley::Entity * entity, int32_t xTiles, int32_t yTiles);
 
+	MovementSystem &attachNetworkingSystem(NetworkDispatchSystem * const networkDispatchSystem);
+	MovementSystem &detachNetworkingSystem();
+
+	bool networkingAttached() const {
+		return networkDispatchSystem_ != nullptr;
+	}
+
 	Map * getMap() const {
 		return map_;
 	}
 
 private:
 	Map * map_;
+
+	NetworkDispatchSystem * networkDispatchSystem_;
 
 	std::vector<Move> moves_;
 };

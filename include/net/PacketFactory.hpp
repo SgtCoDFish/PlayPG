@@ -25,44 +25,25 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef INCLUDE_NET_PACKET_HPP_
-#define INCLUDE_NET_PACKET_HPP_
+#ifndef INCLUDE_NET_PACKETFACTORY_HPP_
+#define INCLUDE_NET_PACKETFACTORY_HPP_
 
-#include <cstdint>
-
-#include <type_traits>
-
-#include "util/Util.hpp"
+#include "net/Packet.hpp"
+#include "systems/MovementSystem.hpp"
 
 namespace PlayPG {
 
-using msg_t = uint16_t;
+class PacketFactory {
+public:
+	explicit PacketFactory() = delete;
+	~PacketFactory() = default;
 
-enum class ClientMessage : msg_t {
-	LOGIN = 500u,
-	MOVE = 1000u,
+	static Packet makeMovePacket(const Move &move);
+
+private:
+	static uint64_t packetIDCounter;
 };
-
-enum class ServerMessage : msg_t {
-	LOGIN = 500u,
-	MOVE = 1000u
-};
-
-struct Packet {
-	uint64_t id; // 8 bytes
-
-	uint64_t entity; // 8 bytes
-
-	msg_t message; // 2 bytes
-
-	uint16_t extra1; // 2 bytes
-	uint16_t extra2; // 2 bytes
-	uint16_t extra3; // 2 bytes
-
-};
-
-static_assert(std::is_pod<Packet>::value, "Packet should be a POD");
 
 }
 
-#endif /* INCLUDE_NET_PACKET_HPP_ */
+#endif /* INCLUDE_NET_PACKETFACTORY_HPP_ */

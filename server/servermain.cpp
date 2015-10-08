@@ -32,6 +32,9 @@
 #include <APG/APG.hpp>
 INITIALIZE_EASYLOGGINGPP
 
+#include "Systems.hpp"
+#include "net/Packet.hpp"
+
 int main(int argc, char *argv[]) {
 	START_EASYLOGGINGPP(argc, argv);
 	APG::Game::setLoggerToAPGStyle("ServPG");
@@ -66,14 +69,16 @@ int main(int argc, char *argv[]) {
 
 	logger->info("Accepted a connection!");
 
-	std::array<char, 5> buffer;
+	while (true) {
+		PlayPG::Packet packet;
 
-	SDLNet_TCP_Recv(accepted, buffer.data(), buffer.size()-1);
-	buffer[buffer.size()-1] = '\0';
+		if(SDLNet_TCP_Recv(accepted, &packet, sizeof(PlayPG::Packet)) <= 0) {
+			logger->info("Finished with remote host.");
+			break;
+		}
 
-	std::string str {buffer.data()};
-
-	logger->info("Got %v.", str);
+		logger->info("Received packet #%v, entity #%v", packet.id, packet.entity);
+	}
 
 	APG::SDLGame::shutdownSDL();
 	return EXIT_SUCCESS;

@@ -32,14 +32,25 @@
 
 #include <Ashley/Ashley.hpp>
 
+#include <SDL2/SDL_net.h>
+
+#include "net/Packet.hpp"
+
 namespace PlayPG {
 
 class NetworkDispatchSystem : public ashley::EntitySystem {
 public:
-	explicit NetworkDispatchSystem(int64_t priority);
+	explicit NetworkDispatchSystem(TCPsocket socket, int64_t priority);
 	virtual ~NetworkDispatchSystem() = default;
 
 	void update(float deltaTime) override final;
+
+	void queuePacket(Packet &&packet);
+
+private:
+	TCPsocket socket_;
+
+	std::vector<Packet> packetQueue;
 };
 
 }
