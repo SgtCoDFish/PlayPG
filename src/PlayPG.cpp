@@ -63,7 +63,7 @@ bool PlayPG::init() {
 	playerSprite = std::make_unique<Sprite>(playerTexture);
 
 	IPaddress ip;
-	if(SDLNet_ResolveHost(&ip, "localhost", 10419) == -1) {
+	if(SDLNet_ResolveHost(&ip, "192.168.0.45", 10419) == -1) {
 		logger->fatal("Couldn't resolve localhost on port 10419: %v", SDLNet_GetError());
 	}
 
