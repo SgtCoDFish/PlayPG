@@ -3,7 +3,7 @@
 # APG_LIBRARY
 # APG_FOUND
 
-find_path(APG_INCLUDE_DIR NAMES APG/APGCommon.hpp
+find_path(APG_INCLUDE_DIR NAMES APG/APG.hpp
           DOC "The APG include directory"
 )
 
