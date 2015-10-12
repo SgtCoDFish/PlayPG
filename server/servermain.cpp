@@ -28,6 +28,9 @@
 #include <cstdlib>
 
 #include <memory>
+#include <iostream>
+#include <string>
+#include <vector>
 
 #include <boost/program_options.hpp>
 
@@ -36,6 +39,8 @@ INITIALIZE_EASYLOGGINGPP
 
 #include "Systems.hpp"
 #include "net/Packet.hpp"
+
+#include "PlayPGVersion.hpp"
 
 namespace po = boost::program_options;
 
@@ -99,25 +104,41 @@ int main(int argc, char *argv[]) {
 
 bool initializeProgramOptions(int argc, char *argv[]) {
 	auto logger = el::Loggers::getLogger("ServPG");
-	po::options_description desc("ServPG Options");
+	po::options_description generalOptions("General Options");
 
-	desc.add_options()
+	generalOptions.add_options()
 			("help", "list available commands")
 			("version", "print version information")
 			("verbose", "enable verbose logging")
-			("v", po::value<int>()->implicit_value(1), "enable verbose logging with value from 0-9 indicating verbosity level");
+			("v", po::value<uint16_t>()->implicit_value(1u), "enable verbose logging with value from 0-9 indicating verbosity level");
+
+	po::options_description serverOptions("Server Options");
+
+	serverOptions.add_options()
+			("login-server", po::value<uint32_t>()->implicit_value(10419u), "run a login server listening on the given port (default 10419)")
+			("world-server", po::value<uint32_t>(), "run a world server listening on the given port.");
+
+	po::options_description worldServerOptions("World Server Specific Options");
+
+	worldServerOptions.add_options()
+			("map-dirs", po::value<std::vector<std::string>>(), "A list of directories in which to search for maps.");
+
+	po::options_description allOptions("Allowed Options");
+
+	allOptions.add(serverOptions).add(worldServerOptions).add(generalOptions);
 
 	po::variables_map vm;
-	po::store(po::parse_command_line(argc, argv, desc), vm);
+	po::store(po::parse_command_line(argc, argv, generalOptions), vm);
 	po::notify(vm);
 
 	if(vm.count("help")) {
-		logger->info("%v", desc);
+		std::cout << allOptions;
 		return false;
 	}
 
 	if(vm.count("version")) {
-		logger->info("%v", "Version PRE_PRE_ALPHA");
+		logger->info("PlayPG Server Version %v", PLAYPG_VERSION);
+		return false;
 	}
 
 	return true;
