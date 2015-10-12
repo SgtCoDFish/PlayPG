@@ -29,16 +29,29 @@
 
 #include <memory>
 
+#include <boost/program_options.hpp>
+
 #include <APG/APG.hpp>
 INITIALIZE_EASYLOGGINGPP
 
 #include "Systems.hpp"
 #include "net/Packet.hpp"
 
+namespace po = boost::program_options;
+
+bool initializeProgramOptions(int argc, char *argv[]);
+
 int main(int argc, char *argv[]) {
 	START_EASYLOGGINGPP(argc, argv);
+
+	APG::Game::setupLoggingDefault();
 	APG::Game::setLoggerToAPGStyle("ServPG");
 	auto logger = el::Loggers::getLogger("ServPG");
+
+	if(!initializeProgramOptions(argc, argv)) {
+		return EXIT_SUCCESS;
+	}
+
 	logger->info("ServPG started.");
 
 	APG::SDLGame::initialiseSDL();
@@ -82,4 +95,30 @@ int main(int argc, char *argv[]) {
 
 	APG::SDLGame::shutdownSDL();
 	return EXIT_SUCCESS;
+}
+
+bool initializeProgramOptions(int argc, char *argv[]) {
+	auto logger = el::Loggers::getLogger("ServPG");
+	po::options_description desc("ServPG Options");
+
+	desc.add_options()
+			("help", "list available commands")
+			("version", "print version information")
+			("verbose", "enable verbose logging")
+			("v", po::value<int>()->implicit_value(1), "enable verbose logging with value from 0-9 indicating verbosity level");
+
+	po::variables_map vm;
+	po::store(po::parse_command_line(argc, argv, desc), vm);
+	po::notify(vm);
+
+	if(vm.count("help")) {
+		logger->info("%v", desc);
+		return false;
+	}
+
+	if(vm.count("version")) {
+		logger->info("%v", "Version PRE_PRE_ALPHA");
+	}
+
+	return true;
 }
