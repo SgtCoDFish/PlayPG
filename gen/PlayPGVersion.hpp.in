@@ -37,11 +37,11 @@ public:
 	static constexpr int major = @PlayPG_VERSION_MAJOR@;
 	static constexpr int minor = @PlayPG_VERSION_MINOR@;
 	static constexpr int patch = @PlayPG_VERSION_PATCH@;
-	static constexpr const char *extra = "@PlayPG_VERSION_EXTRA@";
+	static constexpr const char * const extra = "@PlayPG_VERSION_EXTRA@";
 
-	static constexpr const char *versionString = "@PlayPG_VERSION@";
+	static constexpr const char * const versionString = "@PlayPG_VERSION@";
 
-	static constexpr const char *gitHash = "@PlayPG_GIT_HASH@";
+	static constexpr const char * const gitHash = "@PlayPG_GIT_HASH@";
 };
 
 }

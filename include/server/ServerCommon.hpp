@@ -30,6 +30,10 @@
 
 #include <cstdint>
 
+#include <memory>
+
+#include <APG/APGNet.hpp>
+
 namespace PlayPG {
 
 enum class ServerType {
@@ -39,12 +43,23 @@ enum class ServerType {
 
 class ServerDetails {
 public:
-	explicit ServerDetails(const char * serverName, int32_t port, ServerType serverType);
+	explicit ServerDetails(const char * serverName, uint16_t port, ServerType serverType);
 	~ServerDetails() = default;
 
-	const char * const serverName_;
-	const int32_t port_;
-	const ServerType serverType_;
+	const char * const serverName;
+	const uint16_t port;
+	const ServerType serverType;
+};
+
+class Server {
+public:
+	explicit Server(std::unique_ptr<ServerDetails> &&serverDetails);
+	virtual ~Server() = default;
+
+	const std::unique_ptr<ServerDetails> details;
+
+protected:
+	std::unique_ptr<APG::AcceptorSocket> acceptor;
 };
 
 }
