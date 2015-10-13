@@ -29,10 +29,15 @@
 
 namespace PlayPG {
 
-ServerDetails::ServerDetails(const char * serverName_, uint16_t port_, ServerType serverType_) :
-		        serverName { serverName_ },
+ServerDetails::ServerDetails(const std::string &friendlyName_, const std::string &hostName_, uint16_t port_, ServerType serverType_) :
+		        friendlyName { friendlyName_ },
+		        hostName { hostName_ },
 		        port { port_ },
-		        serverType { serverType_} {
+		        serverType { serverType_ } {
 }
 
+Server::Server(const ServerDetails &serverDetails_) :
+		        details { serverDetails_ } {
+
+}
 }

@@ -25,52 +25,26 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef INCLUDE_SERVER_SERVERCOMMON_HPP_
-#define INCLUDE_SERVER_SERVERCOMMON_HPP_
+#ifndef INCLUDE_SERVER_LOGINSERVER_HPP_
+#define INCLUDE_SERVER_LOGINSERVER_HPP_
 
-#include <cstdint>
-
-#include <memory>
-#include <vector>
-#include <string>
-
-#include <APG/APGNet.hpp>
+#include "ServerCommon.hpp"
 
 namespace PlayPG {
 
-enum class ServerType {
-	LOGIN_SERVER,
-	WORLD_SERVER
-};
-
-class ServerDetails {
+class LoginServer final : public Server {
 public:
-	explicit ServerDetails(const std::string &friendlyName, const std::string &hostName, uint16_t port, ServerType serverType);
-	~ServerDetails() = default;
+	explicit LoginServer(const ServerDetails &serverDetails_);
+	virtual ~LoginServer() = default;
 
-	const std::string friendlyName; // a user-friendly name for the server
-
-	const std::string hostName; // a web address, possibly an IP
-	const uint16_t port;
-
-	const ServerType serverType;
-};
-
-class Server {
-public:
-	explicit Server(const ServerDetails &serverDetails);
-	virtual ~Server() = default;
-
-	const ServerDetails details;
-
-	virtual void run() = 0;
+	virtual void run() override final;
 
 protected:
-	std::unique_ptr<APG::SDLAcceptorSocket> acceptor;
+	std::unique_ptr<APG::SDLAcceptorSocket> mapServerAcceptor;
 
-	std::vector<APG::SDLSocket> attachedSockets;
+	std::vector<APG::SDLSocket> mapServers;
 };
 
 }
 
-#endif /* INCLUDE_SERVER_SERVERCOMMON_HPP_ */
+#endif /* INCLUDE_SERVER_LOGINSERVER_HPP_ */

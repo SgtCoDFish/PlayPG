@@ -25,52 +25,21 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef INCLUDE_SERVER_SERVERCOMMON_HPP_
-#define INCLUDE_SERVER_SERVERCOMMON_HPP_
+#ifndef INCLUDE_SERVER_MAPSERVER_HPP_
+#define INCLUDE_SERVER_MAPSERVER_HPP_
 
-#include <cstdint>
-
-#include <memory>
-#include <vector>
-#include <string>
-
-#include <APG/APGNet.hpp>
+#include "ServerCommon.hpp"
 
 namespace PlayPG {
 
-enum class ServerType {
-	LOGIN_SERVER,
-	WORLD_SERVER
-};
-
-class ServerDetails {
+class MapServer final : public Server {
 public:
-	explicit ServerDetails(const std::string &friendlyName, const std::string &hostName, uint16_t port, ServerType serverType);
-	~ServerDetails() = default;
+	explicit MapServer(const ServerDetails &details);
+	virtual ~MapServer() = default;
 
-	const std::string friendlyName; // a user-friendly name for the server
-
-	const std::string hostName; // a web address, possibly an IP
-	const uint16_t port;
-
-	const ServerType serverType;
-};
-
-class Server {
-public:
-	explicit Server(const ServerDetails &serverDetails);
-	virtual ~Server() = default;
-
-	const ServerDetails details;
-
-	virtual void run() = 0;
-
-protected:
-	std::unique_ptr<APG::SDLAcceptorSocket> acceptor;
-
-	std::vector<APG::SDLSocket> attachedSockets;
+	virtual void run() override final;
 };
 
 }
 
-#endif /* INCLUDE_SERVER_SERVERCOMMON_HPP_ */
+#endif /* INCLUDE_SERVER_MAPSERVER_HPP_ */
