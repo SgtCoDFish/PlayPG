@@ -137,7 +137,8 @@ bool initializeProgramOptions(int argc, char *argv[]) {
 	}
 
 	if(vm.count("version")) {
-		logger->info("PlayPG Server Version %v", PLAYPG_VERSION);
+		logger->info("PlayPG Server Version %v", PlayPG::Version::versionString);
+		logger->info("Built with Git hash: %v", PlayPG::Version::gitHash);
 		return false;
 	}
 
