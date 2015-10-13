@@ -26,6 +26,7 @@
  */
 
 #include <cstdlib>
+#include <cmath>
 
 #include <memory>
 #include <iostream>
@@ -38,6 +39,7 @@
 INITIALIZE_EASYLOGGINGPP
 
 #include "Systems.hpp"
+#include "server/ServerCommon.hpp"
 #include "net/Packet.hpp"
 
 #include "PlayPGVersion.hpp"
@@ -45,6 +47,9 @@ INITIALIZE_EASYLOGGINGPP
 namespace po = boost::program_options;
 
 bool initializeProgramOptions(int argc, char *argv[]);
+
+bool startLoginServer(el::Logger * logger, const po::variables_map& vm);
+bool startWorldServer(el::Logger * logger, const po::variables_map& vm);
 
 int main(int argc, char *argv[]) {
 	START_EASYLOGGINGPP(argc, argv);
@@ -56,8 +61,6 @@ int main(int argc, char *argv[]) {
 	if(!initializeProgramOptions(argc, argv)) {
 		return EXIT_SUCCESS;
 	}
-
-	logger->info("ServPG started.");
 
 	APG::SDLGame::initialiseSDL();
 
@@ -116,7 +119,8 @@ bool initializeProgramOptions(int argc, char *argv[]) {
 
 	serverOptions.add_options()
 			("login-server", po::value<uint32_t>()->implicit_value(10419u), "run a login server listening on the given port (default 10419)")
-			("world-server", po::value<uint32_t>(), "run a world server listening on the given port.");
+			("world-server", po::value<uint32_t>(), "run a world server listening on the given port.")
+			("name", po::value<std::string>()->implicit_value(std::string("PGserver") + std::to_string(std::rand())), "use the given name for the server, defaulting to \"PGserver\" with a random integer");
 
 	po::options_description worldServerOptions("World Server Specific Options");
 
@@ -128,7 +132,7 @@ bool initializeProgramOptions(int argc, char *argv[]) {
 	allOptions.add(serverOptions).add(worldServerOptions).add(generalOptions);
 
 	po::variables_map vm;
-	po::store(po::parse_command_line(argc, argv, generalOptions), vm);
+	po::store(po::parse_command_line(argc, argv, allOptions), vm);
 	po::notify(vm);
 
 	if(vm.count("help")) {
@@ -139,8 +143,35 @@ bool initializeProgramOptions(int argc, char *argv[]) {
 	if(vm.count("version")) {
 		logger->info("PlayPG Server Version %v", PlayPG::Version::versionString);
 		logger->info("Built with Git hash: %v", PlayPG::Version::gitHash);
+
 		return false;
 	}
 
+	bool ret = true;
+
+	if(vm.count("login-server") && vm.count("world-server")) {
+		logger->error("Cannot have both --login-server and --world-server, run two processes.");
+		return false;
+	} else if(vm.count("login-server")) {
+		ret = startLoginServer(logger, vm);
+	} else if(vm.count("world-server")) {
+		ret = startWorldServer(logger, vm);
+	} else {
+		logger->info("Note: Defaulting to starting a login server since no choice was specified.");
+		logger->info("Run with --help for more information about server options.");
+
+		ret = startLoginServer(logger, vm);
+	}
+
+	return ret;
+}
+
+bool startLoginServer(el::Logger * logger, const po::variables_map &vm) {
+	logger->info("Starting a login server.");
+	return true;
+}
+
+bool startWorldServer(el::Logger * logger, const po::variables_map &vm) {
+	logger->info("Starting a world server.");
 	return true;
 }
