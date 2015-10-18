@@ -34,7 +34,7 @@ namespace PlayPG {
 
 class LoginServer final : public Server {
 public:
-	explicit LoginServer(const ServerDetails &serverDetails_);
+	explicit LoginServer(const ServerDetails &serverDetails_, const DatabaseDetails &databaseDetails_);
 	virtual ~LoginServer() = default;
 
 	virtual void run() override final;

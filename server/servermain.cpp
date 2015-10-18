@@ -40,6 +40,8 @@ INITIALIZE_EASYLOGGINGPP
 
 #include "Systems.hpp"
 #include "server/ServerCommon.hpp"
+#include "server/LoginServer.hpp"
+#include "server/MapServer.hpp"
 #include "net/Packet.hpp"
 
 #include "PlayPGVersion.hpp"
@@ -109,8 +111,10 @@ bool initializeProgramOptions(int argc, char *argv[]) {
 	auto logger = el::Loggers::getLogger("ServPG");
 	po::options_description generalOptions("General Options");
 
-	generalOptions.add_options()("help", "list available commands")("version", "print version information")("verbose",
-	        "enable verbose logging")("v", po::value<uint16_t>()->implicit_value(1u),
+	generalOptions.add_options()("help", "list available commands") //
+	("version", "print version information") //
+	("verbose", "enable verbose logging") //
+	("v", po::value<uint16_t>()->default_value(1u),
 	        "enable verbose logging with value from 0-9 indicating verbosity level");
 
 	po::options_description serverOptions("Server Options");
@@ -118,9 +122,19 @@ bool initializeProgramOptions(int argc, char *argv[]) {
 	serverOptions.add_options() //
 	("login-server", po::value<uint16_t>()->implicit_value(10419u),
 	        "run a login server listening on the given port (default 10419)") //
-	("world-server", po::value<uint16_t>(), "run a world server listening on the given port.") //
-	("name", po::value<std::string>()->implicit_value(std::string("PGserver") + std::to_string(std::rand())),
+	("world-server", po::value<uint16_t>(),
+	        "run a world server listening on the given port (default 10420).") //
+	("name", po::value<std::string>()->default_value(std::string("PGserver") + std::to_string(std::rand())),
 	        "use the given name for the server, defaulting to \"PGserver\" with a random integer");
+
+	po::options_description databaseOptions("Database Options");
+
+	databaseOptions.add_options()("database-server", po::value<std::string>()->default_value(std::string("localhost")),
+	        "the database server to connect to") //
+	("database-port", po::value<uint16_t>()->default_value(3306u), "the port the database server listens on") //
+	("database-username", po::value<std::string>()->default_value(std::string("root")),
+	        "the username for the database") //
+	("database-password", po::value<std::string>()->required(), "the password for the database");
 
 	po::options_description worldServerOptions("World Server Specific Options");
 
@@ -129,11 +143,16 @@ bool initializeProgramOptions(int argc, char *argv[]) {
 
 	po::options_description allOptions("Allowed Options");
 
-	allOptions.add(serverOptions).add(worldServerOptions).add(generalOptions);
+	allOptions.add(serverOptions).add(worldServerOptions).add(databaseOptions).add(generalOptions);
 
 	po::variables_map vm;
-	po::store(po::parse_command_line(argc, argv, allOptions), vm);
-	po::notify(vm);
+
+	try {
+		po::store(po::parse_command_line(argc, argv, allOptions), vm);
+		po::notify(vm);
+	} catch (std::exception &e) {
+		logger->fatal("%v", e.what());
+	}
 
 	if (vm.count("help")) {
 		std::cout << allOptions;
@@ -169,11 +188,32 @@ bool initializeProgramOptions(int argc, char *argv[]) {
 bool startLoginServer(el::Logger * logger, const po::variables_map &vm) {
 	logger->info("Starting a login server.");
 
-	const uint16_t port = vm["login-server"].as<uint16_t>();
+	const uint16_t serverPort = vm["login-server"].as<uint16_t>();
+	const uint16_t dbPort =  vm["database-port"].as<uint16_t>();
 
-	if(!APG::NetUtil::validatePort(port)) {
-
+	if (!APG::NetUtil::validatePort(serverPort)) {
+		logger->error("Invalid server port number: %v", serverPort);
+		return false;
 	}
+
+	if (!APG::NetUtil::validatePort(dbPort)) {
+		logger->error("Invalid database port given: %v", dbPort);
+		return false;
+	}
+
+	if (!vm.count("database-password")) {
+		logger->error("No database password given; use --database-password");
+		return false;
+	}
+
+	const auto dbServer = vm["database-server"].as<std::string>();
+	const auto dbUsername = vm["database-username"].as<std::string>();
+	const auto dbPassword = vm["database-password"].as<std::string>();
+
+	PlayPG::ServerDetails serverDetails("edmund", "localhost", 10410, PlayPG::ServerType::LOGIN_SERVER);
+	PlayPG::DatabaseDetails dbDetails(dbServer, dbPort, dbUsername, dbPassword);
+
+	PlayPG::LoginServer loginServer(serverDetails, dbDetails);
 
 	return true;
 }
@@ -182,3 +222,4 @@ bool startWorldServer(el::Logger * logger, const po::variables_map &vm) {
 	logger->info("Starting a world server.");
 	return true;
 }
+

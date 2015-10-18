@@ -29,8 +29,8 @@
 
 namespace PlayPG {
 
-LoginServer::LoginServer(const ServerDetails &serverDetails_) :
-		        Server(serverDetails_) {
+LoginServer::LoginServer(const ServerDetails &serverDetails_, const DatabaseDetails &databaseDetails_) :
+		        Server(serverDetails_, databaseDetails_) {
 
 }
 

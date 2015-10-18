@@ -34,7 +34,7 @@ namespace PlayPG {
 
 class MapServer final : public Server {
 public:
-	explicit MapServer(const ServerDetails &details);
+	explicit MapServer(const ServerDetails &details, const DatabaseDetails &databaseDetails_);
 	virtual ~MapServer() = default;
 
 	virtual void run() override final;

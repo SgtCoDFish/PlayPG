@@ -29,15 +29,31 @@
 
 namespace PlayPG {
 
-ServerDetails::ServerDetails(const std::string &friendlyName_, const std::string &hostName_, uint16_t port_, ServerType serverType_) :
+ServerDetails::ServerDetails(const std::string &friendlyName_, const std::string &hostName_, uint16_t port_,
+        ServerType serverType_) :
 		        friendlyName { friendlyName_ },
 		        hostName { hostName_ },
 		        port { port_ },
 		        serverType { serverType_ } {
 }
 
-Server::Server(const ServerDetails &serverDetails_) :
-		        details { serverDetails_ } {
+DatabaseDetails::DatabaseDetails(const std::string &hostName_, uint16_t port_, const std::string &username_,
+        const std::string &password_, DatabaseType databaseType_) :
+		        databaseType { databaseType_ },
+		        hostName { hostName_ },
+		        port { port_ },
+		        fullHostName { hostName + ":" + std::to_string(port) },
+		        userName { username_ },
+		        password { password_ } {
 
 }
+
+Server::Server(const ServerDetails &serverDetails_, const DatabaseDetails &databaseDetails_) :
+		        serverDetails { serverDetails_ },
+		        databaseDetails { databaseDetails_ },
+		        driver { sql::mysql::get_driver_instance() },
+		        mysqlConnection { std::unique_ptr<sql::Connection>(driver->connect(databaseDetails.fullHostName.c_str(),
+		                databaseDetails.userName.c_str(), databaseDetails.password.c_str())) } {
+}
+
 }

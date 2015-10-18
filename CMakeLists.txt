@@ -94,13 +94,15 @@ if ( NOT EXCLUDE_CLIENT )
 endif ()
 
 if ( NOT EXCLUDE_SERVER )
+	include_directories(${MysqlConnectorCpp_INCLUDES})
+	
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_BASE} ${PlayPG_DEBUG_FLAGS}")
 	add_executable(serverPG-d ${PlayPG_SOURCES} ${PlayPG_SERVER_SOURCES})
-	target_link_libraries(serverPG-d ${APG_DEBUG_LIBRARY} ${AshleyCPP_DEBUG_LIBRARY} ${PlayPG_LIBS})
+	target_link_libraries(serverPG-d ${APG_DEBUG_LIBRARY} ${AshleyCPP_DEBUG_LIBRARY} mysqlcppconn ${PlayPG_LIBS})
 
 	if ( NOT EXCLUDE_RELEASE ) 
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_BASE} ${PlayPG_RELEASE_FLAGS}")
 		add_executable(serverPG ${PlayPG_SOURCES} ${PlayPG_SERVER_SOURCES})
-		target_link_libraries(serverPG ${APG_LIBRARY} ${AshleyCPP_LIBRARY} ${PlayPG_LIBS})
+		target_link_libraries(serverPG ${APG_LIBRARY} ${AshleyCPP_LIBRARY} mysqlcppconn ${PlayPG_LIBS})
 	endif ()
 endif () 

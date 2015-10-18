@@ -28,8 +28,8 @@
 
 namespace PlayPG {
 
-MapServer::MapServer(const ServerDetails &details) :
-		        Server(details) {
+MapServer::MapServer(const ServerDetails &serverDetails_, const DatabaseDetails &databaseDetails_) :
+		        Server(serverDetails_, databaseDetails_) {
 
 }
 

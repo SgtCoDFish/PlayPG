@@ -36,11 +36,18 @@
 
 #include <APG/APGNet.hpp>
 
+#include <mysql_driver.h>
+#include <mysql_connection.h>
+
 namespace PlayPG {
 
 enum class ServerType {
 	LOGIN_SERVER,
 	WORLD_SERVER
+};
+
+enum class DatabaseType {
+	MYSQL
 };
 
 class ServerDetails {
@@ -56,16 +63,36 @@ public:
 	const ServerType serverType;
 };
 
+class DatabaseDetails {
+public:
+	explicit DatabaseDetails(const std::string &hostName, uint16_t port, const std::string &username, const std::string &password, DatabaseType databaseType = DatabaseType::MYSQL);
+	~DatabaseDetails() = default;
+
+	const DatabaseType databaseType;
+
+	const std::string hostName;
+	const uint16_t port;
+
+	const std::string fullHostName;
+
+	const std::string userName;
+	const std::string password;
+};
+
 class Server {
 public:
-	explicit Server(const ServerDetails &serverDetails);
+	explicit Server(const ServerDetails &serverDetails, const DatabaseDetails &databaseDetails);
 	virtual ~Server() = default;
 
-	const ServerDetails details;
+	const ServerDetails serverDetails;
+	const DatabaseDetails databaseDetails;
 
 	virtual void run() = 0;
 
 protected:
+	sql::mysql::MySQL_Driver * driver;
+	std::unique_ptr<sql::Connection> mysqlConnection;
+
 	std::unique_ptr<APG::SDLAcceptorSocket> acceptor;
 
 	std::vector<APG::SDLSocket> attachedSockets;
