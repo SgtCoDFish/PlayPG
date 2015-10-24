@@ -1,7 +1,6 @@
 /*
  * Copyright (c) 2015 See AUTHORS file.
  * All rights reserved.
-
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *    * Redistributions of source code must retain the above copyright
@@ -29,8 +28,8 @@
 
 namespace PlayPG {
 
-const char * const Version::extra;
-const char * const Version::gitHash;
-const char * const Version::versionString;
+constexpr const char * const Version::extra;
+constexpr const char * const Version::gitHash;
+constexpr const char * const Version::versionString;
 
 }

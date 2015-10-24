@@ -28,7 +28,12 @@
 #ifndef INCLUDE_SERVER_LOGINSERVER_HPP_
 #define INCLUDE_SERVER_LOGINSERVER_HPP_
 
+#include <vector>
+#include <memory>
+#include <utility>
+
 #include "ServerCommon.hpp"
+#include "net/PlayerSession.hpp"
 
 namespace PlayPG {
 
@@ -40,8 +45,15 @@ public:
 	virtual void run() override final;
 
 protected:
+	// For accepting connections from players
+	std::unique_ptr<APG::SDLAcceptorSocket> playerAcceptor;
+
+	std::vector<std::unique_ptr<PlayerSession>> playerSessions;
+
+	// For accepting connections from map servers which have just spun up
 	std::unique_ptr<APG::SDLAcceptorSocket> mapServerAcceptor;
 
+	// A list of connected map servers
 	std::vector<APG::SDLSocket> mapServers;
 };
 

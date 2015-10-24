@@ -32,36 +32,17 @@
 
 #include <type_traits>
 
+#include <APG/net/ByteBuffer.hpp>
+
 #include "util/Util.hpp"
 
 namespace PlayPG {
 
-using msg_t = uint16_t;
-
-enum class ClientMessage : msg_t {
-	LOGIN = 500u,
-	MOVE = 1000u,
-};
-
-enum class ServerMessage : msg_t {
-	LOGIN = 500u,
-	MOVE = 1000u
-};
-
 struct Packet {
-	uint64_t id; // 8 bytes
+	uint32_t opcode;
 
-	uint64_t entity; // 8 bytes
-
-	msg_t message; // 2 bytes
-
-	uint16_t extra1; // 2 bytes
-	uint16_t extra2; // 2 bytes
-	uint16_t extra3; // 2 bytes
-
+	APG::ByteBuffer buffer;
 };
-
-static_assert(std::is_pod<Packet>::value, "Packet should be a POD");
 
 }
 

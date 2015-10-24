@@ -33,11 +33,14 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include <unordered_map>
 
 #include <APG/APGNet.hpp>
 
 #include <mysql_driver.h>
 #include <mysql_connection.h>
+
+#include "net/Opcodes.hpp"
 
 namespace PlayPG {
 
@@ -52,7 +55,8 @@ enum class DatabaseType {
 
 class ServerDetails {
 public:
-	explicit ServerDetails(const std::string &friendlyName, const std::string &hostName, uint16_t port, ServerType serverType);
+	explicit ServerDetails(const std::string &friendlyName, const std::string &hostName, uint16_t port,
+	        ServerType serverType);
 	~ServerDetails() = default;
 
 	const std::string friendlyName; // a user-friendly name for the server
@@ -65,7 +69,8 @@ public:
 
 class DatabaseDetails {
 public:
-	explicit DatabaseDetails(const std::string &hostName, uint16_t port, const std::string &username, const std::string &password, DatabaseType databaseType = DatabaseType::MYSQL);
+	explicit DatabaseDetails(const std::string &hostName, uint16_t port, const std::string &username,
+	        const std::string &password, DatabaseType databaseType = DatabaseType::MYSQL);
 	~DatabaseDetails() = default;
 
 	const DatabaseType databaseType;
@@ -81,7 +86,8 @@ public:
 
 class Server {
 public:
-	explicit Server(const ServerDetails &serverDetails, const DatabaseDetails &databaseDetails);
+	explicit Server(const ServerDetails &serverDetails, const DatabaseDetails &databaseDetails,
+	        const std::unordered_map<OpcodeType, OpcodeDetails>& acceptedOpcodeTypes);
 	virtual ~Server() = default;
 
 	const ServerDetails serverDetails;
@@ -90,12 +96,16 @@ public:
 	virtual void run() = 0;
 
 protected:
+	bool isOpcodeAccepted(const OpcodeType &opcode);
+
 	sql::mysql::MySQL_Driver * driver;
 	std::unique_ptr<sql::Connection> mysqlConnection;
 
 	std::unique_ptr<APG::SDLAcceptorSocket> acceptor;
 
 	std::vector<APG::SDLSocket> attachedSockets;
+
+	std::unordered_map<OpcodeType, OpcodeDetails> acceptedOpcodes;
 };
 
 }

@@ -25,23 +25,18 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "net/PacketFactory.hpp"
+#ifndef INCLUDE_NET_WORLDSESSION_HPP_
+#define INCLUDE_NET_WORLDSESSION_HPP_
 
 namespace PlayPG {
 
-uint64_t PacketFactory::packetIDCounter = 0u;
+/**
+ * Manages a world session for a player, including packet handling and detail storage.
+ */
+class WorldSession {
 
-Packet PacketFactory::makeMovePacket(const Move &move) {
-	Packet packet;
-
-	packet.id = packetIDCounter++;
-	packet.message = PlayPG::util::to_integral(ClientMessage::MOVE);
-	packet.entity = move.entity->getIndex();
-
-	packet.extra1 = move.xTiles;
-	packet.extra2 = move.yTiles;
-
-	return packet;
-}
+};
 
 }
+
+#endif /* INCLUDE_NET_WORLDSESSION_HPP_ */

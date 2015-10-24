@@ -28,16 +28,46 @@
 #ifndef INCLUDE_NET_OPCODES_HPP_
 #define INCLUDE_NET_OPCODES_HPP_
 
+#include <cstdint>
+
+#include <type_traits>
+
 namespace PlayPG {
 
-enum class ClientOpcodes {
-	LOGIN, MOVE
+struct OpcodeDetails {
+	OpcodeDetails(const char *humanReadable_, bool encrypted_ = false) :
+			        humanReadable { humanReadable_ },
+			        encrypted { encrypted_ } {
+
+	}
+
+	const char * const humanReadable;
+	const bool encrypted;
 };
 
-enum class ServerOpcodes {
-	LOGIN, MOVE
+namespace ClientOpcodes {
+
+enum ClientOpcodes
+	: uint32_t {
+		LOGIN = 0x01,
+	MOVE = 0x02,
 };
 
+}
+
+namespace ServerOpcodes {
+
+enum ServerOpcodes
+	: uint32_t {
+		LOGIN = 0xFFFF,
+	MOVE = 0xFFFE,
+};
+
+}
+
+static_assert(std::is_same<std::underlying_type<ClientOpcodes::ClientOpcodes>::type, std::underlying_type<ServerOpcodes::ServerOpcodes>::type>::value, "ClientOpcodes and ServerOpcodes must have the same underlying type.");
+using OpcodeType = std::underlying_type<ClientOpcodes::ClientOpcodes>::type;
+// can safely use the type of ClientOpcodes since we mandate that the underlying type must match that of the server opcodes.
 }
 
 #endif /* INCLUDE_NET_OPCODES_HPP_ */

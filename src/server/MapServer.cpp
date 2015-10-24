@@ -24,17 +24,25 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include <APG/core/APGeasylogging.hpp>
+
 #include "server/MapServer.hpp"
 
 namespace PlayPG {
 
+static const std::unordered_map<OpcodeType, OpcodeDetails> acceptedOpcodes_map = { //
+        { ClientOpcodes::MOVE, OpcodeDetails("Move request") }, //
+        };
+
 MapServer::MapServer(const ServerDetails &serverDetails_, const DatabaseDetails &databaseDetails_) :
-		        Server(serverDetails_, databaseDetails_) {
+		        Server(serverDetails_, databaseDetails_, acceptedOpcodes_map) {
 
 }
 
 void MapServer::run() {
+	auto logger = el::Loggers::getLogger("PlayPG");
 
+	logger->info("Running map server.");
 }
 
 }

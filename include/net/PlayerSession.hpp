@@ -25,36 +25,26 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <APG/core/APGeasylogging.hpp>
+#ifndef INCLUDE_NET_PLAYERSESSION_HPP_
+#define INCLUDE_NET_PLAYERSESSION_HPP_
 
-#include "server/LoginServer.hpp"
-#include "net/Opcodes.hpp"
+#include <cstdint>
+
+#include <APG/APGNet.hpp>
 
 namespace PlayPG {
 
-static const std::unordered_map<OpcodeType, OpcodeDetails> acceptedOpcodes_login = { //
-        { ClientOpcodes::LOGIN, OpcodeDetails("Login request", true) }, //
-        };
+class PlayerSession final {
+public:
+	explicit PlayerSession(std::unique_ptr<APG::Socket> &&socket);
+	~PlayerSession() = default;
 
-LoginServer::LoginServer(const ServerDetails &serverDetails_, const DatabaseDetails &databaseDetails_) :
-		        Server(serverDetails_, databaseDetails_, acceptedOpcodes_login) {
-	playerAcceptor = std::make_unique<APG::SDLAcceptorSocket>(serverDetails.port);
-
-}
-
-void LoginServer::run() {
-	auto logger = el::Loggers::getLogger("ServPG");
-
-	logger->info("Running login server.");
-
-	while(true) {
-		auto newPlayerSocket = playerAcceptor->acceptSocketOnce();
-
-		if(newPlayerSocket != nullptr) {
-			// new connection
-			playerSessions.emplace_back(std::make_unique<PlayerSession>(std::move(newPlayerSocket)));
-		}
-	}
-}
+	uint64_t guid;
+	std::unique_ptr<APG::Socket> socket;
+};
 
 }
+
+
+
+#endif /* INCLUDE_NET_PLAYERSESSION_HPP_ */

@@ -48,12 +48,19 @@ DatabaseDetails::DatabaseDetails(const std::string &hostName_, uint16_t port_, c
 
 }
 
-Server::Server(const ServerDetails &serverDetails_, const DatabaseDetails &databaseDetails_) :
+Server::Server(const ServerDetails &serverDetails_, const DatabaseDetails &databaseDetails_,
+        const std::unordered_map<OpcodeType, OpcodeDetails>& acceptedOpcodeTypes_) :
 		        serverDetails { serverDetails_ },
 		        databaseDetails { databaseDetails_ },
 		        driver { sql::mysql::get_driver_instance() },
-		        mysqlConnection { std::unique_ptr<sql::Connection>(driver->connect(databaseDetails.fullHostName.c_str(),
-		                databaseDetails.userName.c_str(), databaseDetails.password.c_str())) } {
+		        mysqlConnection { std::unique_ptr<sql::Connection>(
+		                driver->connect(databaseDetails.fullHostName.c_str(), databaseDetails.userName.c_str(),
+		                        databaseDetails.password.c_str())) },
+		        acceptedOpcodes { acceptedOpcodeTypes_ } {
+}
+
+bool Server::isOpcodeAccepted(const OpcodeType &opcode) {
+	return acceptedOpcodes.find(opcode) != acceptedOpcodes.end();
 }
 
 }

@@ -25,25 +25,19 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef INCLUDE_NET_PACKETFACTORY_HPP_
-#define INCLUDE_NET_PACKETFACTORY_HPP_
+#include <cstdint>
 
-#include "net/Packet.hpp"
-#include "systems/MovementSystem.hpp"
+#include <memory>
+#include <utility>
+
+#include "net/PlayerSession.hpp"
 
 namespace PlayPG {
 
-class PacketFactory {
-public:
-	explicit PacketFactory() = delete;
-	~PacketFactory() = default;
-
-	static Packet makeMovePacket(const Move &move);
-
-private:
-	static uint64_t packetIDCounter;
-};
+PlayerSession::PlayerSession(std::unique_ptr<APG::Socket> &&socket_) :
+				guid { 0 }, // todo: change
+		        socket { std::move(socket_) } {
 
 }
 
-#endif /* INCLUDE_NET_PACKETFACTORY_HPP_ */
+}

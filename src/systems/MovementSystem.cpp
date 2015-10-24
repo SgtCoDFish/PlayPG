@@ -37,7 +37,6 @@
 #include "components/Position.hpp"
 #include "systems/MovementSystem.hpp"
 #include "net/Packet.hpp"
-#include "net/PacketFactory.hpp"
 #include "systems/NetworkDispatchSystem.hpp"
 #include "Map.hpp"
 
@@ -64,10 +63,6 @@ void MovementSystem::update(float deltaTime) {
 
 		if (!map_->isSolidAtCoord(destination)) {
 			position->p = destination;
-		}
-
-		if(networkingAttached()) {
-			networkDispatchSystem_->queuePacket(PacketFactory::makeMovePacket(move));
 		}
 	}
 

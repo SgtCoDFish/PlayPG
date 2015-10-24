@@ -32,6 +32,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <utility>
 
 #include <boost/program_options.hpp>
 
@@ -48,10 +49,10 @@ INITIALIZE_EASYLOGGINGPP
 
 namespace po = boost::program_options;
 
-bool initializeProgramOptions(int argc, char *argv[]);
+std::unique_ptr<PlayPG::Server> initializeProgramOptions(int argc, char *argv[]);
 
-bool startLoginServer(el::Logger * logger, const po::variables_map& vm);
-bool startWorldServer(el::Logger * logger, const po::variables_map& vm);
+std::unique_ptr<PlayPG::LoginServer> startLoginServer(el::Logger * logger, const po::variables_map& vm);
+std::unique_ptr<PlayPG::MapServer> startWorldServer(el::Logger * logger, const po::variables_map& vm);
 
 int main(int argc, char *argv[]) {
 	START_EASYLOGGINGPP(argc, argv);
@@ -60,54 +61,20 @@ int main(int argc, char *argv[]) {
 	APG::Game::setLoggerToAPGStyle("ServPG");
 	auto logger = el::Loggers::getLogger("ServPG");
 
-	if (!initializeProgramOptions(argc, argv)) {
+	auto server = initializeProgramOptions(argc, argv);
+	if (server == nullptr) {
 		return EXIT_SUCCESS;
 	}
 
 	APG::SDLGame::initialiseSDL();
 
-	auto inputManager = std::make_unique<APG::SDLInputManager>();
-
-	IPaddress ip;
-	TCPsocket socket;
-
-	if (SDLNet_ResolveHost(&ip, nullptr, 10419) == -1) {
-		logger->fatal("Couldn't resolve host: %v.", SDLNet_GetError());
-		return EXIT_FAILURE;
-	}
-
-	socket = SDLNet_TCP_Open(&ip);
-
-	if (socket == nullptr) {
-		logger->fatal("Couldn't open server socket: %v.", SDLNet_GetError());
-		return EXIT_FAILURE;
-	}
-
-	logger->info("Successfully listening on port 10419.");
-
-	TCPsocket accepted;
-
-	while ((accepted = SDLNet_TCP_Accept(socket)) == nullptr) {
-	}
-
-	logger->info("Accepted a connection!");
-
-	while (true) {
-		PlayPG::Packet packet;
-
-		if (SDLNet_TCP_Recv(accepted, &packet, sizeof(PlayPG::Packet)) <= 0) {
-			logger->info("Finished with remote host.");
-			break;
-		}
-
-		logger->info("Received packet #%v, entity #%v", packet.id, packet.entity);
-	}
+	server->run();
 
 	APG::SDLGame::shutdownSDL();
 	return EXIT_SUCCESS;
 }
 
-bool initializeProgramOptions(int argc, char *argv[]) {
+std::unique_ptr<PlayPG::Server>  initializeProgramOptions(int argc, char *argv[]) {
 	auto logger = el::Loggers::getLogger("ServPG");
 	po::options_description generalOptions("General Options");
 
@@ -123,7 +90,7 @@ bool initializeProgramOptions(int argc, char *argv[]) {
 	("login-server", po::value<uint16_t>()->implicit_value(10419u),
 	        "run a login server listening on the given port (default 10419)") //
 	("world-server", po::value<uint16_t>(),
-	        "run a world server listening on the given port (default 10420).") //
+	        "run a world server listening on the given port") //
 	("name", po::value<std::string>()->default_value(std::string("PGserver") + std::to_string(std::rand())),
 	        "use the given name for the server, defaulting to \"PGserver\" with a random integer");
 
@@ -156,27 +123,29 @@ bool initializeProgramOptions(int argc, char *argv[]) {
 
 	if (vm.count("help")) {
 		std::cout << allOptions;
-		return false;
+		return nullptr;
 	}
 
 	if (vm.count("version")) {
 		logger->info("PlayPG Server Version %v", PlayPG::Version::versionString);
 		logger->info("Built with Git hash: %v", PlayPG::Version::gitHash);
 
-		return false;
+		return nullptr;
 	}
 
-	bool ret = true;
+	std::unique_ptr<PlayPG::Server> ret;
 
 	if (vm.count("login-server") && vm.count("world-server")) {
 		logger->error("Cannot have both --login-server and --world-server; run two processes instead.");
-		return false;
+		return nullptr;
 	} else if (vm.count("world-server")) {
 		ret = startWorldServer(logger, vm);
 	} else {
 		if (!vm.count("login-server")) {
 			logger->info("Note: Defaulting to starting a login server since no choice was specified.");
 			logger->info("Run with --help for more information about server options.");
+
+			vm.insert(std::make_pair("login-server", po::variable_value(10419u, false)));
 		}
 
 		ret = startLoginServer(logger, vm);
@@ -185,7 +154,7 @@ bool initializeProgramOptions(int argc, char *argv[]) {
 	return ret;
 }
 
-bool startLoginServer(el::Logger * logger, const po::variables_map &vm) {
+std::unique_ptr<PlayPG::LoginServer> startLoginServer(el::Logger * logger, const po::variables_map &vm) {
 	logger->info("Starting a login server.");
 
 	const uint16_t serverPort = vm["login-server"].as<uint16_t>();
@@ -193,17 +162,17 @@ bool startLoginServer(el::Logger * logger, const po::variables_map &vm) {
 
 	if (!APG::NetUtil::validatePort(serverPort)) {
 		logger->error("Invalid server port number: %v", serverPort);
-		return false;
+		return nullptr;
 	}
 
 	if (!APG::NetUtil::validatePort(dbPort)) {
 		logger->error("Invalid database port given: %v", dbPort);
-		return false;
+		return nullptr;
 	}
 
 	if (!vm.count("database-password")) {
 		logger->error("No database password given; use --database-password");
-		return false;
+		return nullptr;
 	}
 
 	const auto dbServer = vm["database-server"].as<std::string>();
@@ -213,13 +182,11 @@ bool startLoginServer(el::Logger * logger, const po::variables_map &vm) {
 	PlayPG::ServerDetails serverDetails("edmund", "localhost", 10410, PlayPG::ServerType::LOGIN_SERVER);
 	PlayPG::DatabaseDetails dbDetails(dbServer, dbPort, dbUsername, dbPassword);
 
-	PlayPG::LoginServer loginServer(serverDetails, dbDetails);
-
-	return true;
+	return std::make_unique<PlayPG::LoginServer>(serverDetails, dbDetails);
 }
 
-bool startWorldServer(el::Logger * logger, const po::variables_map &vm) {
+std::unique_ptr<PlayPG::MapServer>  startWorldServer(el::Logger * logger, const po::variables_map &vm) {
 	logger->info("Starting a world server.");
-	return true;
+	return nullptr;
 }
 

@@ -13,3 +13,9 @@ Release
 build/*
 build
 
+build-clang/*
+build-clang
+
+build-gcc/*
+build-gcc
+
