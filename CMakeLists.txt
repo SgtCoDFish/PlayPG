@@ -58,6 +58,8 @@ find_package(GLEW REQUIRED)
 find_package(GLM REQUIRED)
 
 find_package(TmxParser REQUIRED)
+find_package(TinyXML2 REQUIRED)
+find_package(ZLIB REQUIRED)
 
 find_package(AshleyCPP REQUIRED)
 find_package(APG REQUIRED)
@@ -68,18 +70,48 @@ file(GLOB_RECURSE PlayPG_SERVER_SOURCES ${PROJECT_SOURCE_DIR}/server/*.cpp)
 file(GLOB_RECURSE PlayPG_HEADERS ${PROJECT_SOURCE_DIR}/include/*.hpp)
 file(GLOB_RECURSE PlayPG_TEST_ASSETS ${PROJECT_SOURCE_DIR}/assets/*)
 
-set(CMAKE_CXX_COMPILER_ARG1 "-std=c++1y")
-set(CMAKE_CXX_FLAGS_BASE "-Wall -Wextra -Wno-unused-parameter")
+set(OS_LIBS "")
+
+if ( NOT MSVC )
+	set(CMAKE_CXX_COMPILER_ARG1 "-std=c++1y")
+	set(CMAKE_CXX_FLAGS_BASE "-Wall -Wextra -Wno-unused-parameter")
+	
+	set(PlayPG_DEBUG_FLAGS "-g3 -O0")
+	set(PlayPG_RELEASE_FLAGS "-g0 -O3")
+else ()
+	# VS 2015 has a linker issue, this should fix it
+	if( MSVC_VERSION GREATER 1800)
+		message ("Using legacy STDIO fix for MSVC 15.")
+		set(OS_LIBS ${OS_LIBS} legacy_stdio_definitions)
+		set(${PlayPG_SOURCES} ${PlayPG_SOURCES} ${PROJECT_SOURCE_DIR}/MSVC/vs2015_io_fix.cpp)
+		
+	endif()
+	
+	set(CMAKE_CXX_FLAGS_BASE "/EHsc")
+	
+	set(PlayPG_DEBUG_FLAGS "/Od /Gs")
+	set(PlayPG_RELEASE_FLAGS "/Ox")
+endif ()
 
 file(MAKE_DIRECTORY assets)
 file(COPY ${PlayPG_TEST_ASSETS} DESTINATION assets)
 
-set(PlayPG_DEBUG_FLAGS "-g3 -O0")
-set(PlayPG_RELEASE_FLAGS "-g0 -O3")
+
 add_definitions(-DGLM_FORCE_RADIANS)
 
-include_directories("include" ${Boost_INCLUDE_DIR} ${APG_INCLUDE_DIR} ${SDL2_INCLUDE_DIR} ${SDL2_TTF_INCLUDE_DIR} ${SDL2_IMAGE_INCLUDE_DIR} ${SDL2_MIXER_INCLUDE_DIR} ${SDL_NET_INCLUDE_DIR} ${OPENGL_INCLUDE_DIR} ${GLEW_INCLUDE_DIRS} ${TMXPARSER_INCLUDE_DIR} ${AshleyCPP_INCLUDE_DIR} ${PROJECT_BINARY_DIR})
-set(PlayPG_LIBS ${Boost_LIBRARIES} ${SDL2_LIBRARY} ${SDL2_IMAGE_LIBRARY} ${SDL2_TTF_LIBRARIES} ${SDL2_MIXER_LIBRARY} ${SDL2_NET_LIBRARY} ${OPENGL_LIBRARIES} ${GLEW_LIBRARIES} ${TMXPARSER_LIBRARY})
+include_directories("include" ${Boost_INCLUDE_DIR}
+							  ${APG_INCLUDE_DIR}
+							  ${SDL2_INCLUDE_DIR}
+							  ${SDL2_TTF_INCLUDE_DIR}
+							  ${SDL2_IMAGE_INCLUDE_DIR}
+							  ${SDL2_MIXER_INCLUDE_DIR}
+							  ${SDL_NET_INCLUDE_DIR} ${OPENGL_INCLUDE_DIR}
+							  ${GLM_INCLUDE_DIRS}
+							  ${GLEW_INCLUDE_DIRS}
+							  ${TMXPARSER_INCLUDE_DIR}
+							  ${AshleyCPP_INCLUDE_DIR}
+							  ${PROJECT_BINARY_DIR})
+set(PlayPG_LIBS ${Boost_LIBRARIES} ${SDL2_LIBRARY} ${SDL2_IMAGE_LIBRARY} ${SDL2_TTF_LIBRARIES} ${SDL2_MIXER_LIBRARY} ${SDL2_NET_LIBRARY} ${OPENGL_LIBRARIES} ${GLEW_LIBRARIES} ${TMXPARSER_LIBRARY} ${OS_LIBS})
 
 if ( NOT EXCLUDE_CLIENT )
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_BASE} ${PlayPG_DEBUG_FLAGS}")

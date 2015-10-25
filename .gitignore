@@ -19,3 +19,6 @@ build-clang
 build-gcc/*
 build-gcc
 
+build-msvc/*
+build-msvc
+
