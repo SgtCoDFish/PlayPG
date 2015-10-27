@@ -27,6 +27,13 @@
 
 #include <APG/core/APGeasylogging.hpp>
 
+#include "mysql_connection.h"
+#include "mysql_driver.h"
+
+#include <cppconn/driver.h>
+#include <cppconn/resultset.h>
+#include <cppconn/statement.h>
+
 #include "server/LoginServer.hpp"
 #include "net/Opcodes.hpp"
 
@@ -47,10 +54,18 @@ void LoginServer::run() {
 
 	logger->info("Running login server.");
 
-	while(true) {
-		auto newPlayerSocket = playerAcceptor->acceptSocketOnce();
+	auto newPlayerSocket = playerAcceptor->acceptSocketOnce();
 
-		if(newPlayerSocket != nullptr) {
+	auto ps = std::unique_ptr<sql::Statement>(mysqlConnection->createStatement());
+
+	auto res = std::unique_ptr<sql::ResultSet>(ps->executeQuery("SELECT * FROM players;"));
+
+	while (res->next()) {
+		std::cout << "id = " << res->getInt(1) << "\nname = " << res->getString(2) << std::endl;
+	}
+
+	while (true) {
+		if (newPlayerSocket != nullptr) {
 			// new connection
 			playerSessions.emplace_back(std::make_unique<PlayerSession>(std::move(newPlayerSocket)));
 		}

@@ -57,6 +57,7 @@ Server::Server(const ServerDetails &serverDetails_, const DatabaseDetails &datab
 		                driver->connect(databaseDetails.fullHostName.c_str(), databaseDetails.userName.c_str(),
 		                        databaseDetails.password.c_str())) },
 		        acceptedOpcodes { acceptedOpcodeTypes_ } {
+	mysqlConnection->setSchema("ppg");
 }
 
 bool Server::isOpcodeAccepted(const OpcodeType &opcode) {
