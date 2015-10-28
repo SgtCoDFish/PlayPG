@@ -59,7 +59,7 @@ int main(int argc, char *argv[]) {
 
 	APG::Game::setupLoggingDefault();
 	APG::Game::setLoggerToAPGStyle("ServPG");
-	auto logger = el::Loggers::getLogger("ServPG");
+//	auto logger = el::Loggers::getLogger("ServPG");
 
 	auto server = initializeProgramOptions(argc, argv);
 	if (server == nullptr) {

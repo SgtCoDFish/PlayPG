@@ -35,13 +35,47 @@
 #include <APG/net/ByteBuffer.hpp>
 
 #include "util/Util.hpp"
+#include "net/Opcodes.hpp"
 
 namespace PlayPG {
 
+enum class PacketType
+	: uint8_t {
+		CLIENT = 0x00,
+	SERVER = 0x01
+};
+
+using packet_type_t = std::underlying_type<PacketType>::type;
+
 struct Packet {
-	uint32_t opcode;
+	explicit Packet(opcode_type_t opcode_, packet_type_t type_) :
+			        opcode { opcode_ },
+			        type { type_ } {
+	}
+
+	opcode_type_t opcode;
+
+	packet_type_t type;
 
 	APG::ByteBuffer buffer;
+};
+
+/**
+ * A packet sent from server -> client.
+ */
+struct ServerPacket : public Packet {
+	explicit ServerPacket(ServerOpcode opcode_) :
+			        Packet(static_cast<opcode_type_t>(opcode_), static_cast<packet_type_t>(PacketType::SERVER)) {
+	}
+};
+
+/**
+ * A packet sent from client -> server.
+ */
+struct ClientPacket : public Packet {
+	explicit ClientPacket(ClientOpcode opcode_) :
+			        Packet(static_cast<opcode_type_t>(opcode_), static_cast<packet_type_t>(PacketType::CLIENT)) {
+	}
 };
 
 }

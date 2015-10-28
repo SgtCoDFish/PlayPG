@@ -24,25 +24,38 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include <APG/core/APGeasylogging.hpp>
 
-#include "server/MapServer.hpp"
+#include "net/packets/LoginPackets.hpp"
 
 namespace PlayPG {
 
-static const std::unordered_map<opcode_type_t, OpcodeDetails> acceptedOpcodes_map = { //
-        { static_cast<opcode_type_t>(ClientOpcode::MOVE), OpcodeDetails("Move request") }, //
-        };
+AuthenticationChallenge::AuthenticationChallenge() :
+		        ServerPacket(ServerOpcode::LOGIN_AUTHENTICATION_CHALLENGE) {
+}
 
-MapServer::MapServer(const ServerDetails &serverDetails_, const DatabaseDetails &databaseDetails_) :
-		        Server(serverDetails_, databaseDetails_, acceptedOpcodes_map) {
+AuthenticationIdentity::AuthenticationIdentity(const std::string &username_, const std::string &password_) :
+		        ClientPacket(ClientOpcode::LOGIN_AUTHENTICATION_IDENTITY),
+		        unameLength { static_cast<decltype(unameLength)>(username_.length()) },
+		        username { username_.c_str() },
+		        passwordLength { static_cast<decltype(passwordLength)>(password_.length()) },
+		        password { password_.c_str() } {
+
+	buffer.putShort(unameLength);
+	for (auto &c : username_) {
+		buffer.putChar(c);
+	}
+
+	buffer.putShort(passwordLength);
+	for (auto &c : password_) {
+		buffer.putChar(c);
+	}
+}
+
+AuthenticationResponse::AuthenticationResponse(bool successful_) :
+		        ServerPacket(ServerOpcode::LOGIN_AUTHENTICATION_RESPONSE),
+		        successful { successful_ } {
+	buffer.put(static_cast<uint8_t>(successful));
+}
 
 }
 
-void MapServer::run() {
-	auto logger = el::Loggers::getLogger("PlayPG");
-
-	logger->info("Running map server.");
-}
-
-}

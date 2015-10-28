@@ -24,25 +24,45 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include <APG/core/APGeasylogging.hpp>
 
-#include "server/MapServer.hpp"
+#ifndef INCLUDE_NET_PACKETS_LOGINPACKETS_HPP_
+#define INCLUDE_NET_PACKETS_LOGINPACKETS_HPP_
+
+#include <string>
+
+#include "net/Packet.hpp"
 
 namespace PlayPG {
 
-static const std::unordered_map<opcode_type_t, OpcodeDetails> acceptedOpcodes_map = { //
-        { static_cast<opcode_type_t>(ClientOpcode::MOVE), OpcodeDetails("Move request") }, //
-        };
+class AuthenticationChallenge final : public ServerPacket {
+public:
+	explicit AuthenticationChallenge();
+};
 
-MapServer::MapServer(const ServerDetails &serverDetails_, const DatabaseDetails &databaseDetails_) :
-		        Server(serverDetails_, databaseDetails_, acceptedOpcodes_map) {
+/**
+ * Filled by a client, contains their login details.
+ *
+ * TODO: Add SSL/encryption
+ */
+class AuthenticationIdentity final : public ClientPacket {
+public:
+	explicit AuthenticationIdentity(const std::string &username, const std::string &password);
+
+	uint16_t unameLength;
+	const char *username;
+
+	uint16_t passwordLength;
+	const char *password;
+
+};
+
+class AuthenticationResponse final : public ServerPacket {
+public:
+	explicit AuthenticationResponse(bool successful_);
+
+	bool successful;
+};
 
 }
 
-void MapServer::run() {
-	auto logger = el::Loggers::getLogger("PlayPG");
-
-	logger->info("Running map server.");
-}
-
-}
+#endif /* INCLUDE_NET_PACKETS_LOGINPACKETS_HPP_ */

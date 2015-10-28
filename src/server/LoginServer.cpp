@@ -39,8 +39,9 @@
 
 namespace PlayPG {
 
-static const std::unordered_map<OpcodeType, OpcodeDetails> acceptedOpcodes_login = { //
-        { ClientOpcodes::LOGIN, OpcodeDetails("Login request", true) }, //
+static const std::unordered_map<opcode_type_t, OpcodeDetails> acceptedOpcodes_login = { //
+                { static_cast<opcode_type_t>(ClientOpcode::LOGIN_AUTHENTICATION_IDENTITY), OpcodeDetails(
+                        "Login request", true) }, //
         };
 
 LoginServer::LoginServer(const ServerDetails &serverDetails_, const DatabaseDetails &databaseDetails_) :

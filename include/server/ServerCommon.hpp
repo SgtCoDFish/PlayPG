@@ -87,7 +87,7 @@ public:
 class Server {
 public:
 	explicit Server(const ServerDetails &serverDetails, const DatabaseDetails &databaseDetails,
-	        const std::unordered_map<OpcodeType, OpcodeDetails>& acceptedOpcodeTypes);
+	        const std::unordered_map<opcode_type_t, OpcodeDetails>& acceptedOpcodeTypes);
 	virtual ~Server() = default;
 
 	const ServerDetails serverDetails;
@@ -96,7 +96,7 @@ public:
 	virtual void run() = 0;
 
 protected:
-	bool isOpcodeAccepted(const OpcodeType &opcode);
+	bool isOpcodeAccepted(const opcode_type_t &opcode);
 
 	sql::mysql::MySQL_Driver * driver;
 	std::unique_ptr<sql::Connection> mysqlConnection;
@@ -105,7 +105,7 @@ protected:
 
 	std::vector<APG::SDLSocket> attachedSockets;
 
-	std::unordered_map<OpcodeType, OpcodeDetails> acceptedOpcodes;
+	std::unordered_map<opcode_type_t, OpcodeDetails> acceptedOpcodes;
 };
 
 }
