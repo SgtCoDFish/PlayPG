@@ -42,9 +42,12 @@ using namespace APG;
 namespace PlayPG {
 
 el::Logger *PlayPG::logger = nullptr;
+constexpr const char * const PlayPG::addr;
+constexpr const int PlayPG::port;
 
 PlayPG::PlayPG() :
-		        APG::SDLGame("PlayPG", 1280u, 720u, 4, 5) {
+		        APG::SDLGame("PlayPG", 1280u, 720u, 4, 5),
+		        socket { addr, port } {
 	PlayPG::logger = el::Loggers::getLogger("PlayPG");
 }
 
@@ -62,20 +65,13 @@ bool PlayPG::init() {
 	playerTexture = std::make_unique<Texture>("assets/player.png");
 	playerSprite = std::make_unique<Sprite>(playerTexture);
 
-	IPaddress ip;
-	if(SDLNet_ResolveHost(&ip, "localhost", 10419) == -1) {
-		logger->fatal("Couldn't resolve localhost on port 10419: %v", SDLNet_GetError());
-	}
-
-	auto socket = SDLNet_TCP_Open(&ip);
-
-	if(!socket) {
-		logger->fatal("Couldn't connect to IP: %v", SDLNet_GetError());
-	}
+	doLogin();
 
 	engine = std::make_unique<ashley::Engine>();
+
 	auto networkingSystem = engine->addSystem<NetworkDispatchSystem>(socket, 50000);
 	auto movementSystem = engine->addSystem<MovementSystem>(mapOutdoor.get(), 6000);
+
 	engine->addSystem<InputSystem>(inputManager.get(), movementSystem, 5000);
 	engine->addSystem<CameraFocusSystem>(camera.get(), 7500);
 	engine->addSystem<RenderSystem>(batch.get(), camera.get(), 10000);
@@ -85,6 +81,17 @@ bool PlayPG::init() {
 	changeToWorld(mapOutdoor);
 
 	return true;
+}
+
+void PlayPG::doLogin() {
+	if(socket.hasError()) {
+		logger->fatal("Couldn't connect to %v, port %v.", addr, port);
+		return;
+	}
+
+	currentCharacter = std::make_unique<Character>("Tim", Stats(50, 10, 5));
+
+	logger->info("Character: %v", currentCharacter->to_json());
 }
 
 void PlayPG::changeToWorld(const std::unique_ptr<Map> &map) {

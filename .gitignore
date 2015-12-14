@@ -22,3 +22,8 @@ build-gcc
 build-msvc/*
 build-msvc
 
+build-server/*
+build-server
+
+build-client/*
+build-client

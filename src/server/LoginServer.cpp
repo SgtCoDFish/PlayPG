@@ -53,20 +53,22 @@ LoginServer::LoginServer(const ServerDetails &serverDetails_, const DatabaseDeta
 void LoginServer::run() {
 	auto logger = el::Loggers::getLogger("ServPG");
 
-	logger->info("Running login server.");
-
-	auto newPlayerSocket = playerAcceptor->acceptSocketOnce();
-
-	auto ps = std::unique_ptr<sql::Statement>(mysqlConnection->createStatement());
-
-	auto res = std::unique_ptr<sql::ResultSet>(ps->executeQuery("SELECT * FROM players;"));
-
-	while (res->next()) {
-		std::cout << "id = " << res->getInt(1) << "\nname = " << res->getString(2) << std::endl;
-	}
+	logger->info("Running login server on port %v.", serverDetails.port);
 
 	while (true) {
+		auto newPlayerSocket = playerAcceptor->acceptSocket();
+
 		if (newPlayerSocket != nullptr) {
+			logger->info("Accepted a connection from: %v", newPlayerSocket->remoteHost);
+
+			auto ps = std::unique_ptr<sql::Statement>(mysqlConnection->createStatement());
+
+			auto res = std::unique_ptr<sql::ResultSet>(ps->executeQuery("SELECT * FROM players;"));
+
+			while (res->next()) {
+				std::cout << "id = " << res->getInt(1) << "\nname = " << res->getString(2) << std::endl;
+			}
+
 			// new connection
 			playerSessions.emplace_back(std::make_unique<PlayerSession>(std::move(newPlayerSocket)));
 		}

@@ -25,34 +25,54 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef INCLUDE_SYSTEMS_NETWORKDISPATCHSYSTEM_HPP_
-#define INCLUDE_SYSTEMS_NETWORKDISPATCHSYSTEM_HPP_
+#ifndef INCLUDE_DATA_STATS_HPP_
+#define INCLUDE_DATA_STATS_HPP_
 
 #include <cstdint>
 
-#include <Ashley/Ashley.hpp>
-
-#include <APG/APGNet.hpp>
-
-#include "net/Packet.hpp"
+#include <rapidjson/prettywriter.h>
 
 namespace PlayPG {
 
-class NetworkDispatchSystem : public ashley::EntitySystem {
-public:
-	explicit NetworkDispatchSystem(APG::SDLSocket &socket, int64_t priority);
-	virtual ~NetworkDispatchSystem() = default;
+struct Stats {
+	using stat_inttype_t = int64_t;
+	using stat_floattype_t = float;
 
-	void update(float deltaTime) override final;
+	explicit Stats(stat_inttype_t maxHP_, stat_inttype_t strength_, stat_inttype_t intelligence_) :
+			        maxHP { maxHP_ },
+			        currentHP { maxHP },
+			        strength { strength_ },
+			        intelligence { intelligence_ } {
+	}
 
-	void queuePacket(Packet &&packet);
+	stat_inttype_t maxHP = 100;
+	stat_inttype_t currentHP = 100;
 
-private:
-	APG::SDLSocket &socket_;
+	stat_inttype_t strength = 10;
+	stat_inttype_t intelligence = 5;
 
-	std::vector<Packet> packetQueue;
+	std::string to_json() {
+		rapidjson::StringBuffer buffer;
+		rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
+
+		writer.StartObject();
+
+		writer.String("maxHP");
+		writer.Int(maxHP);
+
+		writer.String("strength");
+		writer.Int(strength);
+
+		writer.String("intelligence");
+		writer.Int(intelligence);
+
+
+		writer.EndObject();
+
+		return buffer.GetString();
+	}
 };
 
 }
 
-#endif /* INCLUDE_SYSTEMS_NETWORKDISPATCHSYSTEM_HPP_ */
+#endif /* INCLUDE_STATS_HPP_ */

@@ -64,6 +64,8 @@ find_package(ZLIB REQUIRED)
 find_package(AshleyCPP REQUIRED)
 find_package(APG REQUIRED)
 
+find_package(rapidjson REQUIRED)
+
 file(GLOB_RECURSE PlayPG_SOURCES ${PROJECT_SOURCE_DIR}/src/*.cpp)
 file(GLOB_RECURSE PlayPG_CLIENT_SOURCES ${PROJECT_SOURCE_DIR}/client/*.cpp)
 file(GLOB_RECURSE PlayPG_SERVER_SOURCES ${PROJECT_SOURCE_DIR}/server/*.cpp)
@@ -111,7 +113,7 @@ include_directories("include" ${Boost_INCLUDE_DIR}
 							  ${TMXPARSER_INCLUDE_DIR}
 							  ${AshleyCPP_INCLUDE_DIR}
 							  ${PROJECT_BINARY_DIR})
-set(PlayPG_LIBS ${Boost_LIBRARIES} ${SDL2_LIBRARY} ${SDL2_IMAGE_LIBRARY} ${SDL2_TTF_LIBRARIES} ${SDL2_MIXER_LIBRARY} ${SDL2_NET_LIBRARY} ${OPENGL_LIBRARIES} ${GLEW_LIBRARIES} ${TMXPARSER_LIBRARY} ${OS_LIBS})
+set(PlayPG_LIBS ${Boost_LIBRARIES} ${SDL2_LIBRARY} ${SDL2_IMAGE_LIBRARY} ${SDL2_TTF_LIBRARIES} ${SDL2_MIXER_LIBRARY} ${SDL2_NET_LIBRARY} ${OPENGL_LIBRARIES} ${GLEW_LIBRARIES} ${TMXPARSER_LIBRARY} ${OS_LIBS} mysqlcppconn)
 
 if ( NOT EXCLUDE_CLIENT )
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_BASE} ${PlayPG_DEBUG_FLAGS}")
@@ -130,11 +132,11 @@ if ( NOT EXCLUDE_SERVER )
 	
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_BASE} ${PlayPG_DEBUG_FLAGS}")
 	add_executable(serverPG-d ${PlayPG_SOURCES} ${PlayPG_SERVER_SOURCES})
-	target_link_libraries(serverPG-d ${APG_DEBUG_LIBRARY} ${AshleyCPP_DEBUG_LIBRARY} mysqlcppconn ${PlayPG_LIBS})
+	target_link_libraries(serverPG-d ${APG_DEBUG_LIBRARY} ${AshleyCPP_DEBUG_LIBRARY} ${PlayPG_LIBS})
 
 	if ( NOT EXCLUDE_RELEASE ) 
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_BASE} ${PlayPG_RELEASE_FLAGS}")
 		add_executable(serverPG ${PlayPG_SOURCES} ${PlayPG_SERVER_SOURCES})
-		target_link_libraries(serverPG ${APG_LIBRARY} ${AshleyCPP_LIBRARY} mysqlcppconn ${PlayPG_LIBS})
+		target_link_libraries(serverPG ${APG_LIBRARY} ${AshleyCPP_LIBRARY} ${PlayPG_LIBS})
 	endif ()
 endif () 

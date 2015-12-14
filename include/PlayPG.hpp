@@ -40,6 +40,7 @@
 #include <Ashley/Ashley.hpp>
 
 #include "Map.hpp"
+#include "data/Character.hpp"
 
 namespace ashley {
 class Entity;
@@ -58,6 +59,8 @@ public:
 	void render(float deltaTime) override;
 
 private:
+	void doLogin();
+
 	std::unique_ptr<APG::Camera> camera;
 	std::unique_ptr<APG::SpriteBatch> batch;
 
@@ -75,6 +78,13 @@ private:
 
 	ashley::Entity *player = nullptr;
 	void changeToWorld(const std::unique_ptr<Map> &renderer);
+
+	std::unique_ptr<Character> currentCharacter;
+
+	static constexpr const char * const addr = "localhost";
+	static constexpr const int port = 10419;
+
+	APG::SDLSocket socket;
 };
 
 }

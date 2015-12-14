@@ -25,34 +25,16 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef INCLUDE_SYSTEMS_NETWORKDISPATCHSYSTEM_HPP_
-#define INCLUDE_SYSTEMS_NETWORKDISPATCHSYSTEM_HPP_
+#include <utility>
 
-#include <cstdint>
-
-#include <Ashley/Ashley.hpp>
-
-#include <APG/APGNet.hpp>
-
-#include "net/Packet.hpp"
+#include "data/Character.hpp"
 
 namespace PlayPG {
 
-class NetworkDispatchSystem : public ashley::EntitySystem {
-public:
-	explicit NetworkDispatchSystem(APG::SDLSocket &socket, int64_t priority);
-	virtual ~NetworkDispatchSystem() = default;
-
-	void update(float deltaTime) override final;
-
-	void queuePacket(Packet &&packet);
-
-private:
-	APG::SDLSocket &socket_;
-
-	std::vector<Packet> packetQueue;
-};
-
+Character::Character(std::string name_, Stats stats_) :
+		        name { std::move(name_) },
+		        stats { std::move(stats_) } {
 }
 
-#endif /* INCLUDE_SYSTEMS_NETWORKDISPATCHSYSTEM_HPP_ */
+
+}
