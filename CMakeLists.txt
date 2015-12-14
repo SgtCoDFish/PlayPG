@@ -64,6 +64,8 @@ find_package(ZLIB REQUIRED)
 find_package(AshleyCPP REQUIRED)
 find_package(APG REQUIRED)
 
+find_package(rapidjson REQUIRED)
+
 file(GLOB_RECURSE PlayPG_SOURCES ${PROJECT_SOURCE_DIR}/src/*.cpp)
 file(GLOB_RECURSE PlayPG_CLIENT_SOURCES ${PROJECT_SOURCE_DIR}/client/*.cpp)
 file(GLOB_RECURSE PlayPG_SERVER_SOURCES ${PROJECT_SOURCE_DIR}/server/*.cpp)
@@ -113,7 +115,7 @@ include_directories("include" ${Boost_INCLUDE_DIR}
 							  ${ZLIB_INCLUDE_DIR}
 							  ${AshleyCPP_INCLUDE_DIR}
 							  ${PROJECT_BINARY_DIR})
-							  
+
 set(PlayPG_LIBS ${Boost_LIBRARIES}
 				${SDL2_LIBRARY}
 				${SDL2_IMAGE_LIBRARY}

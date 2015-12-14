@@ -32,7 +32,7 @@
 
 #include <Ashley/Ashley.hpp>
 
-#include <SDL2/SDL_net.h>
+#include <APG/APGNet.hpp>
 
 #include "net/Packet.hpp"
 
@@ -40,7 +40,7 @@ namespace PlayPG {
 
 class NetworkDispatchSystem : public ashley::EntitySystem {
 public:
-	explicit NetworkDispatchSystem(TCPsocket socket, int64_t priority);
+	explicit NetworkDispatchSystem(APG::SDLSocket &socket, int64_t priority);
 	virtual ~NetworkDispatchSystem() = default;
 
 	void update(float deltaTime) override final;
@@ -48,7 +48,7 @@ public:
 	void queuePacket(Packet &&packet);
 
 private:
-	TCPsocket socket_;
+	APG::SDLSocket &socket_;
 
 	std::vector<Packet> packetQueue;
 };

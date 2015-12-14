@@ -24,25 +24,55 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include <APG/core/APGeasylogging.hpp>
 
-#include "server/MapServer.hpp"
+#ifndef INCLUDE_DATA_STATS_HPP_
+#define INCLUDE_DATA_STATS_HPP_
+
+#include <cstdint>
+
+#include <rapidjson/prettywriter.h>
 
 namespace PlayPG {
 
-static const std::unordered_map<opcode_type_t, OpcodeDetails> acceptedOpcodes_map = { //
-        { static_cast<opcode_type_t>(ClientOpcode::MOVE), OpcodeDetails("Move request") }, //
-        };
+struct Stats {
+	using stat_inttype_t = int64_t;
+	using stat_floattype_t = float;
 
-MapServer::MapServer(const ServerDetails &serverDetails_, const DatabaseDetails &databaseDetails_) :
-		        Server(serverDetails_, databaseDetails_, acceptedOpcodes_map) {
+	explicit Stats(stat_inttype_t maxHP_, stat_inttype_t strength_, stat_inttype_t intelligence_) :
+			        maxHP { maxHP_ },
+			        currentHP { maxHP },
+			        strength { strength_ },
+			        intelligence { intelligence_ } {
+	}
+
+	stat_inttype_t maxHP = 100;
+	stat_inttype_t currentHP = 100;
+
+	stat_inttype_t strength = 10;
+	stat_inttype_t intelligence = 5;
+
+	std::string to_json() {
+		rapidjson::StringBuffer buffer;
+		rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
+
+		writer.StartObject();
+
+		writer.String("maxHP");
+		writer.Int(maxHP);
+
+		writer.String("strength");
+		writer.Int(strength);
+
+		writer.String("intelligence");
+		writer.Int(intelligence);
+
+
+		writer.EndObject();
+
+		return buffer.GetString();
+	}
+};
 
 }
 
-void MapServer::run() {
-	auto logger = el::Loggers::getLogger("PlayPG");
-
-	logger->info("Running map server.");
-}
-
-}
+#endif /* INCLUDE_STATS_HPP_ */

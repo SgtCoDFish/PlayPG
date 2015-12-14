@@ -59,7 +59,7 @@ int main(int argc, char *argv[]) {
 
 	APG::Game::setupLoggingDefault();
 	APG::Game::setLoggerToAPGStyle("ServPG");
-	auto logger = el::Loggers::getLogger("ServPG");
+//	auto logger = el::Loggers::getLogger("ServPG");
 
 	auto server = initializeProgramOptions(argc, argv);
 	if (server == nullptr) {
@@ -179,7 +179,7 @@ std::unique_ptr<PlayPG::LoginServer> startLoginServer(el::Logger * logger, const
 	const auto dbUsername = vm["database-username"].as<std::string>();
 	const auto dbPassword = vm["database-password"].as<std::string>();
 
-	PlayPG::ServerDetails serverDetails("edmund", "localhost", 10410, PlayPG::ServerType::LOGIN_SERVER);
+	PlayPG::ServerDetails serverDetails("edmund", "localhost", serverPort, PlayPG::ServerType::LOGIN_SERVER);
 	PlayPG::DatabaseDetails dbDetails(dbServer, dbPort, dbUsername, dbPassword);
 
 	return std::make_unique<PlayPG::LoginServer>(serverDetails, dbDetails);

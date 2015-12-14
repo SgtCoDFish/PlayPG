@@ -49,7 +49,7 @@ DatabaseDetails::DatabaseDetails(const std::string &hostName_, uint16_t port_, c
 }
 
 Server::Server(const ServerDetails &serverDetails_, const DatabaseDetails &databaseDetails_,
-        const std::unordered_map<OpcodeType, OpcodeDetails>& acceptedOpcodeTypes_) :
+        const std::unordered_map<opcode_type_t, OpcodeDetails>& acceptedOpcodeTypes_) :
 		        serverDetails { serverDetails_ },
 		        databaseDetails { databaseDetails_ },
 		        driver { sql::mysql::get_driver_instance() },
@@ -57,9 +57,10 @@ Server::Server(const ServerDetails &serverDetails_, const DatabaseDetails &datab
 		                driver->connect(databaseDetails.fullHostName.c_str(), databaseDetails.userName.c_str(),
 		                        databaseDetails.password.c_str())) },
 		        acceptedOpcodes { acceptedOpcodeTypes_ } {
+	mysqlConnection->setSchema("ppg");
 }
 
-bool Server::isOpcodeAccepted(const OpcodeType &opcode) {
+bool Server::isOpcodeAccepted(const opcode_type_t &opcode) {
 	return acceptedOpcodes.find(opcode) != acceptedOpcodes.end();
 }
 

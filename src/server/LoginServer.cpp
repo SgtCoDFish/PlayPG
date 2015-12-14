@@ -27,13 +27,21 @@
 
 #include <APG/core/APGeasylogging.hpp>
 
+#include "mysql_connection.h"
+#include "mysql_driver.h"
+
+#include <cppconn/driver.h>
+#include <cppconn/resultset.h>
+#include <cppconn/statement.h>
+
 #include "server/LoginServer.hpp"
 #include "net/Opcodes.hpp"
 
 namespace PlayPG {
 
-static const std::unordered_map<OpcodeType, OpcodeDetails> acceptedOpcodes_login = { //
-        { ClientOpcodes::LOGIN, OpcodeDetails("Login request", true) }, //
+static const std::unordered_map<opcode_type_t, OpcodeDetails> acceptedOpcodes_login = { //
+                { static_cast<opcode_type_t>(ClientOpcode::LOGIN_AUTHENTICATION_IDENTITY), OpcodeDetails(
+                        "Login request", true) }, //
         };
 
 LoginServer::LoginServer(const ServerDetails &serverDetails_, const DatabaseDetails &databaseDetails_) :
@@ -45,12 +53,22 @@ LoginServer::LoginServer(const ServerDetails &serverDetails_, const DatabaseDeta
 void LoginServer::run() {
 	auto logger = el::Loggers::getLogger("ServPG");
 
-	logger->info("Running login server.");
+	logger->info("Running login server on port %v.", serverDetails.port);
 
-	while(true) {
-		auto newPlayerSocket = playerAcceptor->acceptSocketOnce();
+	while (true) {
+		auto newPlayerSocket = playerAcceptor->acceptSocket();
 
-		if(newPlayerSocket != nullptr) {
+		if (newPlayerSocket != nullptr) {
+			logger->info("Accepted a connection from: %v", newPlayerSocket->remoteHost);
+
+			auto ps = std::unique_ptr<sql::Statement>(mysqlConnection->createStatement());
+
+			auto res = std::unique_ptr<sql::ResultSet>(ps->executeQuery("SELECT * FROM players;"));
+
+			while (res->next()) {
+				std::cout << "id = " << res->getInt(1) << "\nname = " << res->getString(2) << std::endl;
+			}
+
 			// new connection
 			playerSessions.emplace_back(std::make_unique<PlayerSession>(std::move(newPlayerSocket)));
 		}

@@ -29,7 +29,7 @@
 
 namespace PlayPG {
 
-NetworkDispatchSystem::NetworkDispatchSystem(TCPsocket socket, int64_t priority) :
+NetworkDispatchSystem::NetworkDispatchSystem(APG::SDLSocket &socket, int64_t priority) :
 		        EntitySystem(priority),
 		        socket_ { socket } {
 
@@ -41,7 +41,8 @@ void NetworkDispatchSystem::queuePacket(Packet &&packet) {
 
 void NetworkDispatchSystem::update(float deltaTime) {
 	for (auto &packet : packetQueue) {
-		SDLNet_TCP_Send(socket_, &packet, sizeof(Packet));
+		socket_.putInt(packet.opcode);
+		socket_.send();
 	}
 
 	packetQueue.clear();
