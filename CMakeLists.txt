@@ -6,8 +6,6 @@ project(PlayPG)
 option(EXCLUDE_CLIENT "Should we exclude building the client program?" OFF)
 option(EXCLUDE_SERVER "Should we exclude building the server program?" OFF)
 
-option(EXCLUDE_RELEASE "Should we ignore building release versions of the program? Saves compilation time if we're only working with debug builds" OFF)
-
 option(EXCLUDE_GIT "Should we ignore using git to get the latest commit details?" OFF)
 
 set(PlayPG_VERSION_MAJOR 0)
@@ -18,11 +16,17 @@ set(PlayPG_VERSION_EXTRA "")
 
 set(PlayPG_VERSION "${PlayPG_VERSION_MAJOR}.${PlayPG_VERSION_MINOR}.${PlayPG_VERSION_PATCH}")
 
-if( PlayPG_VERSION_EXTRA )
+if ( PlayPG_VERSION_EXTRA )
 	set(PlayPG_VERSION "${PlayPG_VERSION}-${PlayPG_VERSION_EXTRA}")
 endif ()
 
-if( NOT EXCLUDE_GIT )
+if ( CMAKE_BUILD_TYPE EQUAL Debug)
+	set (PPG_DEBUG TRUE)
+else ()
+	set (PPG_DEBUG FALSE)
+endif ()
+
+if ( NOT EXCLUDE_GIT )
 	find_package(Git)
 	
 	execute_process(
@@ -98,7 +102,6 @@ endif ()
 file(MAKE_DIRECTORY assets)
 file(COPY ${PlayPG_TEST_ASSETS} DESTINATION assets)
 
-
 add_definitions(-DGLM_FORCE_RADIANS)
 
 include_directories("include" ${Boost_INCLUDE_DIR}
@@ -114,7 +117,8 @@ include_directories("include" ${Boost_INCLUDE_DIR}
 							  ${TINYXML2_INCLUDE_DIR}
 							  ${ZLIB_INCLUDE_DIR}
 							  ${AshleyCPP_INCLUDE_DIR}
-							  ${PROJECT_BINARY_DIR})
+							  ${PROJECT_BINARY_DIR}
+							  )
 
 set(PlayPG_LIBS ${Boost_LIBRARIES}
 				${SDL2_LIBRARY}
@@ -131,28 +135,26 @@ set(PlayPG_LIBS ${Boost_LIBRARIES}
 				mysqlcppconn
 				)
 
+set(PlayPG_APP_NAME CMAKE_PROJECT_NAME)
+
+if ( PPG_DEBUG ) 
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_BASE} ${PlayPG_DEBUG_FLAGS}")
+	set(PlayPG_APP_NAME "${PlayPG_APP_NAME}-d")
+else ()
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_BASE} ${PlayPG_RELEASE_FLAGS}")
+endif ()
+
 if ( NOT EXCLUDE_CLIENT )
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_BASE} ${PlayPG_DEBUG_FLAGS}")
 	add_executable(PlayPG-d ${PlayPG_SOURCES} ${PlayPG_CLIENT_SOURCES})
 	target_link_libraries(PlayPG-d ${APG_DEBUG_LIBRARY} ${AshleyCPP_DEBUG_LIBRARY} ${PlayPG_LIBS})
-
-	if ( NOT EXCLUDE_RELEASE ) 
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_BASE} ${PlayPG_RELEASE_FLAGS}")
-		add_executable(PlayPG ${PlayPG_SOURCES} ${PlayPG_CLIENT_SOURCES})
-		target_link_libraries(PlayPG ${APG_LIBRARY} ${AshleyCPP_LIBRARY} ${PlayPG_LIBS})
-	endif ()
 endif ()
 
 if ( NOT EXCLUDE_SERVER )
+	#set(PlayPG_LIBS ${PlayPG_LIBS} mysqlcppconn)
 	include_directories(${MysqlConnectorCpp_INCLUDES})
 	
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_BASE} ${PlayPG_DEBUG_FLAGS}")
 	add_executable(serverPG-d ${PlayPG_SOURCES} ${PlayPG_SERVER_SOURCES})
 	target_link_libraries(serverPG-d ${APG_DEBUG_LIBRARY} ${AshleyCPP_DEBUG_LIBRARY} ${PlayPG_LIBS})
-
-	if ( NOT EXCLUDE_RELEASE ) 
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_BASE} ${PlayPG_RELEASE_FLAGS}")
-		add_executable(serverPG ${PlayPG_SOURCES} ${PlayPG_SERVER_SOURCES})
-		target_link_libraries(serverPG ${APG_LIBRARY} ${AshleyCPP_LIBRARY} ${PlayPG_LIBS})
-	endif ()
 endif () 
