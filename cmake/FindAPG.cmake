@@ -11,11 +11,9 @@ find_library(APG_DEBUG_LIBRARY NAMES APG-d
           DOC "The APG debug library"
 )
 
-if ( NOT EXCLUDE_RELEASE )
-	find_library(APG_LIBRARY NAMES APG
-		  DOC "The APG release library"
-	)
-endif()
+find_library(APG_LIBRARY NAMES APG
+	  DOC "The APG release library"
+)
 
 if(APG_DEBUG_LIBRARY OR APG_LIBRARY)
   set(APG_FOUND TRUE)
@@ -24,11 +22,17 @@ else()
 endif()
 
 include(FindPackageHandleStandardArgs)
-if( NOT EXCLUDE_RELEASE) 
+
+if (APG_DEBUG_LIBRARY AND APG_LIBRARY)
+	message("Found APG: Debug and Release")
 	find_package_handle_standard_args(APG DEFAULT_MSG APG_DEBUG_LIBRARY APG_LIBRARY APG_INCLUDE_DIR)
 	mark_as_advanced(APG_INCLUDE_DIR APG_DEBUG_LIBRARY APG_LIBRARY)
-else ()
-	find_package_handle_standard_args(APG "(Ignored release version because EXCLUDE_RELEASE=ON)" APG_DEBUG_LIBRARY APG_INCLUDE_DIR)
+elseif (APG_DEBUG_LIBRARY)
+message("Found APG: Debug only")
+	find_package_handle_standard_args(APG DEFAULT_MSG APG_DEBUG_LIBRARY APG_INCLUDE_DIR)
 	mark_as_advanced(APG_INCLUDE_DIR APG_DEBUG_LIBRARY)
-endif()
-
+elseif (APG_LIBRARY)
+	message("Found APG: Release only")
+	find_package_handle_standard_args(APG DEFAULT_MSG APG_LIBRARY APG_INCLUDE_DIR)
+	mark_as_advanced(APG_INCLUDE_DIR APG_LIBRARY)
+endif ()
