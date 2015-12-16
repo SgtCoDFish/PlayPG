@@ -51,7 +51,8 @@ namespace po = boost::program_options;
 
 std::unique_ptr<PlayPG::Server> initializeProgramOptions(int argc, char *argv[]);
 
-std::unique_ptr<PlayPG::LoginServer> startLoginServer(el::Logger * logger, const po::variables_map& vm);
+std::unique_ptr<PlayPG::LoginServer> startLoginServer(el::Logger * logger, const po::variables_map& vm, bool defaulted =
+        false);
 std::unique_ptr<PlayPG::MapServer> startWorldServer(el::Logger * logger, const po::variables_map& vm);
 
 int main(int argc, char *argv[]) {
@@ -74,7 +75,7 @@ int main(int argc, char *argv[]) {
 	return EXIT_SUCCESS;
 }
 
-std::unique_ptr<PlayPG::Server>  initializeProgramOptions(int argc, char *argv[]) {
+std::unique_ptr<PlayPG::Server> initializeProgramOptions(int argc, char *argv[]) {
 	auto logger = el::Loggers::getLogger("ServPG");
 	po::options_description generalOptions("General Options");
 
@@ -89,19 +90,17 @@ std::unique_ptr<PlayPG::Server>  initializeProgramOptions(int argc, char *argv[]
 	serverOptions.add_options() //
 	("login-server", po::value<uint16_t>()->implicit_value(10419u),
 	        "run a login server listening on the given port (default 10419)") //
-	("world-server", po::value<uint16_t>(),
-	        "run a world server listening on the given port") //
-	("name", po::value<std::string>()->default_value(std::string("PGserver") + std::to_string(std::rand())),
-	        "use the given name for the server, defaulting to \"PGserver\" with a random integer");
+	("world-server", po::value<uint16_t>(), "run a world server listening on the given port") //
+	("name", po::value<std::string>()->default_value(std::string("PPGserver") + std::to_string(std::rand())),
+	        "use the given name for the server, defaulting to \"PPGserver\" with a random integer");
 
 	po::options_description databaseOptions("Database Options");
 
 	databaseOptions.add_options()("database-server", po::value<std::string>()->default_value(std::string("localhost")),
 	        "the database server to connect to") //
 	("database-port", po::value<uint16_t>()->default_value(3306u), "the port the database server listens on") //
-	("database-username", po::value<std::string>()->default_value(std::string("root")),
-	        "the username for the database") //
-	("database-password", po::value<std::string>()->required(), "the password for the database");
+	("database-username", po::value<std::string>()->default_value(std::string("root")), "the username for the database") //
+	("database-password", po::value<std::string>(), "the password for the database");
 
 	po::options_description worldServerOptions("World Server Specific Options");
 
@@ -141,24 +140,26 @@ std::unique_ptr<PlayPG::Server>  initializeProgramOptions(int argc, char *argv[]
 	} else if (vm.count("world-server")) {
 		ret = startWorldServer(logger, vm);
 	} else {
-		if (!vm.count("login-server")) {
-			logger->info("Note: Defaulting to starting a login server since no choice was specified.");
-			logger->info("Run with --help for more information about server options.");
+		const bool passedExplicitly = !vm.count("login-server");
 
-			vm.insert(std::make_pair("login-server", po::variable_value(10419u, false)));
+		if (passedExplicitly) {
+			logger->warn("Note: Defaulting to starting a login server since no choice was specified.");
+			logger->warn("Run with --help for more information about server options.");
+//		vm.insert(std::make_pair("login-server", po::variable_value(10419u, false)));
 		}
 
-		ret = startLoginServer(logger, vm);
+		ret = startLoginServer(logger, vm, passedExplicitly);
 	}
 
 	return ret;
 }
 
-std::unique_ptr<PlayPG::LoginServer> startLoginServer(el::Logger * logger, const po::variables_map &vm) {
+std::unique_ptr<PlayPG::LoginServer> startLoginServer(el::Logger * logger, const po::variables_map &vm,
+        bool defaulted) {
 	logger->info("Starting a login server.");
 
-	const uint16_t serverPort = vm["login-server"].as<uint16_t>();
-	const uint16_t dbPort =  vm["database-port"].as<uint16_t>();
+	const uint16_t serverPort = defaulted ? 10419 : vm["login-server"].as<uint16_t>();
+	const uint16_t dbPort = vm["database-port"].as<uint16_t>();
 
 	if (!APG::NetUtil::validatePort(serverPort)) {
 		logger->error("Invalid server port number: %v", serverPort);
@@ -185,7 +186,7 @@ std::unique_ptr<PlayPG::LoginServer> startLoginServer(el::Logger * logger, const
 	return std::make_unique<PlayPG::LoginServer>(serverDetails, dbDetails);
 }
 
-std::unique_ptr<PlayPG::MapServer>  startWorldServer(el::Logger * logger, const po::variables_map &vm) {
+std::unique_ptr<PlayPG::MapServer> startWorldServer(el::Logger * logger, const po::variables_map &vm) {
 	logger->info("Starting a world server.");
 	return nullptr;
 }
