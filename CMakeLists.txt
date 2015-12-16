@@ -27,7 +27,7 @@ else ()
 endif ()
 
 if ( NOT EXCLUDE_GIT )
-	find_package(Git)
+	find_package(Git REQUIRED)
 	
 	execute_process(
 		COMMAND "${GIT_EXECUTABLE}" rev-parse HEAD
@@ -49,30 +49,28 @@ configure_file (
 
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
-find_package(Boost REQUIRED COMPONENTS program_options)
-
 find_package(SDL2 REQUIRED)
 find_package(SDL2_image REQUIRED)
 find_package(SDL2_mixer REQUIRED)
 find_package(SDL2_ttf REQUIRED)
-find_package(SDL2_net REQUIRED)
 
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
+
 find_package(GLM REQUIRED)
+find_package(AshleyCPP REQUIRED)
+find_package(rapidjson REQUIRED)
+find_package(APG REQUIRED)
 
 find_package(TmxParser REQUIRED)
 find_package(TinyXML2 REQUIRED)
 find_package(ZLIB REQUIRED)
 
-find_package(AshleyCPP REQUIRED)
-find_package(APG REQUIRED)
+find_package(SDL2_net REQUIRED)
 
-find_package(rapidjson REQUIRED)
+add_definitions(-DGLM_FORCE_RADIANS)
 
 file(GLOB_RECURSE PlayPG_SOURCES ${PROJECT_SOURCE_DIR}/src/*.cpp)
-file(GLOB_RECURSE PlayPG_CLIENT_SOURCES ${PROJECT_SOURCE_DIR}/client/*.cpp)
-file(GLOB_RECURSE PlayPG_SERVER_SOURCES ${PROJECT_SOURCE_DIR}/server/*.cpp)
 file(GLOB_RECURSE PlayPG_HEADERS ${PROJECT_SOURCE_DIR}/include/*.hpp)
 file(GLOB_RECURSE PlayPG_TEST_ASSETS ${PROJECT_SOURCE_DIR}/assets/*)
 
@@ -99,62 +97,67 @@ else ()
 	set(PlayPG_RELEASE_FLAGS "/Ox")
 endif ()
 
-file(MAKE_DIRECTORY assets)
-file(COPY ${PlayPG_TEST_ASSETS} DESTINATION assets)
+include_directories("include"
+                    ${SDL2_IMAGE_INCLUDE_DIR}
+                    ${SDL2_INCLUDE_DIR}
+                    ${SDL2_TTF_INCLUDE_DIR}
+                    ${SDL2_MIXER_INCLUDE_DIR}
 
-add_definitions(-DGLM_FORCE_RADIANS)
+                    ${OPENGL_INCLUDE_DIR}
+                    ${GLEW_INCLUDE_DIRS}
 
-include_directories("include" ${Boost_INCLUDE_DIR}
-							  ${APG_INCLUDE_DIR}
-							  ${SDL2_INCLUDE_DIR}
-							  ${SDL2_TTF_INCLUDE_DIR}
-							  ${SDL2_IMAGE_INCLUDE_DIR}
-							  ${SDL2_MIXER_INCLUDE_DIR}
-							  ${SDL_NET_INCLUDE_DIR} ${OPENGL_INCLUDE_DIR}
-							  ${GLM_INCLUDE_DIRS}
-							  ${GLEW_INCLUDE_DIRS}
-							  ${TMXPARSER_INCLUDE_DIR}
-							  ${TINYXML2_INCLUDE_DIR}
-							  ${ZLIB_INCLUDE_DIR}
-							  ${AshleyCPP_INCLUDE_DIR}
-							  ${PROJECT_BINARY_DIR}
-							  )
+                    ${GLM_INCLUDE_DIRS}
+                    ${SDL_NET_INCLUDE_DIR}
+                    
+                    ${AshleyCPP_INCLUDE_DIR}
+                    ${APG_INCLUDE_DIR}
+                    
+                    ${TMXPARSER_INCLUDE_DIR}
+                    ${TINYXML2_INCLUDE_DIR}
+                    ${ZLIB_INCLUDE_DIR}
+                    
+                    ${RAPIDJSON_INCLUDE_DIRS}
+                    
+                    ${PROJECT_BINARY_DIR}
+                    )
+                    
+set(PlayPG_LIBS ${SDL2_NET_LIBRARY}
 
-set(PlayPG_LIBS ${Boost_LIBRARIES}
-				${SDL2_LIBRARY}
-				${SDL2_IMAGE_LIBRARY}
-				${SDL2_TTF_LIBRARIES}
-				${SDL2_MIXER_LIBRARY}
-				${SDL2_NET_LIBRARY}
-				${OPENGL_LIBRARIES}
-				${GLEW_LIBRARIES}
-				${TMXPARSER_LIBRARY}
-				${TINYXML2_LIBRARIES}
-				${ZLIB_LIBRARIES}
-				${OS_LIBS}
-				mysqlcppconn
-				)
+                ${SDL2_LIBRARY}
+                ${SDL2_IMAGE_LIBRARY}
+                ${SDL2_TTF_LIBRARIES}
+                ${SDL2_MIXER_LIBRARY}
 
-set(PlayPG_APP_NAME CMAKE_PROJECT_NAME)
+                ${OPENGL_LIBRARIES}
+                ${GLEW_LIBRARIES}
+                
+                ${OS_LIBS}
+                
+                ${TMXPARSER_LIBRARY}
+                ${TINYXML2_LIBRARIES}
+                ${ZLIB_LIBRARIES}
+                )
 
-if ( PPG_DEBUG ) 
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_BASE} ${PlayPG_DEBUG_FLAGS}")
-	set(PlayPG_APP_NAME "${PlayPG_APP_NAME}-d")
+if( PLAYPG_DEBUG )
+    set(PlayPG_LIBS ${PlayPG_LIBS}
+                    ${APG_DEBUG_LIBRARY}
+                    ${AshleyCPP_DEBUG_LIBRARY}
+                    )
+
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_BASE} ${PlayPG_DEBUG_FLAGS}")
 else ()
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_BASE} ${PlayPG_RELEASE_FLAGS}")
+    set(PlayPG_LIBS ${PlayPG_LIBS}
+                    ${APG_LIBRARY}
+                    ${AshleyCPP_LIBRARY}
+                    )
+
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_BASE} ${PlayPG_DEBUG_FLAGS}")
 endif ()
 
 if ( NOT EXCLUDE_CLIENT )
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_BASE} ${PlayPG_DEBUG_FLAGS}")
-	add_executable(PlayPG-d ${PlayPG_SOURCES} ${PlayPG_CLIENT_SOURCES})
-	target_link_libraries(PlayPG-d ${APG_DEBUG_LIBRARY} ${AshleyCPP_DEBUG_LIBRARY} ${PlayPG_LIBS})
+    include (Client.cmake)
 endif ()
 
 if ( NOT EXCLUDE_SERVER )
-	#set(PlayPG_LIBS ${PlayPG_LIBS} mysqlcppconn)
-	include_directories(${MysqlConnectorCpp_INCLUDES})
-	
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_BASE} ${PlayPG_DEBUG_FLAGS}")
-	add_executable(serverPG-d ${PlayPG_SOURCES} ${PlayPG_SERVER_SOURCES})
-	target_link_libraries(serverPG-d ${APG_DEBUG_LIBRARY} ${AshleyCPP_DEBUG_LIBRARY} ${PlayPG_LIBS})
-endif () 
+    include (Server.cmake)
+endif ()
