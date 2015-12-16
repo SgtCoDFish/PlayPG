@@ -65,33 +65,23 @@ bool PlayPG::init() {
 	playerTexture = std::make_unique<Texture>("assets/player.png");
 	playerSprite = std::make_unique<Sprite>(playerTexture);
 
-	doLogin();
-
 	engine = std::make_unique<ashley::Engine>();
 
-	auto networkingSystem = engine->addSystem<NetworkDispatchSystem>(socket, 50000);
 	auto movementSystem = engine->addSystem<MovementSystem>(mapOutdoor.get(), 6000);
 
 	engine->addSystem<InputSystem>(inputManager.get(), movementSystem, 5000);
 	engine->addSystem<CameraFocusSystem>(camera.get(), 7500);
 	engine->addSystem<RenderSystem>(batch.get(), camera.get(), 10000);
 
-	movementSystem->attachNetworkingSystem(networkingSystem);
-
 	changeToWorld(mapOutdoor);
 
 	return true;
 }
 
-void PlayPG::doLogin() {
-	if(socket.hasError()) {
-		logger->fatal("Couldn't connect to %v, port %v.", addr, port);
-		return;
-	}
+bool PlayPG::doLogin() {
+	socket.reconnect();
 
-	currentCharacter = std::make_unique<Character>("Tim", Stats(50, 10, 5));
-
-	logger->info("Character: %v", currentCharacter->to_json());
+	return !socket.hasError();
 }
 
 void PlayPG::changeToWorld(const std::unique_ptr<Map> &map) {
@@ -101,7 +91,7 @@ void PlayPG::changeToWorld(const std::unique_ptr<Map> &map) {
 		auto frontLayerEntities = map->generateFrontLayerEntities();
 		logger->info("Generated %v front layer entities.", frontLayerEntities.size());
 
-		for(auto &ent : frontLayerEntities) {
+		for (auto &ent : frontLayerEntities) {
 			engine->addEntity(std::move(ent));
 		}
 	}
@@ -118,29 +108,43 @@ void PlayPG::changeToWorld(const std::unique_ptr<Map> &map) {
 		auto backLayerEntities = map->generateBackLayerEntities();
 		logger->info("Generated %v back layer entities.", backLayerEntities.size());
 
-		for(auto &ent : backLayerEntities) {
+		for (auto &ent : backLayerEntities) {
 			engine->addEntity(std::move(ent));
 		}
 	}
 }
 
 void PlayPG::render(float deltaTime) {
-	if(inputManager->isKeyJustPressed(SDL_SCANCODE_RETURN)) {
-		if(indoor) {
-			indoor = false;
-			changeToWorld(mapOutdoor);
-		} else {
-			indoor = true;
-			changeToWorld(mapIndoor);
-		}
-	}
-
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	outdoorRenderer->update(deltaTime);
+	switch (gameState) {
+	case GameState::LOGIN: {
+		if (inputManager->isKeyJustPressed(SDL_SCANCODE_SPACE)) {
+			if (doLogin()) {
+				gameState = GameState::PLAYING;
+			}
+		}
+		break;
+	}
 
-	engine->update(deltaTime);
+	case GameState::PLAYING: {
+		if (inputManager->isKeyJustPressed(SDL_SCANCODE_RETURN)) {
+			if (indoor) {
+				indoor = false;
+				changeToWorld(mapOutdoor);
+			} else {
+				indoor = true;
+				changeToWorld(mapIndoor);
+			}
+		}
+
+		outdoorRenderer->update(deltaTime);
+
+		engine->update(deltaTime);
+		break;
+	}
+	}
 
 	SDL_GL_SwapWindow(window.get());
 }

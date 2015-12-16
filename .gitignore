@@ -13,6 +13,9 @@ Release
 build/*
 build
 
+build-debug/*
+build-debug
+
 build-clang/*
 build-clang
 

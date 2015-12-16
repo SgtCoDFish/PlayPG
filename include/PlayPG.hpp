@@ -48,6 +48,11 @@ class Entity;
 
 namespace PlayPG {
 
+enum class GameState {
+	LOGIN,
+	PLAYING
+};
+
 class PlayPG final : public APG::SDLGame {
 public:
 	static el::Logger *logger;
@@ -59,7 +64,9 @@ public:
 	void render(float deltaTime) override;
 
 private:
-	void doLogin();
+	bool doLogin();
+
+	GameState gameState = GameState::LOGIN;
 
 	std::unique_ptr<APG::Camera> camera;
 	std::unique_ptr<APG::SpriteBatch> batch;
