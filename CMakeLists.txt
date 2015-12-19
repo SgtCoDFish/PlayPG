@@ -21,10 +21,10 @@ if ( PlayPG_VERSION_EXTRA )
 endif ()
 
 if ( CMAKE_BUILD_TYPE MATCHES "Release")
-	message("Building release library.")
+	message("Building in release mode.")
 	set (PLAYPG_DEBUG FALSE)
 else ()
-	message("Building debug library.")
+	message("Building in debug mode.")
 	set (PLAYPG_DEBUG TRUE)
 endif ()
 
