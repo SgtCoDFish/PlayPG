@@ -49,10 +49,10 @@ public:
 	explicit AuthenticationIdentity(const std::string &username, const std::string &password);
 
 	uint16_t unameLength;
-	const char *username;
+	std::string username;
 
 	uint16_t passwordLength;
-	const char *password;
+	std::string password;
 
 };
 

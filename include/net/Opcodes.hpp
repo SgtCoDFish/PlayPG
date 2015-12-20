@@ -46,13 +46,13 @@ struct OpcodeDetails {
 };
 
 enum class ClientOpcode
-	: uint32_t {
-		LOGIN_AUTHENTICATION_IDENTITY = 0x01,
-	MOVE = 0x02,
+	: uint16_t {
+		LOGIN_AUTHENTICATION_IDENTITY = 0x0001,
+	MOVE = 0x0002,
 };
 
 enum class ServerOpcode
-	: uint32_t {
+	: uint16_t {
 		LOGIN_AUTHENTICATION_CHALLENGE = 0xFFFE,
 	LOGIN_AUTHENTICATION_RESPONSE = 0xFFFD,
 	MOVE = 0xFFFC,

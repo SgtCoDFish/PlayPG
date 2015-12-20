@@ -32,8 +32,8 @@ CREATE TABLE `characters` (
 
 LOCK TABLES `players` WRITE;
 
-INSERT INTO `players` VALUES (1, 'SgtCoDFish', 'testa');
-INSERT INTO `players` VALUES (2, 'ad299', 'testa');
+INSERT INTO `players` VALUES (1, 'SgtCoDFish@example.com', 'testa');
+INSERT INTO `players` VALUES (2, 'ad299@example.com', 'testa');
 
 LOCK TABLES `characters` WRITE;
 

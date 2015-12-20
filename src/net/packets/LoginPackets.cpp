@@ -27,18 +27,36 @@
 
 #include "net/packets/LoginPackets.hpp"
 
+#include "PlayPGVersion.hpp"
+
 namespace PlayPG {
 
 AuthenticationChallenge::AuthenticationChallenge() :
 		        ServerPacket(ServerOpcode::LOGIN_AUTHENTICATION_CHALLENGE) {
+	buffer.putShort(static_cast<opcode_type_t>(opcode));
+
+	const uint16_t verLen = uint16_t(std::strlen(Version::versionString));
+	buffer.putShort(verLen);
+
+	for (int i = 0; i < verLen; i++) {
+		buffer.putChar(Version::versionString[i]);
+	}
+
+	const uint16_t hashLen = uint16_t(std::strlen(Version::gitHash));
+	buffer.putShort(hashLen);
+
+	for (int i = 0; i < hashLen; i++) {
+		buffer.putChar(Version::gitHash[i]);
+	}
 }
 
 AuthenticationIdentity::AuthenticationIdentity(const std::string &username_, const std::string &password_) :
 		        ClientPacket(ClientOpcode::LOGIN_AUTHENTICATION_IDENTITY),
 		        unameLength { static_cast<decltype(unameLength)>(username_.length()) },
-		        username { username_.c_str() },
+		        username { username_ },
 		        passwordLength { static_cast<decltype(passwordLength)>(password_.length()) },
-		        password { password_.c_str() } {
+		        password { password_ } {
+	buffer.putShort(static_cast<opcode_type_t>(opcode));
 
 	buffer.putShort(unameLength);
 	for (auto &c : username_) {
@@ -54,6 +72,8 @@ AuthenticationIdentity::AuthenticationIdentity(const std::string &username_, con
 AuthenticationResponse::AuthenticationResponse(bool successful_) :
 		        ServerPacket(ServerOpcode::LOGIN_AUTHENTICATION_RESPONSE),
 		        successful { successful_ } {
+	buffer.putShort(static_cast<opcode_type_t>(opcode));
+
 	buffer.put(static_cast<uint8_t>(successful));
 }
 

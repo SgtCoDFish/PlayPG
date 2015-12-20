@@ -36,6 +36,7 @@
 
 #include "server/LoginServer.hpp"
 #include "net/Opcodes.hpp"
+#include "net/packets/LoginPackets.hpp"
 
 namespace PlayPG {
 
@@ -46,8 +47,8 @@ static const std::unordered_map<opcode_type_t, OpcodeDetails> acceptedOpcodes_lo
 
 LoginServer::LoginServer(const ServerDetails &serverDetails_, const DatabaseDetails &databaseDetails_) :
 		        Server(serverDetails_, databaseDetails_, acceptedOpcodes_login) {
-	playerAcceptor = std::make_unique<APG::SDLAcceptorSocket>(serverDetails.port);
-
+	playerAcceptor = std::make_unique<APG::SDLAcceptorSocket>(serverDetails.port, true);
+//	playerAcceptor->reconnect();
 }
 
 void LoginServer::run() {
@@ -66,8 +67,18 @@ void LoginServer::run() {
 			auto res = std::unique_ptr<sql::ResultSet>(ps->executeQuery("SELECT * FROM players;"));
 
 			while (res->next()) {
-				std::cout << "id = " << res->getInt(1) << "\nname = " << res->getString(2) << std::endl;
+				std::cout << "id = " << res->getInt("id") << "\nname = " << res->getString("email") << std::endl;
 			}
+
+			newPlayerSocket->recv(sizeof(short));
+			logger->info("Got %v", newPlayerSocket->getShort());
+
+			newPlayerSocket->clear();
+
+			AuthenticationChallenge challenge;
+
+			newPlayerSocket->put(&challenge.buffer);
+			newPlayerSocket->send();
 
 			// new connection
 			playerSessions.emplace_back(std::make_unique<PlayerSession>(std::move(newPlayerSocket)));
