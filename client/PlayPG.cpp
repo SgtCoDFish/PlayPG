@@ -81,41 +81,38 @@ bool PlayPG::init() {
 }
 
 bool PlayPG::doLogin() {
+	const auto logger = el::Loggers::getLogger("PlayPG");
 	socket.connect();
 
 	bool ret = false;
 
-	if(socket.hasError()) {
+	if (socket.hasError()) {
 		return false;
 	}
 
 	socket.putShort(0xFFFF);
 	socket.send();
 
-	el::Loggers::getLogger("PlayPG")->info("Sent!");
+	logger->info("Sent!");
 
 	socket.clear();
 
 	int read = socket.recv();
-	el::Loggers::getLogger("PlayPG")->info("Got %v bytes", read);
+	logger->info("Got %v bytes", read);
 
-	for(int i = 0; i < read; i++) {
-		el::Loggers::getLogger("PlayPG")->info("%v", socket.getChar());
+	std::stringstream ss;
+	for (int i = 0; i < read; i++) {
+		ss << socket.getChar();
 	}
 
-	if(std::underlying_type<ServerOpcode>::type(socket.getShort()) == static_cast<std::underlying_type<ServerOpcode>::type>(ServerOpcode::LOGIN_AUTHENTICATION_CHALLENGE)) {
-		socket.recv(sizeof(uint16_t));
+	logger->info("Got: %v", ss.str());
 
-		const auto size = socket.getShort();
-		el::Loggers::getLogger("PlayPG")->info("Got auth challenge, string size: %v", size);
-
-		ret = true;
+	ret = true;
 
 //		AuthenticationIdentity idPacket("SgtCoDFish@example.com", "testa");
 //
 //		socket.put(&idPacket.buffer);
 //		socket.send();
-	}
 
 	return ret;
 }
