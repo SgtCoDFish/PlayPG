@@ -94,9 +94,10 @@ bool PlayPG::doLogin() {
 	}
 
 	int read = socket.recv();
-	logger->info("Got %v bytes.", read);
 
 	const auto opcode = socket.getShort();
+
+	logger->info("Got %v bytes, opcode %v.", read, opcode);
 
 	if (opcode != static_cast<opcode_type_t>(ServerOpcode::LOGIN_AUTHENTICATION_CHALLENGE)) {
 		logger->info("Got opcode %v which doesn't match the expected value. Ignoring.");
@@ -108,7 +109,9 @@ bool PlayPG::doLogin() {
 	auto buffer = std::make_unique<int8_t[]>(jsonSize);
 
 	socket.getBytes((uint8_t *) buffer.get(), jsonSize);
-	std::string json(reinterpret_cast<char*>(buffer.get()));
+	std::string json(reinterpret_cast<char*>(buffer.get()), jsonSize);
+
+	logger->info("JSON: %v", json);
 
 	APG::JSONSerializer<AuthenticationChallenge> challengeS11N;
 	const auto challenge = challengeS11N.fromJSON(json.c_str());
