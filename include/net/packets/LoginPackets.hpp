@@ -30,13 +30,27 @@
 
 #include <string>
 
+#include <APG/s11n/JSON.hpp>
+
 #include "net/Packet.hpp"
 
 namespace PlayPG {
 
 class AuthenticationChallenge final : public ServerPacket {
 public:
-	explicit AuthenticationChallenge();
+	explicit AuthenticationChallenge(const std::string &version, const std::string &versionHash,
+	        const std::string &name);
+
+	std::string version;
+	std::string versionHash;
+	std::string name;
+};
+
+class AuthenticationResponse final : public ServerPacket {
+public:
+	explicit AuthenticationResponse(bool successful_);
+
+	bool successful;
 };
 
 /**
@@ -56,11 +70,81 @@ public:
 
 };
 
-class AuthenticationResponse final : public ServerPacket {
+class VersionMismatch final : public ClientPacket {
 public:
-	explicit AuthenticationResponse(bool successful_);
+	explicit VersionMismatch();
+};
 
-	bool successful;
+}
+
+namespace APG {
+
+template<> class JSONSerializer<PlayPG::AuthenticationChallenge> : public JSONCommon {
+public:
+	JSONSerializer() :
+			        JSONCommon() {
+
+	}
+
+	PlayPG::AuthenticationChallenge fromJSON(const char *json) {
+		rapidjson::Document d;
+
+		d.Parse(json);
+
+		return PlayPG::AuthenticationChallenge(d["version"].GetString(), d["versionHash"].GetString(),
+		        d["name"].GetString());
+	}
+
+	std::string toJSON(const PlayPG::AuthenticationChallenge &t) {
+		buffer.Clear();
+
+		writer->StartObject();
+
+		writer->String("version");
+		writer->String(t.version.c_str());
+
+		writer->String("versionHash");
+		writer->String(t.versionHash.c_str());
+
+		writer->String("name");
+		writer->String(t.name.c_str());
+
+		writer->EndObject();
+
+		return std::string(buffer.GetString());
+	}
+};
+
+template<> class JSONSerializer<PlayPG::AuthenticationIdentity> : public JSONCommon {
+public:
+	JSONSerializer() :
+			        JSONCommon() {
+
+	}
+
+	PlayPG::AuthenticationIdentity fromJSON(const char *json) {
+		rapidjson::Document d;
+
+		d.Parse(json);
+
+		return PlayPG::AuthenticationIdentity(d["username"].GetString(), d["password"].GetString());
+	}
+
+	std::string toJSON(const PlayPG::AuthenticationIdentity &t) {
+		buffer.Clear();
+
+		writer->StartObject();
+
+		writer->String("username");
+		writer->String(t.username.c_str());
+
+		writer->String("password");
+		writer->String(t.password.c_str());
+
+		writer->EndObject();
+
+		return std::string(buffer.GetString());
+	}
 };
 
 }

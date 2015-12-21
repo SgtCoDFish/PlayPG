@@ -36,15 +36,18 @@ namespace PlayPG {
 
 class PlayerSession final {
 public:
-	explicit PlayerSession(std::unique_ptr<APG::Socket> &&socket);
+	explicit PlayerSession(const std::string &username, std::unique_ptr<APG::Socket> &&socket);
 	~PlayerSession() = default;
+
+	const std::string username;
 
 	uint64_t guid;
 	std::unique_ptr<APG::Socket> socket;
+
+private:
+	static uint64_t nextGUID;
 };
 
 }
-
-
 
 #endif /* INCLUDE_NET_PLAYERSESSION_HPP_ */

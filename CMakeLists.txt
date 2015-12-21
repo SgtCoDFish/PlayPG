@@ -26,6 +26,7 @@ if ( CMAKE_BUILD_TYPE MATCHES "Release")
 else ()
 	message("Building in debug mode.")
 	set (PLAYPG_DEBUG TRUE)
+	set (PlayPG_VERSION "${PlayPG_VERSION}-debug")
 endif ()
 
 if ( NOT EXCLUDE_GIT )

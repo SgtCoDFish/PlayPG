@@ -25,6 +25,9 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <cstdint>
+#include <cstring>
+
 #include <utility>
 
 #include <Ashley/Ashley.hpp>
@@ -37,7 +40,10 @@
 #include "Systems.hpp"
 
 #include "PlayPG.hpp"
+#include "PlayPGVersion.hpp"
 #include "Map.hpp"
+
+#include "net/packets/LoginPackets.hpp"
 
 using namespace APG;
 
@@ -83,38 +89,52 @@ bool PlayPG::init() {
 bool PlayPG::doLogin() {
 	const auto logger = el::Loggers::getLogger("PlayPG");
 	socket.connect();
-
-	bool ret = false;
-
 	if (socket.hasError()) {
 		return false;
 	}
 
-	socket.putShort(0xFFFF);
-	socket.send();
+	int read = socket.recv();
+	logger->info("Got %v bytes.", read);
 
-	logger->info("Sent!");
+	const auto opcode = socket.getShort();
+
+	if (opcode != static_cast<opcode_type_t>(ServerOpcode::LOGIN_AUTHENTICATION_CHALLENGE)) {
+		logger->info("Got opcode %v which doesn't match the expected value. Ignoring.");
+		socket.clear();
+		return false;
+	}
+
+	const uint16_t jsonSize = socket.getShort();
+	auto buffer = std::make_unique<int8_t[]>(jsonSize);
+
+	socket.getBytes((uint8_t *) buffer.get(), jsonSize);
+	std::string json(reinterpret_cast<char*>(buffer.get()));
+
+	APG::JSONSerializer<AuthenticationChallenge> challengeS11N;
+	const auto challenge = challengeS11N.fromJSON(json.c_str());
+
+	logger->info("Got challenge from \"%v\" with version %v (%v).", challenge.name, challenge.version,
+	        challenge.versionHash);
 
 	socket.clear();
 
-	int read = socket.recv();
-	logger->info("Got %v bytes", read);
+	if (std::strcmp(challenge.version.c_str(), Version::versionString) != 0
+	        || std::strcmp(challenge.versionHash.c_str(), Version::gitHash) != 0) {
+		logger->info("Version check failed.");
 
-	std::stringstream ss;
-	for (int i = 0; i < read; i++) {
-		ss << socket.getChar();
+		VersionMismatch mismatchPacket;
+
+		socket.put(&mismatchPacket.buffer);
+		socket.send();
+
+		return false;
 	}
 
-	logger->info("Got: %v", ss.str());
+	AuthenticationIdentity identity("SgtCoDFish@example.com", "testa");
+	socket.put(&identity.buffer);
+	socket.send();
 
-	ret = true;
-
-//		AuthenticationIdentity idPacket("SgtCoDFish@example.com", "testa");
-//
-//		socket.put(&idPacket.buffer);
-//		socket.send();
-
-	return ret;
+	return true;
 }
 
 void PlayPG::changeToWorld(const std::unique_ptr<Map> &map) {

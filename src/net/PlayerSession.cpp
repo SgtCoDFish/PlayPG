@@ -34,10 +34,12 @@
 
 namespace PlayPG {
 
-PlayerSession::PlayerSession(std::unique_ptr<APG::Socket> &&socket_) :
-				guid { 0 }, // todo: change
-		        socket { std::move(socket_) } {
+uint64_t PlayerSession::nextGUID = 0u;
 
+PlayerSession::PlayerSession(const std::string &username_, std::unique_ptr<APG::Socket> &&socket_) :
+				username { username_ },
+				guid { nextGUID++ },
+		        socket { std::move(socket_) } {
 }
 
 }

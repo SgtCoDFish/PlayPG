@@ -25,46 +25,29 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <cstdint>
+
 #include "net/packets/LoginPackets.hpp"
 
 #include "PlayPGVersion.hpp"
 
 namespace PlayPG {
 
-AuthenticationChallenge::AuthenticationChallenge() :
-		        ServerPacket(ServerOpcode::LOGIN_AUTHENTICATION_CHALLENGE) {
+AuthenticationChallenge::AuthenticationChallenge(const std::string &version_, const std::string &versionHash_,
+        const std::string &name_) :
+		        ServerPacket(ServerOpcode::LOGIN_AUTHENTICATION_CHALLENGE),
+		        version { version_ },
+		        versionHash { versionHash_ },
+		        name { name_ } {
 	buffer.putShort(static_cast<opcode_type_t>(opcode));
 
-	const uint16_t verLen = uint16_t(std::strlen(Version::versionString));
-	buffer.putShort(verLen);
+	APG::JSONSerializer<AuthenticationChallenge> toJson;
 
-	for (int i = 0; i < verLen; i++) {
-		buffer.putChar(Version::versionString[i]);
-	}
+	std::string json = toJson.toJSON(*this);
 
-	const uint16_t hashLen = uint16_t(std::strlen(Version::gitHash));
-	buffer.putShort(hashLen);
+	buffer.putShort(static_cast<uint16_t>(json.size()));
 
-	for (int i = 0; i < hashLen; i++) {
-		buffer.putChar(Version::gitHash[i]);
-	}
-}
-
-AuthenticationIdentity::AuthenticationIdentity(const std::string &username_, const std::string &password_) :
-		        ClientPacket(ClientOpcode::LOGIN_AUTHENTICATION_IDENTITY),
-		        unameLength { static_cast<decltype(unameLength)>(username_.length()) },
-		        username { username_ },
-		        passwordLength { static_cast<decltype(passwordLength)>(password_.length()) },
-		        password { password_ } {
-	buffer.putShort(static_cast<opcode_type_t>(opcode));
-
-	buffer.putShort(unameLength);
-	for (auto &c : username_) {
-		buffer.putChar(c);
-	}
-
-	buffer.putShort(passwordLength);
-	for (auto &c : password_) {
+	for (const char &c : json) {
 		buffer.putChar(c);
 	}
 }
@@ -75,6 +58,30 @@ AuthenticationResponse::AuthenticationResponse(bool successful_) :
 	buffer.putShort(static_cast<opcode_type_t>(opcode));
 
 	buffer.put(static_cast<uint8_t>(successful));
+}
+
+AuthenticationIdentity::AuthenticationIdentity(const std::string &username_, const std::string &password_) :
+		        ClientPacket(ClientOpcode::LOGIN_AUTHENTICATION_IDENTITY),
+		        unameLength { static_cast<decltype(unameLength)>(username_.length()) },
+		        username { username_ },
+		        passwordLength { static_cast<decltype(passwordLength)>(password_.length()) },
+		        password { password_ } {
+	buffer.putShort(static_cast<opcode_type_t>(opcode));
+
+	APG::JSONSerializer<AuthenticationIdentity> toJson;
+
+	std::string json = toJson.toJSON(*this);
+
+	buffer.putShort(static_cast<uint16_t>(json.size()));
+
+	for (const char &c : json) {
+		buffer.putChar(c);
+	}
+}
+
+VersionMismatch::VersionMismatch() :
+		        ClientPacket(ClientOpcode::VERSION_MISMATCH) {
+	buffer.putShort(static_cast<opcode_type_t>(opcode));
 }
 
 }
