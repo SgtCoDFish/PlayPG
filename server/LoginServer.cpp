@@ -36,10 +36,10 @@
 
 #include <SDL2/SDL.h>
 
-#include "server/LoginServer.hpp"
 #include "net/Opcodes.hpp"
 #include "net/packets/LoginPackets.hpp"
 #include "PlayPGVersion.hpp"
+#include "LoginServer.hpp"
 
 namespace PlayPG {
 
@@ -78,19 +78,16 @@ void LoginServer::run() {
 
 			newPlayerSocket->put(&challenge.buffer);
 			newPlayerSocket->send();
-
 			newPlayerSocket->clear();
 
-			SDL_Delay(500);
-
-			const auto receivedCount = newPlayerSocket->recv();
-
-			if (receivedCount <= 0) {
-				logger->info("Got no response from new socket, closing.");
+			if(!newPlayerSocket->waitForActivity(3000u)) {
+				logger->warn("Client timed out when responding to challenge. Abandoning.");
 				continue;
 			}
 
-			const opcode_type_t opcode = newPlayerSocket->getShort();
+			logger->info("Got %v response bytes.", newPlayerSocket->recv());
+
+			const opcode_type_t opcode = newPlayerSocket->getUInt16();
 
 			if (opcode != static_cast<opcode_type_t>(ClientOpcode::LOGIN_AUTHENTICATION_IDENTITY)) {
 				if (opcode == static_cast<opcode_type_t>(ClientOpcode::VERSION_MISMATCH)) {
@@ -102,21 +99,18 @@ void LoginServer::run() {
 				continue;
 			}
 
-			logger->info("Client attempting to authenticate.");
-
-			const auto authIDJSONSize = newPlayerSocket->getShort();
+			const auto authIDJSONSize = newPlayerSocket->getUInt16();
+			newPlayerSocket->recv(authIDJSONSize);
 
 			APG::JSONSerializer<AuthenticationIdentity> authIDS11N;
-			auto authIDBuffer = std::make_unique<char[]>(authIDJSONSize);
-			newPlayerSocket->getBytes(reinterpret_cast<uint8_t *>(authIDBuffer.get()), authIDJSONSize);
+			auto jsonString = newPlayerSocket->getStringByLength(authIDJSONSize);
 
-			std::string jsonString(authIDBuffer.get(), authIDJSONSize);
+			logger->info("Client attempting to authenticate with JSON: %v", jsonString);
+
 			AuthenticationIdentity id = authIDS11N.fromJSON(jsonString.c_str());
 
-			logger->verbose(9, "Username: %v - Password: %v", id.username, id.password);
-
 			auto newSession = std::make_unique<PlayerSession>(id.username, std::move(newPlayerSocket));
-			logger->verbose(1, "Storing new user \"%v\" into connection pool with GUID %v.", newSession->username, newSession->guid);
+			logger->verbose(9, "New user session for \"%v\": GUID %v.", newSession->username, newSession->guid);
 			// new connection established so keep for later.
 			playerSessions.emplace_back(std::move(newSession));
 		}

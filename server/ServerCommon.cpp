@@ -25,7 +25,9 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "server/ServerCommon.hpp"
+#include <chrono>
+
+#include "ServerCommon.hpp"
 
 namespace PlayPG {
 
@@ -56,7 +58,10 @@ Server::Server(const ServerDetails &serverDetails_, const DatabaseDetails &datab
 		        mysqlConnection { std::unique_ptr<sql::Connection>(
 		                driver->connect(databaseDetails.fullHostName.c_str(), databaseDetails.userName.c_str(),
 		                        databaseDetails.password.c_str())) },
-		        acceptedOpcodes { acceptedOpcodeTypes_ } {
+		        acceptedOpcodes { acceptedOpcodeTypes_ },
+		        mersenneTwister {
+		                static_cast<std::mt19937_64::result_type>(std::chrono::high_resolution_clock::now().time_since_epoch().count()) },
+		        random { mersenneTwister } {
 	mysqlConnection->setSchema("ppg");
 }
 

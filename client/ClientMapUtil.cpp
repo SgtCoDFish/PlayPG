@@ -24,25 +24,63 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include <APG/core/APGeasylogging.hpp>
 
-#include "MapServer.hpp"
+#include <APG/APG.hpp>
+
+#include "ClientMapUtil.hpp"
+#include "Components.hpp"
 
 namespace PlayPG {
 
-static const std::unordered_map<opcode_type_t, OpcodeDetails> acceptedOpcodes_map = { //
-        { static_cast<opcode_type_t>(ClientOpcode::MOVE), OpcodeDetails("Move request") }, //
-        };
+std::vector<std::unique_ptr<ashley::Entity>> MapUtil::generateFrontLayerEntities(const Map &ppgMap, APG::GLTmxRenderer *renderer) {
+	std::vector<std::unique_ptr<ashley::Entity>> layerEntities;
 
-MapServer::MapServer(const ServerDetails &serverDetails_, const DatabaseDetails &databaseDetails_) :
-		        Server(serverDetails_, databaseDetails_, acceptedOpcodes_map) {
+	const auto map = ppgMap.getTmxMap();
 
+	for (int i = 0; i < map->GetNumTileLayers(); ++i) {
+		const auto layer = map->GetTileLayer(i);
+
+		if (!layer->IsVisible()) {
+			continue;
+		} else if (layer->GetName() == "__playerSpawn") {
+			break;
+		}
+
+		layerEntities.emplace_back(std::make_unique<ashley::Entity>());
+
+		layerEntities.back()->add<Position>();
+		layerEntities.back()->add<Renderable>(renderer, i);
+	}
+
+	return layerEntities;
 }
 
-void MapServer::run() {
-	auto logger = el::Loggers::getLogger("PlayPG");
+std::vector<std::unique_ptr<ashley::Entity>> MapUtil::generateBackLayerEntities(const Map &ppgMap, APG::GLTmxRenderer *renderer) {
+	std::vector<std::unique_ptr<ashley::Entity>> layerEntities;
+	bool spawnFound = false;
 
-	logger->info("Running map server.");
+	const auto map = ppgMap.getTmxMap();
+
+	for (int i = 0; i < map->GetNumTileLayers(); ++i) {
+		const auto layer = map->GetTileLayer(i);
+
+		if (layer->GetName() == "__playerSpawn") {
+			spawnFound = true;
+		}
+
+		if (spawnFound) {
+			if (!layer->IsVisible()) {
+				continue;
+			}
+
+			layerEntities.emplace_back(std::make_unique<ashley::Entity>());
+
+			layerEntities.back()->add<Position>();
+			layerEntities.back()->add<Renderable>(renderer, i);
+		}
+	}
+
+	return layerEntities;
 }
 
 }

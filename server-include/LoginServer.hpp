@@ -24,25 +24,39 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include <APG/core/APGeasylogging.hpp>
 
-#include "MapServer.hpp"
+#ifndef INCLUDE_SERVER_LOGINSERVER_HPP_
+#define INCLUDE_SERVER_LOGINSERVER_HPP_
+
+#include <vector>
+#include <memory>
+#include <utility>
+
+#include "ServerCommon.hpp"
+#include "net/PlayerSession.hpp"
 
 namespace PlayPG {
 
-static const std::unordered_map<opcode_type_t, OpcodeDetails> acceptedOpcodes_map = { //
-        { static_cast<opcode_type_t>(ClientOpcode::MOVE), OpcodeDetails("Move request") }, //
-        };
+class LoginServer final : public Server {
+public:
+	explicit LoginServer(const ServerDetails &serverDetails_, const DatabaseDetails &databaseDetails_);
+	virtual ~LoginServer() = default;
 
-MapServer::MapServer(const ServerDetails &serverDetails_, const DatabaseDetails &databaseDetails_) :
-		        Server(serverDetails_, databaseDetails_, acceptedOpcodes_map) {
+	virtual void run() override final;
+
+protected:
+	// For accepting connections from players
+	std::unique_ptr<APG::AcceptorSocket> playerAcceptor;
+
+	std::vector<std::unique_ptr<PlayerSession>> playerSessions;
+
+	// For accepting connections from map servers which have just spun up
+	std::unique_ptr<APG::AcceptorSocket> mapServerAcceptor;
+
+	// A list of connected map servers
+	std::vector<APG::Socket> mapServers;
+};
 
 }
 
-void MapServer::run() {
-	auto logger = el::Loggers::getLogger("PlayPG");
-
-	logger->info("Running map server.");
-}
-
-}
+#endif /* INCLUDE_SERVER_LOGINSERVER_HPP_ */

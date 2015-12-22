@@ -2,7 +2,8 @@ find_package(Boost REQUIRED COMPONENTS program_options)
 
 file(GLOB_RECURSE PlayPG_SERVER_SOURCES ${PROJECT_SOURCE_DIR}/server/*.cpp)
 
-include_directories(${Boost_INCLUDE_DIR}
+include_directories("server-include"
+                    ${Boost_INCLUDE_DIR}
                     ${MysqlConnectorCpp_INCLUDES}
                     )
                     

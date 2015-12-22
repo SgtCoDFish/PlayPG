@@ -34,7 +34,9 @@
 #include <vector>
 #include <string>
 #include <unordered_map>
+#include <random>
 
+#include <APG/core/Random.hpp>
 #include <APG/APGNet.hpp>
 
 #include <mysql_driver.h>
@@ -101,11 +103,10 @@ protected:
 	sql::mysql::MySQL_Driver * driver;
 	std::unique_ptr<sql::Connection> mysqlConnection;
 
-	std::unique_ptr<APG::SDLAcceptorSocket> acceptor;
-
-	std::vector<APG::SDLSocket> attachedSockets;
-
 	std::unordered_map<opcode_type_t, OpcodeDetails> acceptedOpcodes;
+
+	std::mt19937_64 mersenneTwister;
+	APG::Random random;
 };
 
 }

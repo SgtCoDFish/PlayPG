@@ -43,13 +43,10 @@ AuthenticationChallenge::AuthenticationChallenge(const std::string &version_, co
 
 	APG::JSONSerializer<AuthenticationChallenge> toJson;
 
-	std::string json = toJson.toJSON(*this);
+	const std::string json = toJson.toJSON(*this);
 
 	buffer.putShort(static_cast<uint16_t>(json.size()));
-
-	for (const char &c : json) {
-		buffer.putChar(c);
-	}
+	buffer.putString(json);
 }
 
 AuthenticationResponse::AuthenticationResponse(bool successful_) :
@@ -70,13 +67,10 @@ AuthenticationIdentity::AuthenticationIdentity(const std::string &username_, con
 
 	APG::JSONSerializer<AuthenticationIdentity> toJson;
 
-	std::string json = toJson.toJSON(*this);
-
+	const std::string json = toJson.toJSON(*this);
 	buffer.putShort(static_cast<uint16_t>(json.size()));
 
-	for (const char &c : json) {
-		buffer.putChar(c);
-	}
+	buffer.putString(json);
 }
 
 VersionMismatch::VersionMismatch() :

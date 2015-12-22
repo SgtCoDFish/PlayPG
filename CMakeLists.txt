@@ -3,10 +3,17 @@ set(CMAKE_LEGACY_CYGWIN32 0)
 
 project(PlayPG)
 
+option(APG_NO_SDL "Is the APG library built without SDL? Can trim down the size of the APG library + server significantly and allow builidng on headless platforms. Implies -DEXCLUDE_CLIENT" OFF)
+
 option(EXCLUDE_CLIENT "Should we exclude building the client program?" OFF)
 option(EXCLUDE_SERVER "Should we exclude building the server program?" OFF)
 
 option(EXCLUDE_GIT "Should we ignore using git to get the latest commit details?" OFF)
+
+if ( APG_NO_SDL AND NOT EXCLUDE_CLIENT )
+    message("Excluding client as APG_NO_SDL is set.")
+    set(EXCLUDE_CLIENT ON)
+endif ()
 
 set(PlayPG_VERSION_MAJOR 0)
 set(PlayPG_VERSION_MINOR 2)
@@ -22,11 +29,11 @@ endif ()
 
 if ( CMAKE_BUILD_TYPE MATCHES "Release")
 	message("Building in release mode.")
-	set (PLAYPG_DEBUG FALSE)
+	set (PlayPG_DEBUG FALSE)
 else ()
 	message("Building in debug mode.")
-	set (PLAYPG_DEBUG TRUE)
-	set (PlayPG_VERSION "${PlayPG_VERSION}-debug")
+	set (PlayPG_DEBUG TRUE)
+	set (PlayPG_VERSION "${PlayPG_VERSION}-d")
 endif ()
 
 if ( NOT EXCLUDE_GIT )
@@ -52,18 +59,21 @@ configure_file (
 
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
-find_package(SDL2 REQUIRED)
-find_package(SDL2_image REQUIRED)
-find_package(SDL2_mixer REQUIRED)
-find_package(SDL2_ttf REQUIRED)
+if ( NOT APG_NO_SDL )
+    find_package(SDL2 REQUIRED)
+    find_package(SDL2_image REQUIRED)
+    find_package(SDL2_mixer REQUIRED)
+    find_package(SDL2_ttf REQUIRED)
+    
+    find_package(OpenGL REQUIRED)
+    find_package(GLEW REQUIRED)
+endif ()
 
-find_package(OpenGL REQUIRED)
-find_package(GLEW REQUIRED)
+find_package(APG REQUIRED)
 
 find_package(GLM REQUIRED)
 find_package(AshleyCPP REQUIRED)
 find_package(rapidjson REQUIRED)
-find_package(APG REQUIRED)
 
 find_package(TmxParser REQUIRED)
 find_package(TinyXML2 REQUIRED)
@@ -101,16 +111,7 @@ else ()
 endif ()
 
 include_directories("include"
-                    ${SDL2_IMAGE_INCLUDE_DIR}
-                    ${SDL2_INCLUDE_DIR}
-                    ${SDL2_TTF_INCLUDE_DIR}
-                    ${SDL2_MIXER_INCLUDE_DIR}
-
-                    ${OPENGL_INCLUDE_DIR}
-                    ${GLEW_INCLUDE_DIRS}
-
                     ${GLM_INCLUDE_DIRS}
-                    ${SDL_NET_INCLUDE_DIR}
                     
                     ${AshleyCPP_INCLUDE_DIR}
                     ${APG_INCLUDE_DIR}
@@ -123,25 +124,40 @@ include_directories("include"
                     
                     ${PROJECT_BINARY_DIR}
                     )
-                    
-set(PlayPG_LIBS ${SDL2_NET_LIBRARY}
 
-                ${SDL2_LIBRARY}
-                ${SDL2_IMAGE_LIBRARY}
-                ${SDL2_TTF_LIBRARIES}
-                ${SDL2_MIXER_LIBRARY}
+set(PlayPG_LIBS ${OS_LIBS}
 
-                ${OPENGL_LIBRARIES}
-                ${GLEW_LIBRARIES}
-                
-                ${OS_LIBS}
-                
                 ${TMXPARSER_LIBRARY}
                 ${TINYXML2_LIBRARIES}
                 ${ZLIB_LIBRARIES}
                 )
+                
+if ( NOT APG_NO_SDL )
+    include_directories(${SDL2_IMAGE_INCLUDE_DIR}
+                        ${SDL2_INCLUDE_DIR}
+                        ${SDL2_TTF_INCLUDE_DIR}
+                        ${SDL2_MIXER_INCLUDE_DIR}
+                        ${SDL2_NET_INCLUDE_DIR}
+    
+                        ${OPENGL_INCLUDE_DIR}
+                        ${GLEW_INCLUDE_DIRS}
+                        )
+                        
+    set(PlayPG_LIBS ${PlayPG_LIBS}
+                    ${SDL2_LIBRARY}
+                    ${SDL2_IMAGE_LIBRARY}
+                    ${SDL2_TTF_LIBRARIES}
+                    ${SDL2_MIXER_LIBRARY}
+                    ${SDL2_NET_LIBRARY}
+                    
+                    ${OPENGL_LIBRARIES}
+                    ${GLEW_LIBRARIES}
+                    )
+else ()
+    add_definitions(-DAPG_NO_SDL -DAPG_NO_GL)
+endif ()
 
-if( PLAYPG_DEBUG )
+if( PlayPG_DEBUG )
     set(PlayPG_LIBS ${PlayPG_LIBS}
                     ${APG_DEBUG_LIBRARY}
                     ${AshleyCPP_DEBUG_LIBRARY}

@@ -27,6 +27,7 @@
 
 #include <cstdlib>
 #include <cmath>
+#include <ctime>
 
 #include <memory>
 #include <iostream>
@@ -39,10 +40,9 @@
 #include <APG/APG.hpp>
 INITIALIZE_EASYLOGGINGPP
 
-#include "Systems.hpp"
-#include "server/ServerCommon.hpp"
-#include "server/LoginServer.hpp"
-#include "server/MapServer.hpp"
+#include "ServerCommon.hpp"
+#include "LoginServer.hpp"
+#include "MapServer.hpp"
 #include "net/Packet.hpp"
 
 #include "PlayPGVersion.hpp"
@@ -60,7 +60,8 @@ int main(int argc, char *argv[]) {
 
 	APG::Game::setupLoggingDefault();
 	APG::Game::setLoggerToAPGStyle("ServPG");
-//	auto logger = el::Loggers::getLogger("ServPG");
+
+	std::srand(std::time(nullptr));
 
 	auto server = initializeProgramOptions(argc, argv);
 	if (server == nullptr) {
@@ -176,11 +177,13 @@ std::unique_ptr<PlayPG::LoginServer> startLoginServer(el::Logger * logger, const
 		return nullptr;
 	}
 
+	const auto serverName = vm["name"].as<std::string>();
+
 	const auto dbServer = vm["database-server"].as<std::string>();
 	const auto dbUsername = vm["database-username"].as<std::string>();
 	const auto dbPassword = vm["database-password"].as<std::string>();
 
-	PlayPG::ServerDetails serverDetails("edmund", "localhost", serverPort, PlayPG::ServerType::LOGIN_SERVER);
+	PlayPG::ServerDetails serverDetails(serverName, "localhost", serverPort, PlayPG::ServerType::LOGIN_SERVER);
 	PlayPG::DatabaseDetails dbDetails(dbServer, dbPort, dbUsername, dbPassword);
 
 	return std::make_unique<PlayPG::LoginServer>(serverDetails, dbDetails);

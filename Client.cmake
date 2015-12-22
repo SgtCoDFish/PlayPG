@@ -3,8 +3,7 @@ file(GLOB_RECURSE PlayPG_CLIENT_SOURCES ${PROJECT_SOURCE_DIR}/client/*.cpp)
 file(MAKE_DIRECTORY assets)
 file(COPY ${PlayPG_TEST_ASSETS} DESTINATION assets)
 
-include_directories(
-                    )
+include_directories("client-include")
 
 set(PlayPG_CLIENT_LIBS  ${PlayPG_LIBS}
                         )

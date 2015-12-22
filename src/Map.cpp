@@ -29,21 +29,16 @@
 
 #include <glm/glm.hpp>
 
-#include <Ashley/Ashley.hpp>
-
 #include <tmxparser/Tmx.h>
 
-#include <APG/APG.hpp>
+#include <APG/core/APGeasylogging.hpp>
 
-#include "components/Position.hpp"
-#include "components/Renderable.hpp"
 #include "Map.hpp"
 
 namespace PlayPG {
 
-Map::Map(APG::GLTmxRenderer * const renderer_) :
-		        renderer { renderer_ },
-		        map { renderer->getMap() } {
+Map::Map(const Tmx::Map * map_) :
+		        map { map_ } {
 	parseMap();
 }
 
@@ -110,53 +105,6 @@ void Map::parseTiles(el::Logger * const logger) {
 			tiles.emplace_back(solid, interesting, spawn);
 		}
 	}
-}
-
-std::vector<std::unique_ptr<ashley::Entity>> Map::generateFrontLayerEntities() const {
-	std::vector<std::unique_ptr<ashley::Entity>> layerEntities;
-
-	for (int i = 0; i < map->GetNumTileLayers(); ++i) {
-		const auto layer = map->GetTileLayer(i);
-
-		if (!layer->IsVisible()) {
-			continue;
-		} else if (layer->GetName() == "__playerSpawn") {
-			break;
-		}
-
-		layerEntities.emplace_back(std::make_unique<ashley::Entity>());
-
-		layerEntities.back()->add<Position>();
-		layerEntities.back()->add<Renderable>(renderer, i);
-	}
-
-	return layerEntities;
-}
-
-std::vector<std::unique_ptr<ashley::Entity>> Map::generateBackLayerEntities() const {
-	std::vector<std::unique_ptr<ashley::Entity>> layerEntities;
-	bool spawnFound = false;
-
-	for (int i = 0; i < map->GetNumTileLayers(); ++i) {
-		const auto layer = map->GetTileLayer(i);
-
-		if (layer->GetName() == "__playerSpawn") {
-			spawnFound = true;
-		}
-
-		if (spawnFound) {
-			if (!layer->IsVisible()) {
-				continue;
-			}
-
-			layerEntities.emplace_back(std::make_unique<ashley::Entity>());
-
-			layerEntities.back()->add<Position>();
-			layerEntities.back()->add<Renderable>(renderer, i);
-		}
-	}
-
-	return layerEntities;
 }
 
 }

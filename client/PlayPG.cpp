@@ -42,6 +42,7 @@
 #include "PlayPG.hpp"
 #include "PlayPGVersion.hpp"
 #include "Map.hpp"
+#include "ClientMapUtil.hpp"
 
 #include "net/packets/LoginPackets.hpp"
 
@@ -65,10 +66,10 @@ bool PlayPG::init() {
 	batch = std::make_unique<SpriteBatch>();
 
 	outdoorRenderer = std::make_unique<GLTmxRenderer>("assets/outdoor.tmx", batch.get());
-	mapOutdoor = std::make_unique<Map>(outdoorRenderer.get());
+	mapOutdoor = std::make_unique<Map>(outdoorRenderer->getMap());
 
 	indoorRenderer = std::make_unique<GLTmxRenderer>("assets/room1.tmx", batch.get());
-	mapIndoor = std::make_unique<Map>(indoorRenderer.get());
+	mapIndoor = std::make_unique<Map>(indoorRenderer->getMap());
 
 	playerTexture = std::make_unique<Texture>("assets/player.png");
 	playerSprite = std::make_unique<Sprite>(playerTexture);
@@ -93,6 +94,11 @@ bool PlayPG::doLogin() {
 		return false;
 	}
 
+	if(!socket.waitForActivity(2000)) {
+		logger->error("Server didn't respond in time.");
+		return false;
+	}
+
 	int read = socket.recv();
 
 	const auto opcode = socket.getShort();
@@ -106,17 +112,15 @@ bool PlayPG::doLogin() {
 	}
 
 	const uint16_t jsonSize = socket.getShort();
-	auto buffer = std::make_unique<int8_t[]>(jsonSize);
 
-	socket.getBytes((uint8_t *) buffer.get(), jsonSize);
-	std::string json(reinterpret_cast<char*>(buffer.get()), jsonSize);
+	auto json = socket.getStringByLength(jsonSize);
 
 	logger->info("JSON: %v", json);
 
 	APG::JSONSerializer<AuthenticationChallenge> challengeS11N;
 	const auto challenge = challengeS11N.fromJSON(json.c_str());
 
-	logger->info("Got challenge from \"%v\" with version %v (%v).", challenge.name, challenge.version,
+	logger->info("Got challenge from \"%v\", v%v (%v).", challenge.name, challenge.version,
 	        challenge.versionHash);
 
 	socket.clear();
@@ -133,9 +137,12 @@ bool PlayPG::doLogin() {
 		return false;
 	}
 
+	logger->info("Version check successful.");
+
 	AuthenticationIdentity identity("SgtCoDFish@example.com", "testa");
+
 	socket.put(&identity.buffer);
-	socket.send();
+	logger->info("Sent %v auth detail bytes.", socket.send());
 
 	return true;
 }
@@ -144,7 +151,7 @@ void PlayPG::changeToWorld(const std::unique_ptr<Map> &map) {
 	engine->removeAllEntities();
 
 	{
-		auto frontLayerEntities = map->generateFrontLayerEntities();
+		auto frontLayerEntities = MapUtil::generateFrontLayerEntities(*map, outdoorRenderer.get());
 		logger->info("Generated %v front layer entities.", frontLayerEntities.size());
 
 		for (auto &ent : frontLayerEntities) {
@@ -161,7 +168,7 @@ void PlayPG::changeToWorld(const std::unique_ptr<Map> &map) {
 	player->add<FocalPoint>();
 
 	{
-		auto backLayerEntities = map->generateBackLayerEntities();
+		auto backLayerEntities = MapUtil::generateBackLayerEntities(*map, outdoorRenderer.get());
 		logger->info("Generated %v back layer entities.", backLayerEntities.size());
 
 		for (auto &ent : backLayerEntities) {

@@ -25,38 +25,28 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef INCLUDE_SERVER_LOGINSERVER_HPP_
-#define INCLUDE_SERVER_LOGINSERVER_HPP_
+#ifndef CLIENT_INCLUDE_CLIENTMAPUTIL_HPP_
+#define CLIENT_INCLUDE_CLIENTMAPUTIL_HPP_
 
 #include <vector>
 #include <memory>
-#include <utility>
 
-#include "ServerCommon.hpp"
-#include "net/PlayerSession.hpp"
+#include <Ashley/Ashley.hpp>
+
+#include "Map.hpp"
+
+namespace APG {
+class GLTmxRenderer;
+}
 
 namespace PlayPG {
 
-class LoginServer final : public Server {
+class MapUtil {
 public:
-	explicit LoginServer(const ServerDetails &serverDetails_, const DatabaseDetails &databaseDetails_);
-	virtual ~LoginServer() = default;
-
-	virtual void run() override final;
-
-protected:
-	// For accepting connections from players
-	std::unique_ptr<APG::SDLAcceptorSocket> playerAcceptor;
-
-	std::vector<std::unique_ptr<PlayerSession>> playerSessions;
-
-	// For accepting connections from map servers which have just spun up
-	std::unique_ptr<APG::SDLAcceptorSocket> mapServerAcceptor;
-
-	// A list of connected map servers
-	std::vector<APG::SDLSocket> mapServers;
+	static std::vector<std::unique_ptr<ashley::Entity>> generateFrontLayerEntities(const Map &map, APG::GLTmxRenderer *renderer);
+	static std::vector<std::unique_ptr<ashley::Entity>> generateBackLayerEntities(const Map &map, APG::GLTmxRenderer *renderer);
 };
 
 }
 
-#endif /* INCLUDE_SERVER_LOGINSERVER_HPP_ */
+#endif /* CLIENT_INCLUDE_CLIENTMAPUTIL_HPP_ */

@@ -36,8 +36,7 @@
 
 #include <Ashley/Ashley.hpp>
 #include <tmxparser/Tmx.h>
-
-#include <APG/APG.hpp>
+#include <APG/core/APGeasylogging.hpp>
 
 namespace PlayPG {
 
@@ -55,7 +54,7 @@ struct MapTile final {
 
 class Map final {
 public:
-	explicit Map(APG::GLTmxRenderer * renderer);
+	explicit Map(const Tmx::Map * map);
 
 	bool isSolidAtTile(uint32_t x, uint32_t y) const {
 		return getTile(x, y).isSolid;
@@ -101,18 +100,13 @@ public:
 		return map->GetTileHeight();
 	}
 
-	std::vector<std::unique_ptr<ashley::Entity>> generateFrontLayerEntities() const;
-	std::vector<std::unique_ptr<ashley::Entity>> generateBackLayerEntities() const;
-
-	APG::GLTmxRenderer * getRenderer() const {
-		return renderer;
-	}
-
 	const MapTile &getTile(uint32_t x, uint32_t y) const;
 
-private:
-	APG::GLTmxRenderer *renderer;
+	const Tmx::Map * getTmxMap() const {
+		return map;
+	}
 
+private:
 	const Tmx::Map * map;
 
 	std::vector<MapTile> tiles;
