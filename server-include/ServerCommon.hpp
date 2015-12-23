@@ -39,6 +39,10 @@
 #include <APG/core/Random.hpp>
 #include <APG/APGNet.hpp>
 
+#ifndef APG_NO_SDL
+#include <SDL2/SDL.h>
+#endif
+
 #include <mysql_driver.h>
 #include <mysql_connection.h>
 

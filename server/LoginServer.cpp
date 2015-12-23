@@ -34,8 +34,6 @@
 #include <cppconn/resultset.h>
 #include <cppconn/statement.h>
 
-#include <SDL2/SDL.h>
-
 #include "net/Opcodes.hpp"
 #include "net/packets/LoginPackets.hpp"
 #include "PlayPGVersion.hpp"
