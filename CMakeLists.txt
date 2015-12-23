@@ -88,6 +88,10 @@ file(GLOB_RECURSE PlayPG_TEST_ASSETS ${PROJECT_SOURCE_DIR}/assets/*)
 
 set(OS_LIBS "")
 
+if ( WIN32 )
+	add_definitions(-DWIN32_LEAN_AND_MEAN)
+endif ()
+
 if ( NOT MSVC )
 	set(CMAKE_CXX_COMPILER_ARG1 "-std=c++1y")
 	set(CMAKE_CXX_FLAGS_BASE "-Wall -Wextra -Wno-unused-parameter")
@@ -169,7 +173,7 @@ else ()
                     ${AshleyCPP_LIBRARY}
                     )
 
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_BASE} ${PlayPG_DEBUG_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_BASE} ${PlayPG_RELEASE_FLAGS}")
 endif ()
 
 if ( NOT EXCLUDE_CLIENT )

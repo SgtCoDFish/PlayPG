@@ -24,6 +24,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+ 
+#include "LoginServer.hpp"
 
 #include <APG/core/APGeasylogging.hpp>
 
@@ -37,7 +39,6 @@
 #include "net/Opcodes.hpp"
 #include "net/packets/LoginPackets.hpp"
 #include "PlayPGVersion.hpp"
-#include "LoginServer.hpp"
 
 namespace PlayPG {
 
@@ -111,6 +112,11 @@ void LoginServer::run() {
 			logger->verbose(9, "New user session for \"%v\": GUID %v.", newSession->username, newSession->guid);
 			// new connection established so keep for later.
 			playerSessions.emplace_back(std::move(newSession));
+		} else {
+			if(playerAcceptor->hasError()) {
+				logger->error("Error in playerAcceptor, exiting.");
+				break;
+			}
 		}
 	}
 }

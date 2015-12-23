@@ -28,6 +28,8 @@
 #ifndef INCLUDE_SERVER_SERVERCOMMON_HPP_
 #define INCLUDE_SERVER_SERVERCOMMON_HPP_
 
+#include <APG/APGNet.hpp>
+
 #include <cstdint>
 
 #include <memory>
@@ -37,7 +39,6 @@
 #include <random>
 
 #include <APG/core/Random.hpp>
-#include <APG/APGNet.hpp>
 
 #ifndef APG_NO_SDL
 #include <SDL2/SDL.h>
