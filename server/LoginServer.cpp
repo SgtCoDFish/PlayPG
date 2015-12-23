@@ -50,7 +50,7 @@ static const std::unordered_map<opcode_type_t, OpcodeDetails> acceptedOpcodes_lo
 
 LoginServer::LoginServer(const ServerDetails &serverDetails_, const DatabaseDetails &databaseDetails_) :
 		        Server(serverDetails_, databaseDetails_, acceptedOpcodes_login) {
-	playerAcceptor = std::make_unique<APG::SDLAcceptorSocket>(serverDetails.port, true);
+	playerAcceptor = getAcceptorSocket(serverDetails_.port, true);
 }
 
 void LoginServer::run() {
@@ -80,7 +80,7 @@ void LoginServer::run() {
 			newPlayerSocket->send();
 			newPlayerSocket->clear();
 
-			if(!newPlayerSocket->waitForActivity(3000u)) {
+			if (!newPlayerSocket->waitForActivity(3000u)) {
 				logger->warn("Client timed out when responding to challenge. Abandoning.");
 				continue;
 			}

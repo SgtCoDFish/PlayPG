@@ -55,6 +55,9 @@ std::unique_ptr<PlayPG::LoginServer> startLoginServer(el::Logger * logger, const
         false);
 std::unique_ptr<PlayPG::MapServer> startWorldServer(el::Logger * logger, const po::variables_map& vm);
 
+void init_sockets();
+void shutdown_sockets();
+
 int main(int argc, char *argv[]) {
 	START_EASYLOGGINGPP(argc, argv);
 
@@ -68,11 +71,11 @@ int main(int argc, char *argv[]) {
 		return EXIT_SUCCESS;
 	}
 
-	APG::SDLGame::initialiseSDL();
+	init_sockets();
 
 	server->run();
 
-	APG::SDLGame::shutdownSDL();
+	shutdown_sockets();
 	return EXIT_SUCCESS;
 }
 
@@ -192,5 +195,21 @@ std::unique_ptr<PlayPG::LoginServer> startLoginServer(el::Logger * logger, const
 std::unique_ptr<PlayPG::MapServer> startWorldServer(el::Logger * logger, const po::variables_map &vm) {
 	logger->info("Starting a world server.");
 	return nullptr;
+}
+
+void init_sockets() {
+#ifndef APG_NO_SDL
+	APG::SDLGame::initialiseSDL();
+#else
+	APG::NativeSocket::nativeSocketInit();
+#endif
+}
+
+void shutdown_sockets() {
+#ifndef APG_NO_SDL
+	APG::SDLGame::shutdownSDL();
+#else
+	APG::NativeSocket::nativeSocketCleanup();
+#endif
 }
 

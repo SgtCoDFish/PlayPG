@@ -14,7 +14,7 @@ set(PlayPG_SERVER_LIBS ${PlayPG_LIBS}
 
 set (PlayPG_SERVER_NAME "serverPG")
 
-if ( PLAYPG_DEBUG )
+if ( PlayPG_DEBUG )
     set (PlayPG_SERVER_NAME "${PlayPG_SERVER_NAME}-d")
 endif ()
 

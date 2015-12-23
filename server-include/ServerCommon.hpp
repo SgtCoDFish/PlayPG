@@ -100,6 +100,10 @@ public:
 protected:
 	bool isOpcodeAccepted(const opcode_type_t &opcode);
 
+	// These methods are to enable different types of socket to be used depending on platform
+	// e.g. to return a NativeAcceptorSocket where SDL is not available but an SDLAcceptorSocket otherwise.
+	std::unique_ptr<APG::AcceptorSocket> getAcceptorSocket(const uint16_t port, bool autoListen = false, uint32_t bufferSize_ = BB_DEFAULT_SIZE);
+
 	sql::mysql::MySQL_Driver * driver;
 	std::unique_ptr<sql::Connection> mysqlConnection;
 

@@ -69,4 +69,13 @@ bool Server::isOpcodeAccepted(const opcode_type_t &opcode) {
 	return acceptedOpcodes.find(opcode) != acceptedOpcodes.end();
 }
 
+std::unique_ptr<APG::AcceptorSocket> Server::getAcceptorSocket(const uint16_t port, bool autoListen,
+        uint32_t bufferSize_) {
+#ifndef APG_NO_SDL
+	return std::make_unique<APG::SDLAcceptorSocket>(port, autoListen, bufferSize_);
+#else
+	return std::make_unique<APG::NativeAcceptorSocket>(port, autoListen, bufferSize_);
+#endif
+}
+
 }

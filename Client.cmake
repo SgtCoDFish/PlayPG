@@ -10,7 +10,7 @@ set(PlayPG_CLIENT_LIBS  ${PlayPG_LIBS}
 
 set(PlayPG_CLIENT_NAME ${CMAKE_PROJECT_NAME})
 
-if ( PLAYPG_DEBUG )
+if ( PlayPG_DEBUG )
     set(PlayPG_CLIENT_NAME "${PlayPG_CLIENT_NAME}-d")
 endif ()
 
