@@ -10,6 +10,9 @@ Debug
 Release/*
 Release
 
+build*
+build*/
+
 build/*
 build
 

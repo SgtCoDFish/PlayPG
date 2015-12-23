@@ -64,6 +64,7 @@ if ( NOT APG_NO_SDL )
     find_package(SDL2_image REQUIRED)
     find_package(SDL2_mixer REQUIRED)
     find_package(SDL2_ttf REQUIRED)
+	find_package(SDL2_net REQUIRED)
     
     find_package(OpenGL REQUIRED)
     find_package(GLEW REQUIRED)
@@ -78,8 +79,6 @@ find_package(rapidjson REQUIRED)
 find_package(TmxParser REQUIRED)
 find_package(TinyXML2 REQUIRED)
 find_package(ZLIB REQUIRED)
-
-find_package(SDL2_net REQUIRED)
 
 add_definitions(-DGLM_FORCE_RADIANS)
 
@@ -99,7 +98,7 @@ else ()
 	# VS 2015 has a linker issue, this should fix it
 	if( MSVC_VERSION GREATER 1800)
 		message ("Using legacy STDIO fix for MSVC 15.")
-		set(OS_LIBS ${OS_LIBS} legacy_stdio_definitions)
+		set(OS_LIBS ${OS_LIBS} legacy_stdio_definitions ws2_32)
 		set(PlayPG_SOURCES ${PlayPG_SOURCES} ${PROJECT_SOURCE_DIR}/MSVC/vs2015_io_fix.cpp)
 		
 	endif()
