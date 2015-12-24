@@ -48,7 +48,7 @@ struct OpcodeDetails {
 enum class ClientOpcode
 	: uint16_t {
 		LOGIN_AUTHENTICATION_IDENTITY = 0x0001,
-		VERSION_MISMATCH = 0x0002,
+	VERSION_MISMATCH = 0x0002,
 	MOVE = 0x000A,
 };
 
@@ -56,7 +56,8 @@ enum class ServerOpcode
 	: uint16_t {
 		LOGIN_AUTHENTICATION_CHALLENGE = 0xFFFE,
 	LOGIN_AUTHENTICATION_RESPONSE = 0xFFFD,
-	MOVE = 0xFFFC,
+	MAP_SERVER_REGISTRATION_REQUEST = 0xFFFC,
+	INTER_SERVER_HEARTBEAT = 0xFFFB,
 };
 static_assert(std::is_same<std::underlying_type<ClientOpcode>::type, std::underlying_type<ServerOpcode>::type>::value, "ClientOpcodes and ServerOpcodes must have the same underlying type.");
 using opcode_type_t = std::underlying_type<ClientOpcode>::type;

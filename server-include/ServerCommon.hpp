@@ -28,6 +28,10 @@
 #ifndef INCLUDE_SERVER_SERVERCOMMON_HPP_
 #define INCLUDE_SERVER_SERVERCOMMON_HPP_
 
+#ifndef PLAYPG_CORES_AVIAILABLE
+#define PLAYPG_CORES_AVIAILABLE 4
+#endif
+
 #include <APG/APGNet.hpp>
 
 #include <cstdint>
@@ -93,26 +97,22 @@ public:
 
 class Server {
 public:
-	explicit Server(const ServerDetails &serverDetails, const DatabaseDetails &databaseDetails,
-	        const std::unordered_map<opcode_type_t, OpcodeDetails>& acceptedOpcodeTypes);
+	explicit Server(const ServerDetails &serverDetails, const DatabaseDetails &databaseDetails);
 	virtual ~Server() = default;
 
 	const ServerDetails serverDetails;
-	const DatabaseDetails databaseDetails;
 
+	const DatabaseDetails databaseDetails;
 	virtual void run() = 0;
 
 protected:
-	bool isOpcodeAccepted(const opcode_type_t &opcode);
-
-	// These methods are to enable different types of socket to be used depending on platform
+	// This method enables different types of socket to be used depending on platform
 	// e.g. to return a NativeAcceptorSocket where SDL is not available but an SDLAcceptorSocket otherwise.
-	std::unique_ptr<APG::AcceptorSocket> getAcceptorSocket(const uint16_t port, bool autoListen = false, uint32_t bufferSize_ = BB_DEFAULT_SIZE);
+	std::unique_ptr<APG::AcceptorSocket> getAcceptorSocket(const uint16_t port, bool autoListen = false,
+	        uint32_t bufferSize_ = BB_DEFAULT_SIZE);
 
 	sql::mysql::MySQL_Driver * driver;
 	std::unique_ptr<sql::Connection> mysqlConnection;
-
-	std::unordered_map<opcode_type_t, OpcodeDetails> acceptedOpcodes;
 
 	std::mt19937_64 mersenneTwister;
 	APG::Random random;

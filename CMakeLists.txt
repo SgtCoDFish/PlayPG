@@ -94,7 +94,7 @@ endif ()
 
 if ( NOT MSVC )
 	set(CMAKE_CXX_COMPILER_ARG1 "-std=c++1y")
-	set(CMAKE_CXX_FLAGS_BASE "-Wall -Wextra -Wno-unused-parameter")
+	set(CMAKE_CXX_FLAGS_BASE "-Wall -Wextra -Wno-unused-parameter -pthread")
 	
 	set(PlayPG_DEBUG_FLAGS "-g3 -O0")
 	set(PlayPG_RELEASE_FLAGS "-g0 -O3")

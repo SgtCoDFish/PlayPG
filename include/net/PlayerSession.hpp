@@ -44,6 +44,8 @@ public:
 	uint64_t guid;
 	std::unique_ptr<APG::Socket> socket;
 
+	bool authenticated = false;
+
 private:
 	static uint64_t nextGUID;
 };

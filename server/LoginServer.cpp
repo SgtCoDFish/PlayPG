@@ -24,8 +24,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
- 
+
+// Included first to handle windows weirdness with includes.
 #include "LoginServer.hpp"
+
+#include <chrono>
+#include <algorithm>
 
 #include <APG/core/APGeasylogging.hpp>
 
@@ -42,27 +46,31 @@
 
 namespace PlayPG {
 
-static const std::unordered_map<opcode_type_t, OpcodeDetails> acceptedOpcodes_login = { //
-                { static_cast<opcode_type_t>(ClientOpcode::LOGIN_AUTHENTICATION_IDENTITY), OpcodeDetails(
-                        "Login request", true) }, //
-        };
+//static const std::unordered_map<opcode_type_t, OpcodeDetails> acceptedOpcodes_login = { //
+//        { static_cast<opcode_type_t>(ClientOpcode::LOGIN_AUTHENTICATION_IDENTITY), //
+//                OpcodeDetails("Login request", true) }, //
+//                { static_cast<opcode_type_t>(ClientOpcode::VERSION_MISMATCH), //
+//                        OpcodeDetails("The client's version doesn't match the server's.", false) }, };
 
 LoginServer::LoginServer(const ServerDetails &serverDetails_, const DatabaseDetails &databaseDetails_) :
-		        Server(serverDetails_, databaseDetails_, acceptedOpcodes_login) {
+		        Server(serverDetails_, databaseDetails_) {
 	playerAcceptor = getAcceptorSocket(serverDetails_.port, true);
 }
 
 void LoginServer::run() {
 	auto logger = el::Loggers::getLogger("ServPG");
 
+	processingThread = std::thread([this]() {this->processIncoming();});
+
 	logger->info("Running login server on port %v.", serverDetails.port);
 	logger->info("\"%v\", version %v (%v)", serverDetails.friendlyName, Version::versionString, Version::gitHash);
 
-	while (true) {
+	while (!done) {
 		auto newPlayerSocket = playerAcceptor->acceptSocket();
 
 		if (newPlayerSocket != nullptr) {
-			logger->info("Accepted a connection from: %v", newPlayerSocket->remoteHost);
+			logger->verbose(9, "Accepted a connection from: %v. Sending to processing thread.",
+			        newPlayerSocket->remoteHost);
 
 //			auto ps = std::unique_ptr<sql::Statement>(mysqlConnection->createStatement());
 //
@@ -71,6 +79,10 @@ void LoginServer::run() {
 //			while (res->next()) {
 //				std::cout << "id = " << res->getInt("id") << "\nname = " << res->getString("email") << std::endl;
 //			}
+
+//			std::lock_guard<std::mutex> incomingGuard(incomingConnectionsMutex);
+//
+//			incomingConnections.emplace_back(std::move(newPlayerSocket));
 
 			AuthenticationChallenge challenge(Version::versionString, Version::gitHash,
 			        this->serverDetails.friendlyName);
@@ -87,6 +99,12 @@ void LoginServer::run() {
 			logger->info("Got %v response bytes.", newPlayerSocket->recv());
 
 			const opcode_type_t opcode = newPlayerSocket->getUInt16();
+
+			if (opcode == 0xBEEF) {
+				logger->info("Got special opcode \"%v\", quitting.", opcode);
+				done = true;
+				continue;
+			}
 
 			if (opcode != static_cast<opcode_type_t>(ClientOpcode::LOGIN_AUTHENTICATION_IDENTITY)) {
 				if (opcode == static_cast<opcode_type_t>(ClientOpcode::VERSION_MISMATCH)) {
@@ -113,10 +131,80 @@ void LoginServer::run() {
 			// new connection established so keep for later.
 			playerSessions.emplace_back(std::move(newSession));
 		} else {
-			if(playerAcceptor->hasError()) {
+			if (playerAcceptor->hasError()) {
 				logger->error("Error in playerAcceptor, exiting.");
 				break;
 			}
+		}
+	}
+
+	processingThread.join();
+}
+
+void LoginServer::processIncoming() {
+	static constexpr const double DONE_PURGE_TIME = 5.0;
+
+	auto logger = el::Loggers::getLogger("ServPG");
+	AuthenticationChallenge challenge(Version::versionString, Version::gitHash, this->serverDetails.friendlyName);
+
+	auto start = std::chrono::high_resolution_clock::now();
+
+	while (!done) {
+		std::lock_guard<std::mutex> lg(incomingConnectionsMutex);
+
+		for (auto &connection : incomingConnections) {
+			switch (connection.state) {
+			case (IncomingConnectionState::FRESH): {
+				/*
+				 * Fresh connections need an auth challenge sending and nothing else.
+				 */
+				connection.socket->put(&challenge.buffer);
+				challenge.buffer.setReadPos(0);
+
+				connection.socket->send();
+				connection.socket->clear();
+
+				if (connection.socket->hasError()) {
+					logger->verbose(9, "Socket entered error state for fresh connection, dropping.");
+					connection.state = IncomingConnectionState::DONE;
+				} else {
+					connection.state = IncomingConnectionState::CHALLENGE_SENT;
+				}
+
+				break;
+			}
+
+			case (IncomingConnectionState::CHALLENGE_SENT): {
+				/*
+				 * After a challenge is sent, the remote host is expected to identify themselves.
+				 * Either they send:
+				 * - VersionMismatch which we can't really help with so we close.
+				 * - AuthenticationIdentity (correct): they're done and sent to a map server.
+				 * - AuthenticationIdentity (incorrect): they lose a login attempt and get another
+				 * 										 go/disconnected depending on their attempts used
+				 * - Something else: they lose a login attempt and go again/get disconnected
+				 */
+				break;
+			}
+			case (IncomingConnectionState::LOGIN_FAILED): {
+				break;
+			}
+			case (IncomingConnectionState::DONE): {
+//				logger->warn("Socket somehow got to being processed in DONE state.");
+				break;
+			}
+			}
+		}
+
+		if (std::chrono::duration_cast<std::chrono::seconds>(
+		        (std::chrono::high_resolution_clock::now() - start)).count() > DONE_PURGE_TIME) {
+			logger->info("PURGING");
+			incomingConnections.erase(
+			        std::remove_if(incomingConnections.begin(), incomingConnections.end(),
+			                [](const IncomingConnection &ic) {return ic.state == IncomingConnectionState::DONE;}),
+			        incomingConnections.end());
+
+			start = std::chrono::high_resolution_clock::now();
 		}
 	}
 }

@@ -38,6 +38,11 @@ public:
 	virtual ~MapServer() = default;
 
 	virtual void run() override final;
+
+private:
+	std::unique_ptr<APG::Socket> connectedPlayers;
+
+	std::unique_ptr<APG::Socket> loginServerConnection;
 };
 
 }

@@ -30,12 +30,44 @@
 
 #include <vector>
 #include <memory>
+#include <array>
+#include <thread>
 #include <utility>
+#include <mutex>
 
 #include "ServerCommon.hpp"
 #include "net/PlayerSession.hpp"
 
 namespace PlayPG {
+
+enum class IncomingConnectionState {
+	FRESH, // Just connected, needs an auth challenge sending
+	CHALLENGE_SENT, // Challenge has been sent, waiting for response.
+	LOGIN_FAILED, // Login failed for some reason and the user has been given the
+	              // chance to try again.
+	DONE // Login was successful/some error caused the socket to close.
+		 // Won't be in this state for long; after this the
+		 // user should be sent to a map server to actually play.
+};
+
+struct IncomingConnection {
+	static constexpr const int MAX_ATTEMPTS_ALLOWED = 3;
+
+	explicit IncomingConnection(std::unique_ptr<APG::Socket> &&socket_) :
+			        socket { std::move(socket_) },
+			        state { IncomingConnectionState::FRESH } {
+	}
+	~IncomingConnection() = default;
+
+	IncomingConnection &operator=(IncomingConnection&& ic) = default;
+	IncomingConnection(IncomingConnection&& ic) = default;
+
+	std::unique_ptr<APG::Socket> socket;
+
+	IncomingConnectionState state;
+
+	int loginAttempts = 0;
+};
 
 class LoginServer final : public Server {
 public:
@@ -44,17 +76,29 @@ public:
 
 	virtual void run() override final;
 
-protected:
+	/**
+	 * Will be run in a separate thread.
+	 */
+	void processIncoming();
+
+private:
 	// For accepting connections from players
 	std::unique_ptr<APG::AcceptorSocket> playerAcceptor;
 
 	std::vector<std::unique_ptr<PlayerSession>> playerSessions;
+
+	// connections which haven't authenticated themselves yet and so cannot have a session made.
+	std::vector<IncomingConnection> incomingConnections;
+	std::mutex incomingConnectionsMutex;
 
 	// For accepting connections from map servers which have just spun up
 	std::unique_ptr<APG::AcceptorSocket> mapServerAcceptor;
 
 	// A list of connected map servers
 	std::vector<APG::Socket> mapServers;
+
+	bool done = false;
+	std::thread processingThread;
 };
 
 }

@@ -30,12 +30,8 @@
 
 namespace PlayPG {
 
-static const std::unordered_map<opcode_type_t, OpcodeDetails> acceptedOpcodes_map = { //
-        { static_cast<opcode_type_t>(ClientOpcode::MOVE), OpcodeDetails("Move request") }, //
-        };
-
 MapServer::MapServer(const ServerDetails &serverDetails_, const DatabaseDetails &databaseDetails_) :
-		        Server(serverDetails_, databaseDetails_, acceptedOpcodes_map) {
+		        Server(serverDetails_, databaseDetails_) {
 
 }
 
@@ -44,5 +40,9 @@ void MapServer::run() {
 
 	logger->info("Running map server.");
 }
+
+//static const std::unordered_map<opcode_type_t, OpcodeDetails> acceptedOpcodes_map = { //
+//        { static_cast<opcode_type_t>(ClientOpcode::MOVE), OpcodeDetails("Move request") }, //
+//        };
 
 }
