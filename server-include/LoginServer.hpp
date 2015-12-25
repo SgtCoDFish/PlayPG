@@ -88,9 +88,14 @@ public:
 	 * Will be run in a separate thread.
 	 */
 	void processIncoming();
-	bool processLoginAttempt(IncomingConnection &connection, const AuthenticationIdentity &id, el::Logger * const logger);
 
 private:
+	void processFreshSocket(IncomingConnection &connection, AuthenticationChallenge &challange, el::Logger * const logger);
+	void processChallengeSentSocket(IncomingConnection &connection, el::Logger * const logger);
+	void processLoginFailedSocket(IncomingConnection &connection, el::Logger * const logger);
+	void processDoneSocket(IncomingConnection &connection, el::Logger * const logger);
+	bool processLoginAttempt(IncomingConnection &connection, const AuthenticationIdentity &id, el::Logger * const logger);
+
 	// For accepting connections from players
 	std::unique_ptr<APG::AcceptorSocket> playerAcceptor;
 
