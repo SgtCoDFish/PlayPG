@@ -91,6 +91,8 @@ private:
 	static constexpr const char * const addr = "localhost";
 	static constexpr const int port = 10419;
 
+	std::string username { "test@example.com" };
+
 	APG::SDLSocket socket;
 };
 

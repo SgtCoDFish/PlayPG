@@ -37,6 +37,10 @@
 
 #include "ServerCommon.hpp"
 #include "net/PlayerSession.hpp"
+#include "net/Opcodes.hpp"
+#include "net/packets/LoginPackets.hpp"
+
+#include <APG/core/APGeasylogging.hpp>
 
 namespace PlayPG {
 
@@ -67,6 +71,10 @@ struct IncomingConnection {
 	IncomingConnectionState state;
 
 	int loginAttempts = 0;
+
+	int getAttemptsRemaining() const {
+		return MAX_ATTEMPTS_ALLOWED - loginAttempts;
+	}
 };
 
 class LoginServer final : public Server {
@@ -80,6 +88,7 @@ public:
 	 * Will be run in a separate thread.
 	 */
 	void processIncoming();
+	bool processLoginAttempt(IncomingConnection &connection, const AuthenticationIdentity &id, el::Logger * const logger);
 
 private:
 	// For accepting connections from players

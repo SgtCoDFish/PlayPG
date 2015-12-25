@@ -34,11 +34,11 @@
 
 namespace PlayPG {
 
-uint64_t PlayerSession::nextGUID = 0u;
+std::atomic<uint64_t> PlayerSession::nextGUID { 0ull };
 
 PlayerSession::PlayerSession(const std::string &username_, std::unique_ptr<APG::Socket> &&socket_) :
-				username { username_ },
-				guid { nextGUID++ },
+		        username { username_ },
+		        guid { nextGUID++ },
 		        socket { std::move(socket_) } {
 }
 

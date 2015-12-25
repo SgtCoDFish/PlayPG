@@ -49,12 +49,18 @@ AuthenticationChallenge::AuthenticationChallenge(const std::string &version_, co
 	buffer.putString(json);
 }
 
-AuthenticationResponse::AuthenticationResponse(bool successful_) :
+AuthenticationResponse::AuthenticationResponse(bool successful_, int attemptsRemaining_, const std::string &message_) :
 		        ServerPacket(ServerOpcode::LOGIN_AUTHENTICATION_RESPONSE),
-		        successful { successful_ } {
+		        successful { successful_ },
+		        attemptsRemaining { attemptsRemaining_ },
+		        message { message_ } {
 	buffer.putShort(static_cast<opcode_type_t>(opcode));
 
-	buffer.put(static_cast<uint8_t>(successful));
+	APG::JSONSerializer<AuthenticationResponse> toJson;
+
+	const std::string json = toJson.toJSON(*this);
+	buffer.putShort(static_cast<uint16_t>(json.size()));
+	buffer.putString(json);
 }
 
 AuthenticationIdentity::AuthenticationIdentity(const std::string &username_, const std::string &password_) :
@@ -67,7 +73,9 @@ AuthenticationIdentity::AuthenticationIdentity(const std::string &username_, con
 
 	APG::JSONSerializer<AuthenticationIdentity> toJson;
 
+
 	const std::string json = toJson.toJSON(*this);
+	el::Loggers::getLogger("TEST")->info("AuthID: %v", json);
 	buffer.putShort(static_cast<uint16_t>(json.size()));
 
 	buffer.putString(json);

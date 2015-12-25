@@ -30,6 +30,8 @@
 
 #include <cstdint>
 
+#include <atomic>
+
 #include <APG/APGNet.hpp>
 
 namespace PlayPG {
@@ -47,7 +49,7 @@ public:
 	bool authenticated = false;
 
 private:
-	static uint64_t nextGUID;
+	static std::atomic<uint64_t> nextGUID;
 };
 
 }

@@ -89,60 +89,93 @@ bool PlayPG::init() {
 
 bool PlayPG::doLogin() {
 	const auto logger = el::Loggers::getLogger("PlayPG");
-	socket.connect();
-	if (socket.hasError()) {
-		return false;
-	}
+	if (!socket.isConnected()) {
+		socket.connect();
 
-	if(!socket.waitForActivity(2000)) {
-		logger->error("Server didn't respond in time.");
-		return false;
-	}
+		if (socket.hasError()) {
+			return false;
+		}
 
-	int read = socket.recv();
+		if (!socket.waitForActivity(2000)) {
+			logger->error("Server didn't respond in time.");
+			return false;
+		}
 
-	const auto opcode = socket.getShort();
+		int read = socket.recv();
 
-	logger->info("Got %v bytes, opcode %v.", read, opcode);
+		const auto opcode = socket.getShort();
 
-	if (opcode != static_cast<opcode_type_t>(ServerOpcode::LOGIN_AUTHENTICATION_CHALLENGE)) {
-		logger->info("Got opcode %v which doesn't match the expected value. Ignoring.");
+		logger->info("Got %v bytes, opcode %v.", read, opcode);
+
+		if (opcode != static_cast<opcode_type_t>(ServerOpcode::LOGIN_AUTHENTICATION_CHALLENGE)) {
+			logger->info("Got opcode %v which doesn't match the expected value. Ignoring.");
+			socket.clear();
+			return false;
+		}
+
+		const uint16_t jsonSize = socket.getShort();
+
+		auto json = socket.getStringByLength(jsonSize);
+
+		logger->info("JSON: %v", json);
+
+		APG::JSONSerializer<AuthenticationChallenge> challengeS11N;
+		const auto challenge = challengeS11N.fromJSON(json.c_str());
+
+		logger->info("Got challenge from \"%v\", v%v (%v).", challenge.name, challenge.version, challenge.versionHash);
+
 		socket.clear();
-		return false;
+
+		if (std::strcmp(challenge.version.c_str(), Version::versionString) != 0
+		        || std::strcmp(challenge.versionHash.c_str(), Version::gitHash) != 0) {
+			logger->info("Version check failed.");
+
+			VersionMismatch mismatchPacket;
+
+			socket.put(&mismatchPacket.buffer);
+			socket.send();
+
+			return false;
+		}
+
+		logger->info("Version check successful.");
+	} else {
+		socket.clear();
 	}
 
-	const uint16_t jsonSize = socket.getShort();
+	AuthenticationIdentity identity(username, "testa");
 
-	auto json = socket.getStringByLength(jsonSize);
-
-	logger->info("JSON: %v", json);
-
-	APG::JSONSerializer<AuthenticationChallenge> challengeS11N;
-	const auto challenge = challengeS11N.fromJSON(json.c_str());
-
-	logger->info("Got challenge from \"%v\", v%v (%v).", challenge.name, challenge.version,
-	        challenge.versionHash);
+	socket.put(&identity.buffer);
+	logger->info("Sent %v auth detail bytes, opcode %v.", socket.send(), (opcode_type_t)identity.opcode);
 
 	socket.clear();
 
-	if (std::strcmp(challenge.version.c_str(), Version::versionString) != 0
-	        || std::strcmp(challenge.versionHash.c_str(), Version::gitHash) != 0) {
-		logger->info("Version check failed.");
+	socket.waitForActivity(2000);
 
-		VersionMismatch mismatchPacket;
+	socket.recv();
 
-		socket.put(&mismatchPacket.buffer);
-		socket.send();
+	const auto respOpcode = socket.getShort();
 
+	if (respOpcode == static_cast<opcode_type_t>(ServerOpcode::LOGIN_AUTHENTICATION_RESPONSE)) {
+		const auto respSize = socket.getShort();
+		const auto respJSON = socket.getStringByLength(respSize);
+		logger->info("Got authentication response: %v", respJSON);
+
+		APG::JSONSerializer<AuthenticationResponse> responseS11N;
+		const auto response = responseS11N.fromJSON(respJSON.c_str());
+
+		if (!response.successful) {
+			logger->info("Authentication failed with username %v: %v", username, response.message);
+
+			if(response.attemptsRemaining == 0) {
+				socket.disconnect();
+			}
+
+			return false;
+		}
+	} else {
 		return false;
 	}
-
-	logger->info("Version check successful.");
-
-	AuthenticationIdentity identity("SgtCoDFish@example.com", "testa");
-
-	socket.put(&identity.buffer);
-	logger->info("Sent %v auth detail bytes.", socket.send());
 
 	return true;
 }
@@ -187,6 +220,8 @@ void PlayPG::render(float deltaTime) {
 			if (doLogin()) {
 				gameState = GameState::PLAYING;
 			}
+		} else if (inputManager->isKeyJustPressed(SDL_SCANCODE_1)) {
+			username = "SgtCoDFish@example.com";
 		}
 		break;
 	}

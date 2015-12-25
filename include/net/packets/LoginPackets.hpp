@@ -48,9 +48,13 @@ public:
 
 class AuthenticationResponse final : public ServerPacket {
 public:
-	explicit AuthenticationResponse(bool successful_);
+	explicit AuthenticationResponse(bool successful_, int attemptsRemaining_, const std::string &message_);
 
-	bool successful;
+	const bool successful;
+
+	const int attemptsRemaining;
+
+	const std::string message;
 };
 
 /**
@@ -140,6 +144,41 @@ public:
 
 		writer->String("password");
 		writer->String(t.password.c_str());
+
+		writer->EndObject();
+
+		return std::string(buffer.GetString());
+	}
+};
+
+template<> class JSONSerializer<PlayPG::AuthenticationResponse> : public JSONCommon {
+public:
+	JSONSerializer() :
+			        JSONCommon() {
+
+	}
+
+	PlayPG::AuthenticationResponse fromJSON(const char *json) {
+		rapidjson::Document d;
+
+		d.Parse(json);
+
+		return PlayPG::AuthenticationResponse(d["successful"].GetBool(), d["attemptsRemaining"].GetInt(), d["message"].GetString());
+	}
+
+	std::string toJSON(const PlayPG::AuthenticationResponse &t) {
+		buffer.Clear();
+
+		writer->StartObject();
+
+		writer->String("successful");
+		writer->Bool(t.successful);
+
+		writer->String("attemptsRemaining");
+		writer->Int(t.attemptsRemaining);
+
+		writer->String("message");
+		writer->String(t.message.c_str());
 
 		writer->EndObject();
 
