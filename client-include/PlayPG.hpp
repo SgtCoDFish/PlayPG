@@ -57,7 +57,7 @@ class PlayPG final : public APG::SDLGame {
 public:
 	static el::Logger *logger;
 
-	explicit PlayPG();
+	explicit PlayPG(int argc, char *argv[]);
 	virtual ~PlayPG() = default;
 
 	bool init() override;
@@ -65,6 +65,8 @@ public:
 
 private:
 	bool doLogin();
+
+	void parseCommandLineArgs(int argc, char *argv[]);
 
 	GameState gameState = GameState::LOGIN;
 
@@ -88,8 +90,8 @@ private:
 
 	std::unique_ptr<Character> currentCharacter;
 
-	static constexpr const char * const addr = "localhost";
-	static constexpr const int port = 10419;
+	std::string addr;
+	const uint16_t port = 10419;
 
 	std::string username { "test@example.com" };
 

@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) {
 	APG::Game::setLoggerToAPGStyle("PlayPG");
 
 	{
-		auto playPG = std::make_unique<PlayPG::PlayPG>();
+		auto playPG = std::make_unique<PlayPG::PlayPG>(argc, argv);
 
 		if (!playPG->init()) {
 			return EXIT_FAILURE;

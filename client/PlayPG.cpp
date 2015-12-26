@@ -51,13 +51,14 @@ using namespace APG;
 namespace PlayPG {
 
 el::Logger *PlayPG::logger = nullptr;
-constexpr const char * const PlayPG::addr;
-constexpr const int PlayPG::port;
 
-PlayPG::PlayPG() :
+PlayPG::PlayPG(int argc, char *argv[]) :
 		        APG::SDLGame("PlayPG", 1280u, 720u, 4, 5),
+		        addr { argc > 1 ? argv[1] : "localhost" },
 		        socket { addr, port } {
 	PlayPG::logger = el::Loggers::getLogger("PlayPG");
+
+	parseCommandLineArgs(argc, argv);
 }
 
 bool PlayPG::init() {
@@ -146,7 +147,7 @@ bool PlayPG::doLogin() {
 	AuthenticationIdentity identity(username, "testa");
 
 	socket.put(&identity.buffer);
-	logger->info("Sent %v auth detail bytes, opcode %v.", socket.send(), (opcode_type_t)identity.opcode);
+	logger->info("Sent %v auth detail bytes, opcode %v.", socket.send(), (opcode_type_t) identity.opcode);
 
 	socket.clear();
 
@@ -167,7 +168,7 @@ bool PlayPG::doLogin() {
 		if (!response.successful) {
 			logger->info("Authentication failed with username %v: %v", username, response.message);
 
-			if(response.attemptsRemaining == 0) {
+			if (response.attemptsRemaining == 0) {
 				socket.disconnect();
 			}
 
@@ -245,6 +246,10 @@ void PlayPG::render(float deltaTime) {
 	}
 
 	SDL_GL_SwapWindow(window.get());
+}
+
+void PlayPG::parseCommandLineArgs(int argc, char *argv[]) {
+	// no-op
 }
 
 }
