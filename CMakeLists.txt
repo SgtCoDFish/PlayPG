@@ -72,6 +72,8 @@ endif ()
 
 find_package(APG REQUIRED)
 
+find_package(OpenSSL REQUIRED)
+
 find_package(GLM REQUIRED)
 find_package(AshleyCPP REQUIRED)
 find_package(rapidjson REQUIRED)
@@ -99,15 +101,15 @@ if ( NOT MSVC )
 	set(PlayPG_DEBUG_FLAGS "-g3 -O0")
 	set(PlayPG_RELEASE_FLAGS "-g0 -O3")
 else ()
+    set(OS_LIBS ${OS_LIBS} ws2_32)
 	# VS 2015 has a linker issue, this should fix it
 	if( MSVC_VERSION GREATER 1800)
 		message ("Using legacy STDIO fix for MSVC 15.")
-		set(OS_LIBS ${OS_LIBS} legacy_stdio_definitions ws2_32)
+		set(OS_LIBS ${OS_LIBS} legacy_stdio_definitions)
 		set(PlayPG_SOURCES ${PlayPG_SOURCES} ${PROJECT_SOURCE_DIR}/MSVC/vs2015_io_fix.cpp)
-		
 	endif()
 	
-	set(CMAKE_CXX_FLAGS_BASE "/EHsc")
+	set(CMAKE_CXX_FLAGS_BASE "${CMAKE_CXX_FLAGS_BASE} /EHsc")
 	
 	set(PlayPG_DEBUG_FLAGS "/Od /Gs")
 	set(PlayPG_RELEASE_FLAGS "/Ox")
@@ -125,6 +127,8 @@ include_directories("include"
                     
                     ${RAPIDJSON_INCLUDE_DIRS}
                     
+                    ${OPENSSL_INCLUDE_DIR}
+                    
                     ${PROJECT_BINARY_DIR}
                     )
 
@@ -133,6 +137,8 @@ set(PlayPG_LIBS ${OS_LIBS}
                 ${TMXPARSER_LIBRARY}
                 ${TINYXML2_LIBRARIES}
                 ${ZLIB_LIBRARIES}
+                
+                ${OPENSSL_LIBRARIES}
                 )
                 
 if ( NOT APG_NO_SDL )

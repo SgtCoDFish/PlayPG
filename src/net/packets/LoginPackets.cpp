@@ -73,9 +73,8 @@ AuthenticationIdentity::AuthenticationIdentity(const std::string &username_, con
 
 	APG::JSONSerializer<AuthenticationIdentity> toJson;
 
-
 	const std::string json = toJson.toJSON(*this);
-	el::Loggers::getLogger("TEST")->info("AuthID: %v", json);
+
 	buffer.putShort(static_cast<uint16_t>(json.size()));
 
 	buffer.putString(json);

@@ -39,6 +39,7 @@
 #include "net/PlayerSession.hpp"
 #include "net/Opcodes.hpp"
 #include "net/packets/LoginPackets.hpp"
+#include "net/Crypto.hpp"
 
 #include <APG/core/APGeasylogging.hpp>
 
@@ -50,8 +51,8 @@ enum class IncomingConnectionState {
 	LOGIN_FAILED, // Login failed for some reason and the user has been given the
 	              // chance to try again.
 	DONE // Login was successful/some error caused the socket to close.
-		 // Won't be in this state for long; after this the
-		 // user should be sent to a map server to actually play.
+	     // Won't be in this state for long; after this the
+	     // user should be sent to a map server to actually play.
 };
 
 struct IncomingConnection {
@@ -90,11 +91,15 @@ public:
 	void processIncoming();
 
 private:
-	void processFreshSocket(IncomingConnection &connection, AuthenticationChallenge &challange, el::Logger * const logger);
+	void processFreshSocket(IncomingConnection &connection, AuthenticationChallenge &challange,
+	        el::Logger * const logger);
 	void processChallengeSentSocket(IncomingConnection &connection, el::Logger * const logger);
 	void processLoginFailedSocket(IncomingConnection &connection, el::Logger * const logger);
 	void processDoneSocket(IncomingConnection &connection, el::Logger * const logger);
-	bool processLoginAttempt(IncomingConnection &connection, const AuthenticationIdentity &id, el::Logger * const logger);
+	bool processLoginAttempt(IncomingConnection &connection, const AuthenticationIdentity &id,
+	        el::Logger * const logger);
+
+	Crypto crypto;
 
 	// For accepting connections from players
 	std::unique_ptr<APG::AcceptorSocket> playerAcceptor;
