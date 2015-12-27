@@ -39,7 +39,9 @@
 #include "net/PlayerSession.hpp"
 #include "net/Opcodes.hpp"
 #include "net/packets/LoginPackets.hpp"
-#include "net/Crypto.hpp"
+
+#include "net/crypto/RSACrypto.hpp"
+#include "net/crypto/SHACrypto.hpp"
 
 #include <APG/core/APGeasylogging.hpp>
 
@@ -99,7 +101,8 @@ private:
 	bool processLoginAttempt(IncomingConnection &connection, const AuthenticationIdentity &id,
 	        el::Logger * const logger);
 
-	Crypto crypto { true };
+	RSACrypto crypto { true };
+	SHACrypto hasher { 512000 };
 
 	// For accepting connections from players
 	std::unique_ptr<APG::AcceptorSocket> playerAcceptor;

@@ -25,85 +25,36 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef INCLUDE_PLAYPG_HPP_
-#define INCLUDE_PLAYPG_HPP_
+#include <cstring>
 
-#include <vector>
-#include <utility>
+#include <APG/core/APGeasylogging.hpp>
 
-#include <tmxparser/Tmx.h>
-
-#include <glm/vec2.hpp>
-
-#include <APG/APG.hpp>
-
-#include <Ashley/Ashley.hpp>
-
-#include "Map.hpp"
-#include "data/Character.hpp"
-
-#include "net/crypto/RSACrypto.hpp"
 #include "net/crypto/SHACrypto.hpp"
-
-namespace ashley {
-class Entity;
-}
 
 namespace PlayPG {
 
-enum class GameState {
-	LOGIN,
-	PLAYING
-};
+SHACrypto::SHACrypto(uint64_t iterationCount) :
+		        iterationCount_ { iterationCount } {
+	if (iterationCount_ <= 32000) {
+		el::Loggers::getLogger("PlayPG")->warn(
+		        "Warning: password hashing is only repeated %v times, which may be insecure. Consider increasing the number as hardware allows.",
+		        iterationCount);
+	}
+}
 
-class PlayPG final : public APG::SDLGame {
-public:
-	static el::Logger *logger;
+std::array<uint8_t, 64> SHACrypto::hashPasswordSHA512(const std::string &password, const std::vector<uint8_t> &salt) {
+	if (salt.size() < 16) {
+		el::Loggers::getLogger("PlayPG")->warn("Salt used for SHA512 hash with length %v; minimum of 16 bytes is reccommended.",
+		        salt.size());
+	}
 
-	explicit PlayPG(int argc, char *argv[]);
-	virtual ~PlayPG() = default;
+	std::array<uint8_t, 64> ret;
 
-	bool init() override;
-	void render(float deltaTime) override;
+	::PKCS5_PBKDF2_HMAC(password.c_str(), password.size(), salt.data(), salt.size(), iterationCount_, ::EVP_sha512(),
+	        ret.size(), ret.data());
 
-private:
-	bool doLogin();
-
-	void parseCommandLineArgs(int argc, char *argv[]);
-
-	GameState gameState = GameState::LOGIN;
-
-	std::unique_ptr<APG::Camera> camera;
-	std::unique_ptr<APG::SpriteBatch> batch;
-
-	std::unique_ptr<Map> mapOutdoor;
-	std::unique_ptr<Map> mapIndoor;
-	bool indoor = false;
-
-	std::unique_ptr<APG::Texture> playerTexture;
-	std::unique_ptr<APG::Sprite> playerSprite;
-
-	std::unique_ptr<APG::GLTmxRenderer> outdoorRenderer;
-	std::unique_ptr<APG::GLTmxRenderer> indoorRenderer;
-
-	std::unique_ptr<ashley::Engine> engine;
-
-	ashley::Entity *player = nullptr;
-	void changeToWorld(const std::unique_ptr<Map> &renderer);
-
-	std::unique_ptr<Character> currentCharacter;
-
-	std::string addr;
-	const uint16_t port = 10419;
-
-	std::string username { "test@example.com" };
-
-	std::unique_ptr<RSACrypto> crypto;
-	std::string serverPubKey { "" };
-
-	APG::SDLSocket socket;
-};
+	return ret;
+}
 
 }
 
-#endif /* INCLUDE_PLAYPG_HPP_ */

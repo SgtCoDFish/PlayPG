@@ -50,16 +50,18 @@ DatabaseDetails::DatabaseDetails(const std::string &hostName_, uint16_t port_, c
 
 }
 
-Server::Server(const ServerDetails &serverDetails_, const DatabaseDetails &databaseDetails_
-        ) :
+Server::Server(const ServerDetails &serverDetails_, const DatabaseDetails &databaseDetails_) :
 		        serverDetails { serverDetails_ },
 		        databaseDetails { databaseDetails_ },
 		        driver { sql::mysql::get_driver_instance() },
 		        mysqlConnection { std::unique_ptr<sql::Connection>(
 		                driver->connect(databaseDetails.fullHostName.c_str(), databaseDetails.userName.c_str(),
 		                        databaseDetails.password.c_str())) },
+//		        mersenneTwister {
+//		                static_cast<std::mt19937_64::result_type>(std::chrono::high_resolution_clock::now().time_since_epoch().count()) },
 		        mersenneTwister {
-		                static_cast<std::mt19937_64::result_type>(std::chrono::high_resolution_clock::now().time_since_epoch().count()) },
+		                static_cast<std::mt19937_64::result_type>(static_cast<std::mt19937_64::result_type>(randomDevice())
+		                        << 32 | static_cast<std::mt19937_64::result_type>(randomDevice())) },
 		        random { mersenneTwister } {
 	mysqlConnection->setSchema("ppg");
 }

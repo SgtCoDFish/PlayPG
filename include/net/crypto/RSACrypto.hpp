@@ -25,85 +25,71 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef INCLUDE_PLAYPG_HPP_
-#define INCLUDE_PLAYPG_HPP_
+#ifndef INCLUDE_NET_CRYPTO_RSACRYPTO_HPP_
+#define INCLUDE_NET_CRYPTO_RSACRYPTO_HPP_
 
+#include <cstdint>
+
+#include <memory>
+#include <string>
 #include <vector>
-#include <utility>
 
-#include <tmxparser/Tmx.h>
+#include <openssl/rsa.h>
+#include <openssl/pem.h>
+#include <openssl/err.h>
 
-#include <glm/vec2.hpp>
-
-#include <APG/APG.hpp>
-
-#include <Ashley/Ashley.hpp>
-
-#include "Map.hpp"
-#include "data/Character.hpp"
-
-#include "net/crypto/RSACrypto.hpp"
-#include "net/crypto/SHACrypto.hpp"
-
-namespace ashley {
-class Entity;
-}
+#include "CryptoCommon.hpp"
 
 namespace PlayPG {
 
-enum class GameState {
-	LOGIN,
-	PLAYING
-};
-
-class PlayPG final : public APG::SDLGame {
+class RSACrypto final {
 public:
-	static el::Logger *logger;
+	constexpr static const int KEY_LENGTH = 4096;
+	constexpr static const int KEY_EXPONENT = 3;
 
-	explicit PlayPG(int argc, char *argv[]);
-	virtual ~PlayPG() = default;
+	/**
+	 * Initialise with a PEM-formatted pubkey (likely received over the network.)
+	 * @param publicKey
+	 * @param log
+	 */
+	explicit RSACrypto(const std::string &publicKey, bool log = false);
+	explicit RSACrypto(bool log = false);
+	~RSACrypto() = default;
 
-	bool init() override;
-	void render(float deltaTime) override;
+	/**
+	 * Encrypt the given string with the public key loaded; will require the matching private key
+	 * to decrypt later.
+	 */
+	std::vector<uint8_t> encryptStringPublic(const std::string &str);
+
+	/**
+	 * Decrypts the given string using the loaded private key, assuming that it was encrypted with
+	 * the matching public key.
+	 */
+	std::string decryptStringPrivate(const std::vector<uint8_t> &vec);
+
+	std::string getPublicKeyPEM() const {
+		return publicKey;
+	}
 
 private:
-	bool doLogin();
+	rsa_ptr keyPair;
 
-	void parseCommandLineArgs(int argc, char *argv[]);
+	bio_ptr pubKeyBIO;
+	bio_ptr priKeyBIO;
 
-	GameState gameState = GameState::LOGIN;
+	size_t pubKeyLength;
+	size_t priKeyLength;
 
-	std::unique_ptr<APG::Camera> camera;
-	std::unique_ptr<APG::SpriteBatch> batch;
+	std::string privateKey;
+	std::string publicKey;
 
-	std::unique_ptr<Map> mapOutdoor;
-	std::unique_ptr<Map> mapIndoor;
-	bool indoor = false;
+	bool log;
 
-	std::unique_ptr<APG::Texture> playerTexture;
-	std::unique_ptr<APG::Sprite> playerSprite;
-
-	std::unique_ptr<APG::GLTmxRenderer> outdoorRenderer;
-	std::unique_ptr<APG::GLTmxRenderer> indoorRenderer;
-
-	std::unique_ptr<ashley::Engine> engine;
-
-	ashley::Entity *player = nullptr;
-	void changeToWorld(const std::unique_ptr<Map> &renderer);
-
-	std::unique_ptr<Character> currentCharacter;
-
-	std::string addr;
-	const uint16_t port = 10419;
-
-	std::string username { "test@example.com" };
-
-	std::unique_ptr<RSACrypto> crypto;
-	std::string serverPubKey { "" };
-
-	APG::SDLSocket socket;
+	bool hasPubKey;
+	bool hasPriKey;
 };
 
 }
 
-#endif /* INCLUDE_PLAYPG_HPP_ */
+#endif /* INCLUDE_NET_RSACRYPTO_HPP_ */

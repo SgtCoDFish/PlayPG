@@ -25,85 +25,42 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef INCLUDE_PLAYPG_HPP_
-#define INCLUDE_PLAYPG_HPP_
+#ifndef INCLUDE_NET_CRYPTO_SHACRYPTO_HPP_
+#define INCLUDE_NET_CRYPTO_SHACRYPTO_HPP_
 
+#include <cstdint>
+
+#include <memory>
+#include <string>
+#include <array>
 #include <vector>
-#include <utility>
 
-#include <tmxparser/Tmx.h>
+#include <openssl/rsa.h>
+#include <openssl/pem.h>
+#include <openssl/err.h>
 
-#include <glm/vec2.hpp>
-
-#include <APG/APG.hpp>
-
-#include <Ashley/Ashley.hpp>
-
-#include "Map.hpp"
-#include "data/Character.hpp"
-
-#include "net/crypto/RSACrypto.hpp"
-#include "net/crypto/SHACrypto.hpp"
-
-namespace ashley {
-class Entity;
-}
+#include "CryptoCommon.hpp"
 
 namespace PlayPG {
 
-enum class GameState {
-	LOGIN,
-	PLAYING
-};
-
-class PlayPG final : public APG::SDLGame {
+class SHACrypto final {
 public:
-	static el::Logger *logger;
+	explicit SHACrypto(uint64_t iterationCount);
+	~SHACrypto() = default;
 
-	explicit PlayPG(int argc, char *argv[]);
-	virtual ~PlayPG() = default;
-
-	bool init() override;
-	void render(float deltaTime) override;
+	/**
+	 * Hash a given password into a SHA512 array, using the given salt.
+	 *
+	 * Hashing is repeated iterationCount_ times.
+	 *
+	 * @return the hashed password.
+	 */
+	std::array<uint8_t, 64> hashPasswordSHA512(const std::string &password, const std::vector<uint8_t> &salt);
 
 private:
-	bool doLogin();
-
-	void parseCommandLineArgs(int argc, char *argv[]);
-
-	GameState gameState = GameState::LOGIN;
-
-	std::unique_ptr<APG::Camera> camera;
-	std::unique_ptr<APG::SpriteBatch> batch;
-
-	std::unique_ptr<Map> mapOutdoor;
-	std::unique_ptr<Map> mapIndoor;
-	bool indoor = false;
-
-	std::unique_ptr<APG::Texture> playerTexture;
-	std::unique_ptr<APG::Sprite> playerSprite;
-
-	std::unique_ptr<APG::GLTmxRenderer> outdoorRenderer;
-	std::unique_ptr<APG::GLTmxRenderer> indoorRenderer;
-
-	std::unique_ptr<ashley::Engine> engine;
-
-	ashley::Entity *player = nullptr;
-	void changeToWorld(const std::unique_ptr<Map> &renderer);
-
-	std::unique_ptr<Character> currentCharacter;
-
-	std::string addr;
-	const uint16_t port = 10419;
-
-	std::string username { "test@example.com" };
-
-	std::unique_ptr<RSACrypto> crypto;
-	std::string serverPubKey { "" };
-
-	APG::SDLSocket socket;
+	uint64_t iterationCount_;
 };
 
 }
 
-#endif /* INCLUDE_PLAYPG_HPP_ */
+#endif /* INCLUDE_NET_CRYPTO_SHACRYPTO_HPP_ */

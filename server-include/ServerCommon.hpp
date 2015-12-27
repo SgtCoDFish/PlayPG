@@ -114,6 +114,7 @@ protected:
 	sql::mysql::MySQL_Driver * driver;
 	std::unique_ptr<sql::Connection> mysqlConnection;
 
+	std::random_device randomDevice;
 	std::mt19937_64 mersenneTwister;
 	APG::Random random;
 };

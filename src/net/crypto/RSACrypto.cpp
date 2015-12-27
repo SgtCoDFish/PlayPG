@@ -29,14 +29,14 @@
 
 #include <APG/core/APGeasylogging.hpp>
 
-#include "net/Crypto.hpp"
+#include "net/crypto/RSACrypto.hpp"
 
 namespace PlayPG {
 
-constexpr const int Crypto::KEY_LENGTH;
-constexpr const int Crypto::KEY_EXPONENT;
+constexpr const int RSACrypto::KEY_LENGTH;
+constexpr const int RSACrypto::KEY_EXPONENT;
 
-Crypto::Crypto(const std::string &publicKey_, bool log_) :
+RSACrypto::RSACrypto(const std::string &publicKey_, bool log_) :
 		        keyPair { make_rsa_ptr(nullptr) },
 		        pubKeyBIO { make_bio_ptr(::BIO_new_mem_buf((void *) publicKey_.data(), -1)) },
 		        priKeyBIO { make_bio_ptr(nullptr) },
@@ -59,7 +59,7 @@ Crypto::Crypto(const std::string &publicKey_, bool log_) :
 	}
 }
 
-Crypto::Crypto(bool log_) :
+RSACrypto::RSACrypto(bool log_) :
 		        keyPair { make_rsa_ptr(nullptr) },
 		        pubKeyBIO { make_bio_ptr(::BIO_new(BIO_s_mem())) },
 		        priKeyBIO { make_bio_ptr(::BIO_new(BIO_s_mem())) },
@@ -94,7 +94,7 @@ Crypto::Crypto(bool log_) :
 	        publicKey);
 }
 
-std::vector<uint8_t> Crypto::encryptStringPublic(const std::string &str) {
+std::vector<uint8_t> RSACrypto::encryptStringPublic(const std::string &str) {
 	const auto bufSize = ::RSA_size(keyPair.get());
 
 	std::vector<uint8_t> vec;
@@ -126,7 +126,7 @@ std::vector<uint8_t> Crypto::encryptStringPublic(const std::string &str) {
 	return vec;
 }
 
-std::string Crypto::decryptStringPrivate(const std::vector<uint8_t> &encStr) {
+std::string RSACrypto::decryptStringPrivate(const std::vector<uint8_t> &encStr) {
 	if (!hasPriKey) {
 		el::Loggers::getLogger("PlayPG")->error("Can't decryptStringPrivate without a private key.");
 		return "";
@@ -147,14 +147,6 @@ std::string Crypto::decryptStringPrivate(const std::vector<uint8_t> &encStr) {
 	}
 
 	return std::string(buffer.get(), decryptedLength);
-}
-
-bio_ptr make_bio_ptr(BIO *bio) {
-	return std::unique_ptr<BIO, void (*)(BIO*)>(bio, ::BIO_free_all);
-}
-
-rsa_ptr make_rsa_ptr(RSA *rsa) {
-	return std::unique_ptr<RSA, void (*)(RSA *)>(rsa, ::RSA_free);
 }
 
 }

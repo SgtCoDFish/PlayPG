@@ -95,7 +95,8 @@ void LoginServer::processIncoming() {
 	static constexpr const double DONE_PURGE_TIME = 5.0;
 
 	auto logger = el::Loggers::getLogger("ServPG");
-	AuthenticationChallenge challenge(Version::versionString, Version::gitHash, serverDetails.friendlyName, crypto.getPublicKeyPEM());
+	AuthenticationChallenge challenge(Version::versionString, Version::gitHash, serverDetails.friendlyName,
+	        crypto.getPublicKeyPEM());
 
 	auto start = std::chrono::high_resolution_clock::now();
 
@@ -292,7 +293,24 @@ bool LoginServer::processLoginAttempt(IncomingConnection &connection, const Auth
 //		std::cout << "id = " << res->getInt("id") << "\nname = " << res->getString("email") << std::endl;
 //	}
 
-	logger->info("Password decrypted: %v", crypto.decryptStringPrivate(authID.password));
+	const std::vector<uint8_t> salt = { 0xFE, 0xED, 0xBE, 0xEF, 0xFE, 0xED, 0xBE, 0xEF, 0xFE, 0xED, 0xBE, 0xEF, 0xFE,
+	        0xED, 0xBE, 0xEF, };
+	const auto decPass = crypto.decryptStringPrivate(authID.password);
+	logger->info("Password decrypted: %v", decPass);
+
+	const auto time1 = std::chrono::high_resolution_clock::now();
+	const auto hashedPass = hasher.hashPasswordSHA512(decPass, salt);
+	const auto time2 = std::chrono::high_resolution_clock::now();
+
+	const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(time2 - time1).count();
+
+	logger->info("Took %v ms to hash.", duration);
+
+	for (auto i = 0u; i < hashedPass.size(); ++i) {
+		std::cout << std::hex << (uint16_t(hashedPass[i]) & 0xFF) << ' ';
+	}
+
+	std::cout << std::endl;
 
 	if (authID.username == "SgtCoDFish@example.com") {
 		// success

@@ -130,7 +130,7 @@ bool PlayPG::doLogin() {
 
 		serverPubKey = challenge.pubKey;
 
-		crypto = std::make_unique<Crypto>(serverPubKey, true);
+		crypto = std::make_unique<RSACrypto>(serverPubKey, true);
 
 		socket.clear();
 
@@ -157,7 +157,7 @@ bool PlayPG::doLogin() {
 	AuthenticationIdentity identity(username, encPass);
 
 	socket.put(&identity.buffer);
-	logger->info("Sent %v auth detail bytes, opcode %v.\n\n%v\n\n", socket.send(), (opcode_type_t) identity.opcode, identity.json);
+	logger->info("Sent %v auth detail bytes, opcode %v.", socket.send(), (opcode_type_t) identity.opcode);
 
 	socket.clear();
 

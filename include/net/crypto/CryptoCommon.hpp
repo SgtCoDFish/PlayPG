@@ -25,85 +25,25 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef INCLUDE_PLAYPG_HPP_
-#define INCLUDE_PLAYPG_HPP_
+#ifndef INCLUDE_NET_CRYPTO_CRYPTOCOMMON_HPP_
+#define INCLUDE_NET_CRYPTO_CRYPTOCOMMON_HPP_
 
-#include <vector>
-#include <utility>
+#include <memory>
 
-#include <tmxparser/Tmx.h>
-
-#include <glm/vec2.hpp>
-
-#include <APG/APG.hpp>
-
-#include <Ashley/Ashley.hpp>
-
-#include "Map.hpp"
-#include "data/Character.hpp"
-
-#include "net/crypto/RSACrypto.hpp"
-#include "net/crypto/SHACrypto.hpp"
-
-namespace ashley {
-class Entity;
-}
+#include <openssl/rsa.h>
+#include <openssl/pem.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
 
 namespace PlayPG {
 
-enum class GameState {
-	LOGIN,
-	PLAYING
-};
+using bio_ptr = std::unique_ptr<BIO, void(*)(BIO*)>;
+bio_ptr make_bio_ptr(BIO *bio);
 
-class PlayPG final : public APG::SDLGame {
-public:
-	static el::Logger *logger;
-
-	explicit PlayPG(int argc, char *argv[]);
-	virtual ~PlayPG() = default;
-
-	bool init() override;
-	void render(float deltaTime) override;
-
-private:
-	bool doLogin();
-
-	void parseCommandLineArgs(int argc, char *argv[]);
-
-	GameState gameState = GameState::LOGIN;
-
-	std::unique_ptr<APG::Camera> camera;
-	std::unique_ptr<APG::SpriteBatch> batch;
-
-	std::unique_ptr<Map> mapOutdoor;
-	std::unique_ptr<Map> mapIndoor;
-	bool indoor = false;
-
-	std::unique_ptr<APG::Texture> playerTexture;
-	std::unique_ptr<APG::Sprite> playerSprite;
-
-	std::unique_ptr<APG::GLTmxRenderer> outdoorRenderer;
-	std::unique_ptr<APG::GLTmxRenderer> indoorRenderer;
-
-	std::unique_ptr<ashley::Engine> engine;
-
-	ashley::Entity *player = nullptr;
-	void changeToWorld(const std::unique_ptr<Map> &renderer);
-
-	std::unique_ptr<Character> currentCharacter;
-
-	std::string addr;
-	const uint16_t port = 10419;
-
-	std::string username { "test@example.com" };
-
-	std::unique_ptr<RSACrypto> crypto;
-	std::string serverPubKey { "" };
-
-	APG::SDLSocket socket;
-};
+using rsa_ptr = std::unique_ptr<RSA, void(*)(RSA *)>;
+rsa_ptr make_rsa_ptr(RSA *rsa);
 
 }
 
-#endif /* INCLUDE_PLAYPG_HPP_ */
+
+#endif /* INCLUDE_NET_CRYPTO_CRYPTOCOMMON_HPP_ */
