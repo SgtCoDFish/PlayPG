@@ -23,3 +23,11 @@ cd boost_1_59_0
 ./bootstrap.sh --with-toolset=<clang|gcc> --with-libraries=program_options # toolset and libraries as needed
 ./b2 toolset=<clang|gcc> cxxflags="-std=c++14 -w" define=_GLIBCXX_USE_CXX11_ABI=1 -j4
 ```
+
+Windows
+=======
+Boost is best built manually if you've not already got an installation of it, and you might need to set -DBOOST_ROOT=<path>
+
+Similar goes for OpenSSL; see [this guide](http://developer.covenanteyes.com/building-openssl-for-visual-studio/) for details (run 7-zip as admin to unzip and preserve symlinks)
+
+When using CMake, testing is done for -G "NMake Makefiles".
