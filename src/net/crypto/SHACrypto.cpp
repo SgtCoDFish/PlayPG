@@ -25,6 +25,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <cstdlib>
 #include <cstring>
 
 #include <APG/core/APGeasylogging.hpp>
@@ -33,9 +34,11 @@
 
 namespace PlayPG {
 
+const uint32_t SHACrypto::DEFAULT_SALT_BYTES;
+
 SHACrypto::SHACrypto(uint64_t iterationCount) :
 		        iterationCount_ { iterationCount } {
-	if (iterationCount_ <= 32000) {
+	if (iterationCount_ <= 16000) {
 		el::Loggers::getLogger("PlayPG")->warn(
 		        "Warning: password hashing is only repeated %v times, which may be insecure. Consider increasing the number as hardware allows.",
 		        iterationCount);
@@ -44,14 +47,71 @@ SHACrypto::SHACrypto(uint64_t iterationCount) :
 
 std::array<uint8_t, 64> SHACrypto::hashPasswordSHA512(const std::string &password, const std::vector<uint8_t> &salt) {
 	if (salt.size() < 16) {
-		el::Loggers::getLogger("PlayPG")->warn("Salt used for SHA512 hash with length %v; minimum of 16 bytes is reccommended.",
-		        salt.size());
+		el::Loggers::getLogger("PlayPG")->warn(
+		        "Salt used for SHA512 hash with length %v; minimum of 16 bytes is reccommended.", salt.size());
 	}
 
 	std::array<uint8_t, 64> ret;
 
 	::PKCS5_PBKDF2_HMAC(password.c_str(), password.size(), salt.data(), salt.size(), iterationCount_, ::EVP_sha512(),
 	        ret.size(), ret.data());
+
+	return ret;
+}
+
+std::vector<uint8_t> SHACrypto::generateSalt(uint32_t bytes) {
+	std::vector<uint8_t> ret;
+	auto buffer = std::make_unique<uint8_t[]>(bytes);
+
+	if (::RAND_bytes(buffer.get(), bytes) == 0) {
+		ERR_load_crypto_strings();
+
+		char * err = ERR_error_string(ERR_get_error(), nullptr);
+
+		el::Loggers::getLogger("PlayPG")->error("Couldn't generate salt: %v", err);
+		return ret;
+	}
+
+	ret.reserve(bytes);
+	for (auto i = 0u; i < bytes; ++i) {
+		ret.emplace_back(buffer[i]);
+	}
+
+	return ret;
+}
+
+std::array<uint8_t, 64> SHACrypto::stringToSHA512(const std::string &str) {
+	std::array<uint8_t, 64> ret;
+
+	if (str.size() < 64u * 2u) {
+		// 2 characters per hex byte, 64 bytes
+		el::Loggers::getLogger("PlayPG")->fatal("Can't convert string to SHA512 array; insufficient length string.");
+		return ret;
+	}
+
+	for (auto i = 0u; i < ret.size(); ++i) {
+		const std::string sub = str.substr(i * 2, 2);
+
+		ret[i] = static_cast<uint8_t>(std::strtoul(sub.c_str(), nullptr, 16));
+	}
+
+	return ret;
+}
+
+std::vector<uint8_t> SHACrypto::stringToSalt(const std::string &str) {
+	std::vector<uint8_t> ret;
+
+	if (str.size() % 2 != 0) {
+		// 2 characters per hex byte, 64 bytes
+		el::Loggers::getLogger("PlayPG")->fatal("Can't convert string to salt array; must have length divisible by 2.");
+		return ret;
+	}
+
+	for (auto i = 0u; i < (str.length() / 2); ++i) {
+		const std::string sub = str.substr(i * 2, 2);
+
+		ret.emplace_back(static_cast<uint8_t>(std::strtoul(sub.c_str(), nullptr, 16)));
+	}
 
 	return ret;
 }

@@ -93,6 +93,8 @@ public:
 	void processIncoming();
 
 private:
+	void initDB(el::Logger * const logger);
+
 	void processFreshSocket(IncomingConnection &connection, AuthenticationChallenge &challange,
 	        el::Logger * const logger);
 	void processChallengeSentSocket(IncomingConnection &connection, el::Logger * const logger);
@@ -102,7 +104,7 @@ private:
 	        el::Logger * const logger);
 
 	RSACrypto crypto { true };
-	SHACrypto hasher { 512000 };
+	SHACrypto hasher { 32000 };
 
 	// For accepting connections from players
 	std::unique_ptr<APG::AcceptorSocket> playerAcceptor;

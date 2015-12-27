@@ -17,7 +17,7 @@ endif ()
 
 set(PlayPG_VERSION_MAJOR 0)
 set(PlayPG_VERSION_MINOR 2)
-set(PlayPG_VERSION_PATCH 0)
+set(PlayPG_VERSION_PATCH 5)
 
 set(PlayPG_VERSION_EXTRA "")
 

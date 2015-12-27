@@ -34,6 +34,8 @@
 #include <string>
 #include <array>
 #include <vector>
+#include <sstream>
+#include <iomanip>
 
 #include <openssl/rsa.h>
 #include <openssl/pem.h>
@@ -45,6 +47,8 @@ namespace PlayPG {
 
 class SHACrypto final {
 public:
+	constexpr static const uint32_t DEFAULT_SALT_BYTES = 16;
+
 	explicit SHACrypto(uint64_t iterationCount);
 	~SHACrypto() = default;
 
@@ -56,6 +60,38 @@ public:
 	 * @return the hashed password.
 	 */
 	std::array<uint8_t, 64> hashPasswordSHA512(const std::string &password, const std::vector<uint8_t> &salt);
+
+	/**
+	 * Generates a secure random salt of the given length and returns it as a vector.
+	 */
+	std::vector<uint8_t> generateSalt(uint32_t bytes = DEFAULT_SALT_BYTES);
+
+	std::array<uint8_t, 64> stringToSHA512(const std::string &str);
+	std::vector<uint8_t> stringToSalt(const std::string &str);
+
+	std::string sha512ToString(const std::array<uint8_t, 64> &sha512) {
+		return bytesToString(sha512.cbegin(), sha512.cend());
+	}
+
+	std::string saltToString(const std::vector<uint8_t> &salt) {
+		return bytesToString(salt.cbegin(), salt.cend());
+	}
+
+	/**
+	 * Convert an STL-style container of uint8_t values to a hex string
+	 * where each byte is represented as a 2-character uppercase hex value.
+	 */
+	template<typename Iter> std::string bytesToString(Iter start, Iter end) {
+		std::ostringstream ss;
+
+		ss << std::hex << std::setfill('0') << std::uppercase;
+
+		while (start != end) {
+			ss << std::setw(2) << static_cast<int>(*start++);
+		}
+
+		return ss.str();
+	}
 
 private:
 	uint64_t iterationCount_;

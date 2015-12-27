@@ -39,6 +39,7 @@
 #include <cppconn/driver.h>
 #include <cppconn/resultset.h>
 #include <cppconn/statement.h>
+#include <cppconn/prepared_statement.h>
 
 #include "net/Opcodes.hpp"
 #include "net/packets/LoginPackets.hpp"
@@ -65,10 +66,7 @@ void LoginServer::run() {
 	logger->info("Running login server on port %v.", serverDetails.port);
 	logger->info("\"%v\", version %v (%v)", serverDetails.friendlyName, Version::versionString, Version::gitHash);
 
-//	const auto encStr = crypto.encryptStringPublic(Version::gitHash);
-//	const auto decStr = crypto.decryptStringPrivate(encStr);
-//	logger->info("ENC: %v", encStr);
-//	logger->info("DEC: %v", decStr);
+	initDB(logger);
 
 	while (!done) {
 		auto newPlayerSocket = playerAcceptor->acceptSocket();
@@ -280,41 +278,53 @@ void LoginServer::processLoginFailedSocket(IncomingConnection &connection, el::L
 }
 
 void LoginServer::processDoneSocket(IncomingConnection &connection, el::Logger * const logger) {
-	// NO-OP
+	// NO OP
 }
 
 bool LoginServer::processLoginAttempt(IncomingConnection &connection, const AuthenticationIdentity &authID,
         el::Logger * const logger) {
-//	auto ps = std::unique_ptr<sql::Statement>(mysqlConnection->createStatement());
-//
-//	auto res = std::unique_ptr<sql::ResultSet>(ps->executeQuery("SELECT * FROM players;"));
-//
-//	while (res->next()) {
-//		std::cout << "id = " << res->getInt("id") << "\nname = " << res->getString("email") << std::endl;
-//	}
-
-	const std::vector<uint8_t> salt = { 0xFE, 0xED, 0xBE, 0xEF, 0xFE, 0xED, 0xBE, 0xEF, 0xFE, 0xED, 0xBE, 0xEF, 0xFE,
-	        0xED, 0xBE, 0xEF, };
 	const auto decPass = crypto.decryptStringPrivate(authID.password);
-	logger->info("Password decrypted: %v", decPass);
 
-	const auto time1 = std::chrono::high_resolution_clock::now();
-	const auto hashedPass = hasher.hashPasswordSHA512(decPass, salt);
-	const auto time2 = std::chrono::high_resolution_clock::now();
+	auto statement = std::unique_ptr<sql::PreparedStatement>(
+	        mysqlConnection->prepareStatement("SELECT * FROM players WHERE email=?;"));
+	statement->setString(1, authID.username);
 
-	const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(time2 - time1).count();
+	auto results = std::unique_ptr<sql::ResultSet>(statement->executeQuery());
 
-	logger->info("Took %v ms to hash.", duration);
+	const auto rowCount = results->rowsCount();
 
-	for (auto i = 0u; i < hashedPass.size(); ++i) {
-		std::cout << std::hex << (uint16_t(hashedPass[i]) & 0xFF) << ' ';
+	if (rowCount == 0) {
+		connection.state = IncomingConnectionState::LOGIN_FAILED;
+		connection.loginAttempts += 1;
+
+		logger->verbose(9, "Login failed; invalid username.");
+
+		AuthenticationResponse response(false, connection.getAttemptsRemaining(), "Authentication failure.");
+
+		connection.socket->clear();
+		connection.socket->put(&response.buffer);
+		connection.socket->send();
+		connection.socket->clear();
+
+		return false;
 	}
 
-	std::cout << std::endl;
+	if (rowCount > 1) {
+		logger->warn("Possible data integrity issue; multiple rows retrieved for email %v. Using first only.",
+		        authID.username);
+	}
 
-	if (authID.username == "SgtCoDFish@example.com") {
-		// success
+	results->next();
 
+	const std::string sha512 = results->getString("password");
+	const std::string saltString = results->getString("salt");
+	const auto dbSalt = hasher.stringToSalt(saltString);
+
+	const auto hashedPass = hasher.hashPasswordSHA512(decPass, dbSalt);
+
+	const std::string hashString = hasher.sha512ToString(hashedPass);
+
+	if (sha512 == hashString) {
 		AuthenticationResponse response(true, connection.getAttemptsRemaining(), "Authentication successful.");
 
 		connection.socket->clear();
@@ -334,7 +344,7 @@ bool LoginServer::processLoginAttempt(IncomingConnection &connection, const Auth
 		connection.state = IncomingConnectionState::LOGIN_FAILED;
 		connection.loginAttempts += 1;
 
-		logger->verbose(9, "Login failed.");
+		logger->verbose(9, "Login failed; incorrect password.");
 
 		AuthenticationResponse response(false, connection.getAttemptsRemaining(), "Authentication failure.");
 
@@ -344,6 +354,44 @@ bool LoginServer::processLoginAttempt(IncomingConnection &connection, const Auth
 		connection.socket->clear();
 
 		return false;
+	}
+}
+
+void LoginServer::initDB(el::Logger * const logger) {
+	auto ps = std::unique_ptr<sql::Statement>(mysqlConnection->createStatement());
+
+	auto res = std::unique_ptr<sql::ResultSet>(ps->executeQuery("SELECT COUNT(*) AS playerCount FROM players;"));
+
+	res->next();
+	const auto playerCount = res->getUInt("playerCount");
+
+	if (playerCount == 0u) {
+		static const char * const suID = "SgtCoDFish@example.com";
+		static const char * const suPWD = "testa";
+
+		const auto salt = hasher.generateSalt();
+		const auto hashedPassword = hasher.hashPasswordSHA512(suPWD, salt);
+
+		logger->info("DB is empty, creating super-user \"%v\".", suID);
+
+		auto insert = std::unique_ptr<sql::Statement>(mysqlConnection->createStatement());
+
+		const auto pwdString = hasher.sha512ToString(hashedPassword);
+		const auto saltString = hasher.saltToString(salt);
+
+//		logger->info("\nPassword: %v\n"
+//				"Salt    : %v", pwdString, saltString);
+
+		const char * const sqlString = "INSERT INTO players (email, password, salt) VALUES (?, ?, ?);";
+
+		auto prep = std::unique_ptr<sql::PreparedStatement>(mysqlConnection->prepareStatement(sqlString));
+		prep->setString(1, suID);
+		prep->setString(2, pwdString);
+		prep->setString(3, saltString);
+
+		prep->execute();
+
+		logger->info("Created super-user.");
 	}
 }
 

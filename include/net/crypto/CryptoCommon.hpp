@@ -34,6 +34,7 @@
 #include <openssl/pem.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
+#include <openssl/rand.h>
 
 namespace PlayPG {
 
@@ -44,6 +45,5 @@ using rsa_ptr = std::unique_ptr<RSA, void(*)(RSA *)>;
 rsa_ptr make_rsa_ptr(RSA *rsa);
 
 }
-
 
 #endif /* INCLUDE_NET_CRYPTO_CRYPTOCOMMON_HPP_ */
