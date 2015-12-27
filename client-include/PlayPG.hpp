@@ -42,6 +42,8 @@
 #include "Map.hpp"
 #include "data/Character.hpp"
 
+#include "net/Crypto.hpp"
+
 namespace ashley {
 class Entity;
 }
@@ -94,6 +96,9 @@ private:
 	const uint16_t port = 10419;
 
 	std::string username { "test@example.com" };
+
+	std::unique_ptr<Crypto> crypto;
+	std::string serverPubKey { "" };
 
 	APG::SDLSocket socket;
 };

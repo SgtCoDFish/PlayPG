@@ -65,6 +65,11 @@ void LoginServer::run() {
 	logger->info("Running login server on port %v.", serverDetails.port);
 	logger->info("\"%v\", version %v (%v)", serverDetails.friendlyName, Version::versionString, Version::gitHash);
 
+//	const auto encStr = crypto.encryptStringPublic(Version::gitHash);
+//	const auto decStr = crypto.decryptStringPrivate(encStr);
+//	logger->info("ENC: %v", encStr);
+//	logger->info("DEC: %v", decStr);
+
 	while (!done) {
 		auto newPlayerSocket = playerAcceptor->acceptSocket();
 
@@ -90,7 +95,7 @@ void LoginServer::processIncoming() {
 	static constexpr const double DONE_PURGE_TIME = 5.0;
 
 	auto logger = el::Loggers::getLogger("ServPG");
-	AuthenticationChallenge challenge(Version::versionString, Version::gitHash, this->serverDetails.friendlyName);
+	AuthenticationChallenge challenge(Version::versionString, Version::gitHash, serverDetails.friendlyName, crypto.getPublicKeyPEM());
 
 	auto start = std::chrono::high_resolution_clock::now();
 
@@ -187,7 +192,7 @@ void LoginServer::processChallengeSentSocket(IncomingConnection &connection, el:
 
 	logger->verbose(9, "Handling CHALLENGE_SENT.");
 
-	connection.socket->recv();
+	logger->info("Read %v bytes", connection.socket->recv(4096));
 	const auto opcode = connection.socket->getShort();
 
 	if (opcode == static_cast<opcode_type_t>(ClientOpcode::LOGIN_AUTHENTICATION_IDENTITY)) {
@@ -231,7 +236,9 @@ void LoginServer::processLoginFailedSocket(IncomingConnection &connection, el::L
 
 	logger->verbose(9, "Handling LOGIN_FAILED connection.");
 
-	int dataRec = connection.socket->recv();
+	int dataRec = connection.socket->recv(4096);
+
+	logger->info("Read %v bytes", dataRec);
 
 	if (dataRec <= 0) {
 		logger->error("No data received in LOGIN_FAILED, dropping connection.");
@@ -277,13 +284,18 @@ void LoginServer::processDoneSocket(IncomingConnection &connection, el::Logger *
 
 bool LoginServer::processLoginAttempt(IncomingConnection &connection, const AuthenticationIdentity &authID,
         el::Logger * const logger) {
-	auto ps = std::unique_ptr<sql::Statement>(mysqlConnection->createStatement());
+//	auto ps = std::unique_ptr<sql::Statement>(mysqlConnection->createStatement());
+//
+//	auto res = std::unique_ptr<sql::ResultSet>(ps->executeQuery("SELECT * FROM players;"));
+//
+//	while (res->next()) {
+//		std::cout << "id = " << res->getInt("id") << "\nname = " << res->getString("email") << std::endl;
+//	}
 
-	auto res = std::unique_ptr<sql::ResultSet>(ps->executeQuery("SELECT * FROM players;"));
+	std::string passStr((const char*)authID.password.data(), authID.password.size());
 
-	while (res->next()) {
-		std::cout << "id = " << res->getInt("id") << "\nname = " << res->getString("email") << std::endl;
-	}
+	logger->info("Password received (len = %v)", authID.password.size());
+	logger->info("Password decrypted: %v", crypto.decryptStringPrivate(passStr));
 
 	if (authID.username == "SgtCoDFish@example.com") {
 		// success

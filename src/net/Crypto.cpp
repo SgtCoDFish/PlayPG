@@ -25,16 +25,53 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <cstring>
+
 #include <APG/core/APGeasylogging.hpp>
 
 #include "net/Crypto.hpp"
 
 namespace PlayPG {
 
-Crypto::Crypto() :
-		        keyPair { make_rsa_ptr(::RSA_generate_key(KEY_LENGTH, 3, nullptr, nullptr)) },
+constexpr const int Crypto::KEY_LENGTH;
+constexpr const int Crypto::KEY_EXPONENT;
+
+Crypto::Crypto(const std::string &publicKey_, bool log_) :
+		        keyPair { make_rsa_ptr(nullptr) },
+		        pubKeyBIO { make_bio_ptr(::BIO_new_mem_buf((void *) publicKey_.data(), -1)) },
+		        priKeyBIO { make_bio_ptr(nullptr) },
+		        pubKeyLength { publicKey_.size() },
+		        priKeyLength { 0 },
+		        publicKey { publicKey_ },
+		        log { log_ },
+		        hasPubKey { true },
+		        hasPriKey { false } {
+	keyPair = make_rsa_ptr(::PEM_read_bio_RSAPublicKey(pubKeyBIO.get(), nullptr, nullptr, nullptr));
+
+	if (keyPair == nullptr) {
+		ERR_load_crypto_strings();
+
+		char * err = ERR_error_string(ERR_get_error(), nullptr);
+
+		el::Loggers::getLogger("PlayPG")->fatal("Couldn't load pubkey from string: %v", err);
+	} else if (log) {
+		el::Loggers::getLogger("PlayPG")->info("Loaded %v byte RSA PubKey from string.", ::RSA_size(keyPair.get()));
+	}
+}
+
+Crypto::Crypto(bool log_) :
+		        keyPair { make_rsa_ptr(nullptr) },
 		        pubKeyBIO { make_bio_ptr(::BIO_new(BIO_s_mem())) },
-		        priKeyBIO { make_bio_ptr(::BIO_new(BIO_s_mem())) } {
+		        priKeyBIO { make_bio_ptr(::BIO_new(BIO_s_mem())) },
+		        log { log_ },
+		        hasPubKey { true },
+		        hasPriKey { true } {
+	if (log) {
+		el::Loggers::getLogger("PlayPG")->info("Generating RSA keypair with %v bit key.", KEY_LENGTH);
+	}
+
+	keyPair = make_rsa_ptr(::RSA_generate_key(KEY_LENGTH, KEY_EXPONENT, nullptr, nullptr));
+
 	::PEM_write_bio_RSAPrivateKey(priKeyBIO.get(), keyPair.get(), nullptr, nullptr, 0, nullptr, nullptr);
 	::PEM_write_bio_RSAPublicKey(pubKeyBIO.get(), keyPair.get());
 
@@ -57,12 +94,51 @@ Crypto::Crypto() :
 	        publicKey);
 }
 
-std::string Crypto::encryptString(const std::string &str) {
+std::string Crypto::encryptStringPublic(const std::string &str) {
+	if (!hasPubKey) {
+		el::Loggers::getLogger("PlayPG")->error("Can't encryptStringPublic without a public key.");
+		return "";
+	}
 
+	auto buffer = std::make_unique<char[]>(::RSA_size(keyPair.get()));
+
+	const auto encryptedLength = ::RSA_public_encrypt(str.size(), reinterpret_cast<const unsigned char *>(str.data()),
+	        reinterpret_cast<unsigned char *>(buffer.get()), keyPair.get(), RSA_PKCS1_OAEP_PADDING);
+
+	if (encryptedLength == -1) {
+		ERR_load_crypto_strings();
+
+		char * err = ERR_error_string(ERR_get_error(), nullptr);
+
+		el::Loggers::getLogger("PlayPG")->error("Couldn't encrypt string: %v", err);
+		return "";
+	}
+
+	return std::string(buffer.get(), encryptedLength);
 }
 
-std::string Crypto::decryptString(const std::string &encStr) {
+std::string Crypto::decryptStringPrivate(const std::string &encStr) {
+	if (!hasPriKey) {
+		el::Loggers::getLogger("PlayPG")->error("Can't decryptStringPrivate without a private key.");
+		return "";
+	}
 
+	auto buffer = std::make_unique<char[]>(::RSA_size(keyPair.get()));
+
+	const auto decryptedLength = ::RSA_private_decrypt(encStr.size(),
+	        reinterpret_cast<const unsigned char *>(encStr.data()), reinterpret_cast<unsigned char *>(buffer.get()),
+	        keyPair.get(), RSA_PKCS1_OAEP_PADDING);
+
+	if (decryptedLength == -1) {
+		ERR_load_crypto_strings();
+
+		char * err = ERR_error_string(ERR_get_error(), nullptr);
+
+		el::Loggers::getLogger("PlayPG")->error("Couldn't decrypt string: %v", err);
+		return "";
+	}
+
+	return std::string(buffer.get(), decryptedLength);
 }
 
 bio_ptr make_bio_ptr(BIO *bio) {

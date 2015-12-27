@@ -29,6 +29,8 @@
 #include <cstring>
 
 #include <utility>
+#include <string>
+#include <sstream>
 
 #include <Ashley/Ashley.hpp>
 
@@ -118,12 +120,17 @@ bool PlayPG::doLogin() {
 
 		auto json = socket.getStringByLength(jsonSize);
 
-		logger->info("JSON: %v", json);
+//		logger->info("JSON: %v", json);
 
 		APG::JSONSerializer<AuthenticationChallenge> challengeS11N;
 		const auto challenge = challengeS11N.fromJSON(json.c_str());
 
 		logger->info("Got challenge from \"%v\", v%v (%v).", challenge.name, challenge.version, challenge.versionHash);
+//		logger->info("Got pubkey: %v", challenge.pubKey);
+
+		serverPubKey = challenge.pubKey;
+
+		crypto = std::make_unique<Crypto>(serverPubKey, true);
 
 		socket.clear();
 
@@ -144,10 +151,27 @@ bool PlayPG::doLogin() {
 		socket.clear();
 	}
 
-	AuthenticationIdentity identity(username, "testa");
+	const auto encPass = crypto->encryptStringPublic("testa");
+	logger->info("Sending %v byte password", encPass.size());
+
+	for (const char &c : encPass) {
+		std::cout << std::hex << (uint16_t(c) & 0xff) << ' ';
+	}
+
+	std::cout << std::endl;
+
+	std::vector<uint8_t> chrs;
+
+	for(auto i = 0u; i < encPass.size(); ++i) {
+		chrs.emplace_back(uint16_t(encPass[i]) & 0xFF);
+	}
+
+	logger->info("Chrs: %v - Str: %v", chrs.size(), encPass.size());
+
+	AuthenticationIdentity identity(username, chrs);
 
 	socket.put(&identity.buffer);
-	logger->info("Sent %v auth detail bytes, opcode %v.", socket.send(), (opcode_type_t) identity.opcode);
+	logger->info("Sent %v auth detail bytes, opcode %v.\n\n%v\n\n", socket.send(), (opcode_type_t) identity.opcode, identity.json);
 
 	socket.clear();
 

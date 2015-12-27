@@ -46,12 +46,32 @@ rsa_ptr make_rsa_ptr(RSA *rsa);
 class Crypto final {
 public:
 	constexpr static const int KEY_LENGTH = 4096;
+	constexpr static const int KEY_EXPONENT = 3;
 
-	explicit Crypto();
+	/**
+	 * Initialise with a PEM-formatted pubkey (likely received over the network.)
+	 * @param publicKey
+	 * @param log
+	 */
+	explicit Crypto(const std::string &publicKey, bool log = false);
+	explicit Crypto(bool log = false);
 	~Crypto() = default;
 
-	std::string encryptString(const std::string &str);
-	std::string decryptString(const std::string &encStr);
+	/**
+	 * Encrypt the given string with the public key loaded; will require the matching private key
+	 * to decrypt later.
+	 */
+	std::string encryptStringPublic(const std::string &str);
+
+	/**
+	 * Decrypts the given string using the loaded private key, assuming that it was encrypted with
+	 * the matching public key.
+	 */
+	std::string decryptStringPrivate(const std::string &encStr);
+
+	std::string getPublicKeyPEM() const {
+		return publicKey;
+	}
 
 private:
 	rsa_ptr keyPair;
@@ -64,6 +84,11 @@ private:
 
 	std::string privateKey;
 	std::string publicKey;
+
+	bool log;
+
+	bool hasPubKey;
+	bool hasPriKey;
 };
 
 }

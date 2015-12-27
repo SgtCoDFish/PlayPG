@@ -34,11 +34,12 @@
 namespace PlayPG {
 
 AuthenticationChallenge::AuthenticationChallenge(const std::string &version_, const std::string &versionHash_,
-        const std::string &name_) :
+        const std::string &name_, const std::string &pubKey_) :
 		        ServerPacket(ServerOpcode::LOGIN_AUTHENTICATION_CHALLENGE),
 		        version { version_ },
 		        versionHash { versionHash_ },
-		        name { name_ } {
+		        name { name_ },
+		        pubKey { pubKey_ } {
 	buffer.putShort(static_cast<opcode_type_t>(opcode));
 
 	APG::JSONSerializer<AuthenticationChallenge> toJson;
@@ -63,21 +64,30 @@ AuthenticationResponse::AuthenticationResponse(bool successful_, int attemptsRem
 	buffer.putString(json);
 }
 
-AuthenticationIdentity::AuthenticationIdentity(const std::string &username_, const std::string &password_) :
+AuthenticationIdentity::AuthenticationIdentity(const std::string &username_, std::vector<uint8_t> password_) :
 		        ClientPacket(ClientOpcode::LOGIN_AUTHENTICATION_IDENTITY),
 		        unameLength { static_cast<decltype(unameLength)>(username_.length()) },
 		        username { username_ },
-		        passwordLength { static_cast<decltype(passwordLength)>(password_.length()) },
 		        password { password_ } {
 	buffer.putShort(static_cast<opcode_type_t>(opcode));
 
 	APG::JSONSerializer<AuthenticationIdentity> toJson;
 
-	const std::string json = toJson.toJSON(*this);
+	json = toJson.toJSON(*this);
 
 	buffer.putShort(static_cast<uint16_t>(json.size()));
 
 	buffer.putString(json);
+}
+
+ServerPubKey::ServerPubKey(const std::string &pubKeyPEM) :
+		        ServerPacket(ServerOpcode::SERVER_PUBKEY),
+		        pubKey { pubKeyPEM } {
+	buffer.putShort(static_cast<opcode_type_t>(opcode));
+
+	buffer.putLong(pubKey.size());
+
+	buffer.putString(pubKey);
 }
 
 VersionMismatch::VersionMismatch() :

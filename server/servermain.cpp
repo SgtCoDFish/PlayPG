@@ -62,7 +62,9 @@ int main(int argc, char *argv[]) {
 	START_EASYLOGGINGPP(argc, argv);
 
 	APG::Game::setupLoggingDefault();
+
 	APG::Game::setLoggerToAPGStyle("ServPG");
+	APG::Game::setLoggerToAPGStyle("PlayPG");
 
 	std::srand(std::time(nullptr));
 

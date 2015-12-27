@@ -99,7 +99,7 @@ private:
 	bool processLoginAttempt(IncomingConnection &connection, const AuthenticationIdentity &id,
 	        el::Logger * const logger);
 
-	Crypto crypto;
+	Crypto crypto { true };
 
 	// For accepting connections from players
 	std::unique_ptr<APG::AcceptorSocket> playerAcceptor;
