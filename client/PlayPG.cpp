@@ -154,21 +154,7 @@ bool PlayPG::doLogin() {
 	const auto encPass = crypto->encryptStringPublic("testa");
 	logger->info("Sending %v byte password", encPass.size());
 
-	for (const char &c : encPass) {
-		std::cout << std::hex << (uint16_t(c) & 0xff) << ' ';
-	}
-
-	std::cout << std::endl;
-
-	std::vector<uint8_t> chrs;
-
-	for(auto i = 0u; i < encPass.size(); ++i) {
-		chrs.emplace_back(uint16_t(encPass[i]) & 0xFF);
-	}
-
-	logger->info("Chrs: %v - Str: %v", chrs.size(), encPass.size());
-
-	AuthenticationIdentity identity(username, chrs);
+	AuthenticationIdentity identity(username, encPass);
 
 	socket.put(&identity.buffer);
 	logger->info("Sent %v auth detail bytes, opcode %v.\n\n%v\n\n", socket.send(), (opcode_type_t) identity.opcode, identity.json);

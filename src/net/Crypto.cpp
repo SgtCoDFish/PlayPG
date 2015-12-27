@@ -94,16 +94,20 @@ Crypto::Crypto(bool log_) :
 	        publicKey);
 }
 
-std::string Crypto::encryptStringPublic(const std::string &str) {
+std::vector<uint8_t> Crypto::encryptStringPublic(const std::string &str) {
+	const auto bufSize = ::RSA_size(keyPair.get());
+
+	std::vector<uint8_t> vec;
+
 	if (!hasPubKey) {
 		el::Loggers::getLogger("PlayPG")->error("Can't encryptStringPublic without a public key.");
-		return "";
+		return vec;
 	}
 
-	auto buffer = std::make_unique<char[]>(::RSA_size(keyPair.get()));
+	auto buffer = std::make_unique<uint8_t[]>(bufSize);
 
 	const auto encryptedLength = ::RSA_public_encrypt(str.size(), reinterpret_cast<const unsigned char *>(str.data()),
-	        reinterpret_cast<unsigned char *>(buffer.get()), keyPair.get(), RSA_PKCS1_OAEP_PADDING);
+	        buffer.get(), keyPair.get(), RSA_PKCS1_OAEP_PADDING);
 
 	if (encryptedLength == -1) {
 		ERR_load_crypto_strings();
@@ -111,13 +115,18 @@ std::string Crypto::encryptStringPublic(const std::string &str) {
 		char * err = ERR_error_string(ERR_get_error(), nullptr);
 
 		el::Loggers::getLogger("PlayPG")->error("Couldn't encrypt string: %v", err);
-		return "";
+		return vec;
 	}
 
-	return std::string(buffer.get(), encryptedLength);
+	vec.reserve(bufSize);
+	for (auto i = 0; i < bufSize; ++i) {
+		vec.emplace_back(buffer[i]);
+	}
+
+	return vec;
 }
 
-std::string Crypto::decryptStringPrivate(const std::string &encStr) {
+std::string Crypto::decryptStringPrivate(const std::vector<uint8_t> &encStr) {
 	if (!hasPriKey) {
 		el::Loggers::getLogger("PlayPG")->error("Can't decryptStringPrivate without a private key.");
 		return "";
@@ -125,9 +134,8 @@ std::string Crypto::decryptStringPrivate(const std::string &encStr) {
 
 	auto buffer = std::make_unique<char[]>(::RSA_size(keyPair.get()));
 
-	const auto decryptedLength = ::RSA_private_decrypt(encStr.size(),
-	        reinterpret_cast<const unsigned char *>(encStr.data()), reinterpret_cast<unsigned char *>(buffer.get()),
-	        keyPair.get(), RSA_PKCS1_OAEP_PADDING);
+	const auto decryptedLength = ::RSA_private_decrypt(encStr.size(), encStr.data(),
+	        reinterpret_cast<unsigned char *>(buffer.get()), keyPair.get(), RSA_PKCS1_OAEP_PADDING);
 
 	if (decryptedLength == -1) {
 		ERR_load_crypto_strings();

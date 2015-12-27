@@ -28,6 +28,8 @@
 #ifndef INCLUDE_NET_CRYPTO_HPP_
 #define INCLUDE_NET_CRYPTO_HPP_
 
+#include <cstdint>
+
 #include <memory>
 #include <string>
 
@@ -61,13 +63,13 @@ public:
 	 * Encrypt the given string with the public key loaded; will require the matching private key
 	 * to decrypt later.
 	 */
-	std::string encryptStringPublic(const std::string &str);
+	std::vector<uint8_t> encryptStringPublic(const std::string &str);
 
 	/**
 	 * Decrypts the given string using the loaded private key, assuming that it was encrypted with
 	 * the matching public key.
 	 */
-	std::string decryptStringPrivate(const std::string &encStr);
+	std::string decryptStringPrivate(const std::vector<uint8_t> &vec);
 
 	std::string getPublicKeyPEM() const {
 		return publicKey;

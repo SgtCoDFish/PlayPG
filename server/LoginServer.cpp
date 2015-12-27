@@ -253,7 +253,7 @@ void LoginServer::processLoginFailedSocket(IncomingConnection &connection, el::L
 		const auto jsonLength = connection.socket->getShort();
 		const auto json = connection.socket->getStringByLength(jsonLength);
 
-		logger->verbose(9, "Client attempted auth in LOGIN_FAILED, json: %v", json);
+		logger->verbose(9, "Client attempted auth in LOGIN_FAILED");
 
 		APG::JSONSerializer<AuthenticationIdentity> idDecoder;
 		const AuthenticationIdentity authID = idDecoder.fromJSON(json.c_str());
@@ -292,10 +292,7 @@ bool LoginServer::processLoginAttempt(IncomingConnection &connection, const Auth
 //		std::cout << "id = " << res->getInt("id") << "\nname = " << res->getString("email") << std::endl;
 //	}
 
-	std::string passStr((const char*)authID.password.data(), authID.password.size());
-
-	logger->info("Password received (len = %v)", authID.password.size());
-	logger->info("Password decrypted: %v", crypto.decryptStringPrivate(passStr));
+	logger->info("Password decrypted: %v", crypto.decryptStringPrivate(authID.password));
 
 	if (authID.username == "SgtCoDFish@example.com") {
 		// success
