@@ -1,7 +1,7 @@
 PlayPG
 ======
 
-A test of [APG](https://github.com/SgtCoDFish/APG).
+A test of [APG](https://github.com/SgtCoDFish/APG), implementing an MMORPG-style client/server architecture. The server is designed to run functionally on a Raspberry Pi 2.
 
 ```
 mkdir build && cd build
