@@ -90,7 +90,7 @@ RSACrypto::RSACrypto(bool log_) :
 	privateKey = std::move(std::string(privateKeyTempBuffer.get(), priKeyLength));
 	publicKey = std::move(std::string(publicKeyTempBuffer.get(), pubKeyLength));
 
-	el::Loggers::getLogger("PlayPG")->verbose(9, "Generated RSA key pair:\nPRIVATE: %v\n\nPUBLIC: %v", privateKey,
+	el::Loggers::getLogger("PlayPG")->verbose(9, "Generated RSA key pair:\nPRIVATE:\n%v\n\nPUBLIC:\n%v", privateKey,
 	        publicKey);
 }
 
