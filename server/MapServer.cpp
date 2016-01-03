@@ -66,6 +66,7 @@ void MapServer::run() {
 
 	if (masterServerConnection->hasError()) {
 		logger->error("Couldn't connect to master login server.");
+		return;
 	}
 
 	logger->verbose(5, "Waiting for master server to send authentication challenge.");
