@@ -106,6 +106,8 @@ public:
 	virtual void run() = 0;
 
 protected:
+	std::unique_ptr<APG::Socket> getSocket(const std::string &hostname, const uint16_t &port, bool autoConnect_ = false,uint32_t bufferSize_ = BB_DEFAULT_SIZE);
+
 	// This method enables different types of socket to be used depending on platform
 	// e.g. to return a NativeAcceptorSocket where SDL is not available but an SDLAcceptorSocket otherwise.
 	std::unique_ptr<APG::AcceptorSocket> getAcceptorSocket(const uint16_t port, bool autoListen = false,

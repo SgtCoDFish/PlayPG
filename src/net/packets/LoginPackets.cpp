@@ -95,5 +95,14 @@ VersionMismatch::VersionMismatch() :
 	buffer.putShort(static_cast<opcode_type_t>(opcode));
 }
 
+MapServerRegistrationRequest::MapServerRegistrationRequest(const std::string &mapServerFriendlyName_) :
+		        ServerPacket(ServerOpcode::MAP_SERVER_REGISTRATION_REQUEST),
+		        mapServerFriendlyName { mapServerFriendlyName_ } {
+	buffer.putShort(static_cast<opcode_type_t>(opcode));
+
+	buffer.putShort(mapServerFriendlyName.size());
+	buffer.putString(mapServerFriendlyName);
+}
+
 }
 

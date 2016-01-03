@@ -66,6 +66,15 @@ Server::Server(const ServerDetails &serverDetails_, const DatabaseDetails &datab
 	mysqlConnection->setSchema("ppg");
 }
 
+std::unique_ptr<APG::Socket> Server::getSocket(const std::string &hostname_, const uint16_t &port_, bool autoConnect_,
+        uint32_t bufferSize_) {
+#ifndef APG_NO_SDL
+	return std::make_unique<APG::SDLSocket>(hostname_, port_, autoConnect_, bufferSize_);
+#else
+	return std::make_unique<APG::NativeAcceptorSocket>(hostname_, port_, autoConnect_, bufferSize_);
+#endif
+}
+
 std::unique_ptr<APG::AcceptorSocket> Server::getAcceptorSocket(const uint16_t port, bool autoListen,
         uint32_t bufferSize_) {
 #ifndef APG_NO_SDL

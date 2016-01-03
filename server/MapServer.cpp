@@ -24,25 +24,128 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <cstring>
+
+#include <utility>
+
+#include <APG/APGS11N.hpp>
 #include <APG/core/APGeasylogging.hpp>
 
+#include <tmxparser/Tmx.h>
+
+#include "net/packets/LoginPackets.hpp"
 #include "MapServer.hpp"
+#include "PlayPGVersion.hpp"
 
 namespace PlayPG {
 
-MapServer::MapServer(const ServerDetails &serverDetails_, const DatabaseDetails &databaseDetails_) :
-		        Server(serverDetails_, databaseDetails_) {
-
+MapServer::MapServer(const ServerDetails &serverDetails_, const DatabaseDetails &databaseDetails_,
+        std::vector<std::string> &&maps, const std::string &masterServer_, const uint16_t &masterPort_,
+        const std::string &masterPublicKeyFile_, const std::string &masterPrivateKeyFile_) :
+		        Server(serverDetails_, databaseDetails_),
+		        mapPaths { std::move(maps) },
+		        masterServerHostname { masterServer_ },
+		        masterServerPort { masterPort_ },
+		        masterServerCrypto { RSACrypto::fromFiles(masterPublicKeyFile_, masterPrivateKeyFile_) },
+		        masterServerConnection { getSocket(masterServerHostname, masterServerPort) } {
 }
 
 void MapServer::run() {
-	auto logger = el::Loggers::getLogger("PlayPG");
+	auto logger = el::Loggers::getLogger("ServPG");
 
 	logger->info("Running map server.");
+
+	if (!parseMaps(logger)) {
+		return;
+	}
+
+	logger->info("Establishing connection with \"%v\" on port %v.", masterServerHostname, masterServerPort);
+
+	masterServerConnection->connect();
+
+	if (masterServerConnection->hasError()) {
+		logger->error("Couldn't connect to master login server.");
+	}
+
+	logger->verbose(5, "Waiting for master server to send authentication challenge.");
+	masterServerConnection->waitForActivity(5000);
+
+	masterServerConnection->recv();
+
+	// we expect to get an authentication challenge from the master server
+
+	const auto opcode = masterServerConnection->getShort();
+
+	if (opcode != static_cast<opcode_type_t>(ServerOpcode::LOGIN_AUTHENTICATION_CHALLENGE)) {
+		logger->error("Got opcode %v which doesn't match authentication challenge; bad master login server.");
+		return;
+	}
+
+	const uint16_t jsonSize = masterServerConnection->getShort();
+
+	auto json = masterServerConnection->getStringByLength(jsonSize);
+
+	APG::JSONSerializer<AuthenticationChallenge> challengeS11N;
+	const auto challenge = challengeS11N.fromJSON(json.c_str());
+
+	logger->info("Got challenge from \"%v\", v%v (%v).", challenge.name, challenge.version, challenge.versionHash);
+	masterServerConnection->clear();
+
+	// Check the server's public key matches the one we've loaded in; if it doesn't we can't continue.
+	if (challenge.pubKey != masterServerCrypto->getPublicKeyPEM()) {
+		logger->error("Server's public key doesn't match the one loaded; incorrect key file.");
+		return;
+	} else {
+		logger->verbose(9, "Server's public key matches expected key.");
+	}
+
+	if (std::strcmp(challenge.version.c_str(), Version::versionString) != 0
+	        || std::strcmp(challenge.versionHash.c_str(), Version::gitHash) != 0) {
+		logger->info("Version check failed.");
+
+		VersionMismatch mismatchPacket;
+
+		masterServerConnection->put(&mismatchPacket.buffer);
+		masterServerConnection->send();
+
+		return;
+	}
+
+	logger->info("Version check successful.");
+
+	MapServerRegistrationRequest regRequest(serverDetails.friendlyName);
+
+	masterServerConnection->put(&regRequest.buffer);
+	masterServerConnection->send();
 }
 
-//static const std::unordered_map<opcode_type_t, OpcodeDetails> acceptedOpcodes_map = { //
-//        { static_cast<opcode_type_t>(ClientOpcode::MOVE), OpcodeDetails("Move request") }, //
-//        };
+bool MapServer::parseMaps(el::Logger * const logger) {
+	for (const auto & mapPath : mapPaths) {
+		auto map = std::make_unique<Tmx::Map>();
+
+		map->ParseFile(mapPath);
+
+		if (map->HasError()) {
+			logger->error("Couldn't parse %v: %v.", mapPath, map->GetErrorText());
+			continue;
+		}
+
+		maps.emplace_back(std::move(map));
+	}
+
+	if (maps.size() < mapPaths.size()) {
+		// some maps failed to load
+		logger->error("Couldn't load %v maps.", (mapPaths.size() - maps.size()));
+
+		if (maps.size() == 0) {
+			return false;
+		}
+	} else {
+		logger->verbose(1, "Parsed all maps successfully.");
+	}
+
+	return true;
+}
 
 }

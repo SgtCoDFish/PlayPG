@@ -61,12 +61,16 @@ LoginServer::LoginServer(const ServerDetails &serverDetails_, const DatabaseDeta
 void LoginServer::run() {
 	auto logger = el::Loggers::getLogger("ServPG");
 
-	processingThread = std::thread([this]() {this->processIncoming();});
-
 	logger->info("Running login server on port %v.", serverDetails.port);
 	logger->info("\"%v\", version %v (%v)", serverDetails.friendlyName, Version::versionString, Version::gitHash);
 
+	processingThread = std::thread([this]() {this->processIncoming();});
+
 	initDB(logger);
+
+	logger->verbose(9, "Dumping keys to login.pub and login.prv");
+	crypto.writePublicKeyFile("login.pub");
+	crypto.writePrivateKeyFile("login.prv");
 
 	while (!done) {
 		auto newPlayerSocket = playerAcceptor->acceptSocket();
@@ -205,11 +209,11 @@ void LoginServer::processChallengeSentSocket(IncomingConnection &connection, el:
 		processLoginAttempt(connection, authID, logger);
 	} else if (opcode == static_cast<opcode_type_t>(ClientOpcode::VERSION_MISMATCH)) {
 		// we can't really help in this case
-		logger->info("Client had mismatched version.");
+		logger->verbose(9, "Client had mismatched version.");
 		connection.state = IncomingConnectionState::DONE;
 		return;
 	} else {
-		logger->info("Client sent unexpected data.");
+		logger->verbose(9, "Client sent unexpected data.");
 		// unexpected input; increase their attempts
 		connection.state = IncomingConnectionState::LOGIN_FAILED;
 		connection.loginAttempts += 1;
@@ -235,7 +239,7 @@ void LoginServer::processLoginFailedSocket(IncomingConnection &connection, el::L
 
 	logger->verbose(9, "Handling LOGIN_FAILED connection.");
 
-	int dataRec = connection.socket->recv(4096);
+	const int dataRec = connection.socket->recv(4096);
 
 	logger->info("Read %v bytes", dataRec);
 
@@ -259,7 +263,7 @@ void LoginServer::processLoginFailedSocket(IncomingConnection &connection, el::L
 
 		processLoginAttempt(connection, authID, logger);
 	} else {
-		logger->info("Client sent unexpected data in LOGIN_FAILED, opcode %v, bytesRec %v", opcode, dataRec);
+		logger->info("Client sent unexpected data in LOGIN_FAILED", opcode, dataRec);
 		// unexpected input; increase their attempts
 		connection.state = IncomingConnectionState::LOGIN_FAILED;
 		connection.loginAttempts += 1;

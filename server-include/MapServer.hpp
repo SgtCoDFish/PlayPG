@@ -28,21 +28,40 @@
 #ifndef INCLUDE_SERVER_MAPSERVER_HPP_
 #define INCLUDE_SERVER_MAPSERVER_HPP_
 
+#include <string>
+#include <vector>
+#include <memory>
+
+#include <tmxparser/TmxMap.h>
+
 #include "ServerCommon.hpp"
+#include "net/crypto/RSACrypto.hpp"
 
 namespace PlayPG {
 
 class MapServer final : public Server {
 public:
-	explicit MapServer(const ServerDetails &details, const DatabaseDetails &databaseDetails_);
+	explicit MapServer(const ServerDetails &details, const DatabaseDetails &databaseDetails_,
+	        std::vector<std::string> &&maps, const std::string &masterServer_, const uint16_t &masterPort, const std::string &masterPublicKeyFile_,
+	        const std::string &masterPrivateKeyFile_);
 	virtual ~MapServer() = default;
 
 	virtual void run() override final;
 
 private:
+	bool parseMaps(el::Logger * const logger);
+	bool registerWithMasterServer();
+
+	const std::vector<std::string> mapPaths;
+	std::vector<std::unique_ptr<Tmx::Map>> maps;
+
 	std::unique_ptr<APG::Socket> connectedPlayers;
 
-	std::unique_ptr<APG::Socket> loginServerConnection;
+	const std::string masterServerHostname;
+	const uint16_t masterServerPort;
+
+	std::unique_ptr<RSACrypto> masterServerCrypto;
+	std::unique_ptr<APG::Socket> masterServerConnection;
 };
 
 }

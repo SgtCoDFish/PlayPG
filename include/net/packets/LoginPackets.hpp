@@ -93,7 +93,13 @@ public:
 	std::vector<uint8_t> password;
 
 	std::string json;
+};
 
+class MapServerRegistrationRequest final : public ServerPacket {
+public:
+	explicit MapServerRegistrationRequest(const std::string &mapServerFriendlyName_);
+
+	const std::string mapServerFriendlyName;
 };
 
 class VersionMismatch final : public ClientPacket {

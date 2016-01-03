@@ -157,7 +157,8 @@ bool PlayPG::doLogin() {
 	AuthenticationIdentity identity(username, encPass);
 
 	socket.put(&identity.buffer);
-	logger->info("Sent %v auth detail bytes, opcode %v.", socket.send(), (opcode_type_t) identity.opcode);
+	const auto sentAuthDetailBytes = socket.send();
+	logger->info("Sent %v auth detail bytes, opcode %v.", sentAuthDetailBytes, (opcode_type_t) identity.opcode);
 
 	socket.clear();
 

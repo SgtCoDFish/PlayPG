@@ -36,6 +36,8 @@
 #include <utility>
 
 #include <boost/program_options.hpp>
+#include <boost/filesystem.hpp>
+#define BOOST_FILESYSTEM_NO_DEPRECATED
 
 #include <APG/APG.hpp>
 INITIALIZE_EASYLOGGINGPP
@@ -47,7 +49,10 @@ INITIALIZE_EASYLOGGINGPP
 
 #include "PlayPGVersion.hpp"
 
+constexpr static const uint16_t DEFAULT_LOGIN_PORT = 10419u;
+
 namespace po = boost::program_options;
+namespace fs = boost::filesystem;
 
 std::unique_ptr<PlayPG::Server> initializeProgramOptions(int argc, char *argv[]);
 
@@ -55,8 +60,8 @@ std::unique_ptr<PlayPG::LoginServer> startLoginServer(el::Logger * logger, const
         false);
 std::unique_ptr<PlayPG::MapServer> startWorldServer(el::Logger * logger, const po::variables_map& vm);
 
-void init_sockets();
-void shutdown_sockets();
+void initSockets();
+void shutdownSockets();
 
 int main(int argc, char *argv[]) {
 	START_EASYLOGGINGPP(argc, argv);
@@ -73,11 +78,11 @@ int main(int argc, char *argv[]) {
 		return EXIT_SUCCESS;
 	}
 
-	init_sockets();
+	initSockets();
 
 	server->run();
 
-	shutdown_sockets();
+	shutdownSockets();
 	return EXIT_SUCCESS;
 }
 
@@ -94,8 +99,8 @@ std::unique_ptr<PlayPG::Server> initializeProgramOptions(int argc, char *argv[])
 	po::options_description serverOptions("Server Options");
 
 	serverOptions.add_options() //
-	("login-server", po::value<uint16_t>()->implicit_value(10419u),
-	        "run a login server listening on the given port (default 10419)") //
+	("login-server", po::value<uint16_t>()->implicit_value(DEFAULT_LOGIN_PORT),
+	        "run a login server (listening on the given port if one is given)") //
 	("world-server", po::value<uint16_t>(), "run a world server listening on the given port") //
 	("name", po::value<std::string>()->default_value(std::string("PPGserver") + std::to_string(std::rand())),
 	        "use the given name for the server, defaulting to \"PPGserver\" with a random integer");
@@ -110,8 +115,16 @@ std::unique_ptr<PlayPG::Server> initializeProgramOptions(int argc, char *argv[])
 
 	po::options_description worldServerOptions("World Server Specific Options");
 
-	worldServerOptions.add_options()("map-dirs", po::value<std::vector<std::string>>(),
-	        "A list of directories in which to search for maps.");
+	worldServerOptions.add_options()("map-dir", po::value<std::string>()->default_value("."),
+	        "A directory in which to search for maps. Defaults to \".\"") //
+	("master-address", po::value<std::string>(),
+	        "The address of the login server which will act as the master server and will send users to the appropriate map server as they log in.") //
+	("master-port", po::value<uint16_t>()->default_value(DEFAULT_LOGIN_PORT),
+	        "The port of the master login server, defaults to the default login port.") //
+	("master-public", po::value<std::string>()->default_value("login.pub"),
+	        "The public key file for the master login server. Required to authenticate.") //
+	("master-private", po::value<std::string>()->default_value("login.prv"),
+	        "The private key file for the master login server. Required to authenticate.");
 
 	po::options_description allOptions("Allowed Options");
 
@@ -164,7 +177,7 @@ std::unique_ptr<PlayPG::LoginServer> startLoginServer(el::Logger * logger, const
         bool defaulted) {
 	logger->info("Starting a login server.");
 
-	const uint16_t serverPort = defaulted ? 10419 : vm["login-server"].as<uint16_t>();
+	const uint16_t serverPort = defaulted ? DEFAULT_LOGIN_PORT : vm["login-server"].as<uint16_t>();
 	const uint16_t dbPort = vm["database-port"].as<uint16_t>();
 
 	if (!APG::NetUtil::validatePort(serverPort)) {
@@ -196,10 +209,86 @@ std::unique_ptr<PlayPG::LoginServer> startLoginServer(el::Logger * logger, const
 
 std::unique_ptr<PlayPG::MapServer> startWorldServer(el::Logger * logger, const po::variables_map &vm) {
 	logger->info("Starting a world server.");
-	return nullptr;
+
+	const uint16_t serverPort = vm["world-server"].as<uint16_t>();
+	const uint16_t dbPort = vm["database-port"].as<uint16_t>();
+
+	if (!APG::NetUtil::validatePort(serverPort)) {
+		logger->error("Invalid server port number: %v", serverPort);
+		return nullptr;
+	}
+
+	if (!APG::NetUtil::validatePort(dbPort)) {
+		logger->error("Invalid database port given: %v", dbPort);
+		return nullptr;
+	}
+
+	if (!vm.count("database-password")) {
+		logger->error("No database password given; use --database-password");
+		return nullptr;
+	}
+
+	const fs::path mapDir = vm["map-dir"].as<std::string>();
+
+	if (!fs::exists(mapDir)) {
+		logger->error("Map directory %v doesn't exist.", mapDir.c_str());
+		return nullptr;
+	}
+
+	if (!fs::is_directory(mapDir)) {
+		logger->error("Map directory %v is not a directory.", mapDir.c_str());
+		return nullptr;
+	}
+
+	std::vector<std::string> mapNames;
+
+	fs::directory_iterator endIter;
+
+	for (fs::directory_iterator it(mapDir); it != endIter; ++it) {
+		const auto fileName = it->path().leaf();
+		const auto extension = fileName.extension();
+
+		if (extension != ".tmx" && extension != ".ppg") {
+			logger->verbose(1, "Skipping %v because it has an irrelevant extension.", fileName);
+			continue;
+		}
+
+		mapNames.emplace_back(it->path().string());
+	}
+
+	if (mapNames.size() == 0) {
+		logger->error("Couldn't find any maps in %v. Exiting.", mapDir);
+		return nullptr;
+	}
+
+	logger->verbose(1, "Loaded %v maps.", mapNames.size());
+
+	if (!vm.count("master-address")) {
+		logger->error(
+		        "No --master-address given; you must have a running master login server that a map server can connect to.");
+		return nullptr;
+	}
+
+	const auto masterHostname = vm["master-address"].as<std::string>();
+	const auto masterPort = vm["master-port"].as<uint16_t>();
+
+	const auto publicKeyFile = vm["master-public"].as<std::string>();
+	const auto privateKeyFile = vm["master-private"].as<std::string>();
+
+	const auto serverName = vm["name"].as<std::string>();
+
+	const auto dbServer = vm["database-server"].as<std::string>();
+	const auto dbUsername = vm["database-username"].as<std::string>();
+	const auto dbPassword = vm["database-password"].as<std::string>();
+
+	PlayPG::ServerDetails serverDetails(serverName, "localhost", serverPort, PlayPG::ServerType::WORLD_SERVER);
+	PlayPG::DatabaseDetails dbDetails(dbServer, dbPort, dbUsername, dbPassword);
+
+	return std::make_unique<PlayPG::MapServer>(serverDetails, dbDetails, std::move(mapNames), masterHostname,
+	        masterPort, publicKeyFile, privateKeyFile);
 }
 
-void init_sockets() {
+void initSockets() {
 #ifndef APG_NO_SDL
 	APG::SDLGame::initialiseSDL();
 #else
@@ -207,7 +296,7 @@ void init_sockets() {
 #endif
 }
 
-void shutdown_sockets() {
+void shutdownSockets() {
 #ifndef APG_NO_SDL
 	APG::SDLGame::shutdownSDL();
 #else

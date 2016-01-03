@@ -47,13 +47,16 @@ public:
 	constexpr static const int KEY_LENGTH = 4096;
 	constexpr static const int KEY_EXPONENT = 3;
 
+	static std::unique_ptr<RSACrypto> fromFiles(const std::string &pubKeyFile, const std::string &priKeyFile, bool log_ = false);
+
 	/**
 	 * Initialise with a PEM-formatted pubkey (likely received over the network.)
 	 * @param publicKey
 	 * @param log
 	 */
-	explicit RSACrypto(const std::string &publicKey, bool log = false);
-	explicit RSACrypto(bool log = false);
+	explicit RSACrypto(const std::string &publicKey, bool log_ = false);
+	explicit RSACrypto(std::string &&pubKey, std::string &&priKey, bool log_ = false);
+	explicit RSACrypto(bool log_ = false);
 	~RSACrypto() = default;
 
 	/**
@@ -72,7 +75,21 @@ public:
 		return publicKey;
 	}
 
+	void writePublicKeyFile(const std::string &filename);
+	void writePrivateKeyFile(const std::string &filename);
+
+	RSACrypto(const RSACrypto &other) = delete;
+	RSACrypto(RSACrypto &other) = delete;
+	RSACrypto &operator=(const RSACrypto &other) = delete;
+	RSACrypto &operator=(RSACrypto &other) = delete;
+
+	RSACrypto(RSACrypto &&other) = default;
+	RSACrypto &operator=(RSACrypto &&other) = default;
+
 private:
+	std::string privateKey;
+	std::string publicKey;
+
 	rsa_ptr keyPair;
 
 	bio_ptr pubKeyBIO;
@@ -81,13 +98,12 @@ private:
 	size_t pubKeyLength;
 	size_t priKeyLength;
 
-	std::string privateKey;
-	std::string publicKey;
-
 	bool log;
 
 	bool hasPubKey;
 	bool hasPriKey;
+
+	void writeKeyFile(const std::string &filename, const std::string &key);
 };
 
 }

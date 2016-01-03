@@ -27,6 +27,8 @@
 
 #include <cstring>
 
+#include <fstream>
+
 #include <APG/core/APGeasylogging.hpp>
 
 #include "net/crypto/RSACrypto.hpp"
@@ -37,12 +39,12 @@ constexpr const int RSACrypto::KEY_LENGTH;
 constexpr const int RSACrypto::KEY_EXPONENT;
 
 RSACrypto::RSACrypto(const std::string &publicKey_, bool log_) :
+		        publicKey { publicKey_ },
 		        keyPair { make_rsa_ptr(nullptr) },
 		        pubKeyBIO { make_bio_ptr(::BIO_new_mem_buf((void *) publicKey_.data(), -1)) },
 		        priKeyBIO { make_bio_ptr(nullptr) },
 		        pubKeyLength { publicKey_.size() },
 		        priKeyLength { 0 },
-		        publicKey { publicKey_ },
 		        log { log_ },
 		        hasPubKey { true },
 		        hasPriKey { false } {
@@ -57,6 +59,35 @@ RSACrypto::RSACrypto(const std::string &publicKey_, bool log_) :
 	} else if (log) {
 		el::Loggers::getLogger("PlayPG")->info("Loaded %v byte RSA PubKey from string.", ::RSA_size(keyPair.get()));
 	}
+}
+
+RSACrypto::RSACrypto(std::string &&pubKey_, std::string &&priKey_, bool log_) :
+		        privateKey { std::move(priKey_) },
+		        publicKey { std::move(pubKey_) },
+		        keyPair { make_rsa_ptr(nullptr) },
+		        pubKeyBIO { make_bio_ptr(::BIO_new_mem_buf((void*) publicKey.data(), publicKey.size())) },
+		        priKeyBIO { make_bio_ptr(::BIO_new_mem_buf((void*) privateKey.data(), privateKey.size())) },
+		        pubKeyLength { publicKey.size() },
+		        priKeyLength { privateKey.size() },
+		        log { log_ },
+		        hasPubKey { true },
+		        hasPriKey { true } {
+	RSA * rsa = ::RSA_new();
+
+	::PEM_read_bio_RSAPrivateKey(priKeyBIO.get(), &rsa, nullptr, nullptr);
+	::PEM_read_bio_RSAPublicKey(pubKeyBIO.get(), &rsa, nullptr, nullptr);
+
+	if (::RSA_check_key(rsa) != 1) {
+		ERR_load_crypto_strings();
+
+		char * err = ERR_error_string(ERR_get_error(), nullptr);
+
+		el::Loggers::getLogger("PlayPG")->fatal("Invalid pub/pri keypair loaded: %v", err);
+	} else if (log) {
+		el::Loggers::getLogger("PlayPG")->info("Successfully loaded RSA Public/Private keypair.");
+	}
+
+	keyPair = make_rsa_ptr(rsa);
 }
 
 RSACrypto::RSACrypto(bool log_) :
@@ -147,6 +178,63 @@ std::string RSACrypto::decryptStringPrivate(const std::vector<uint8_t> &encStr) 
 	}
 
 	return std::string(buffer.get(), decryptedLength);
+}
+
+void RSACrypto::writePublicKeyFile(const std::string &filename) {
+	writeKeyFile(filename, publicKey);
+}
+
+void RSACrypto::writePrivateKeyFile(const std::string &filename) {
+	writeKeyFile(filename, privateKey);
+}
+
+void RSACrypto::writeKeyFile(const std::string &filename, const std::string &key) {
+	std::ofstream of(filename, std::ios::trunc | std::ios::out | std::ios::binary);
+
+	if (!of.is_open()) {
+		el::Loggers::getLogger("PlayPG")->fatal("Couldn't open %v for writing key file.", filename);
+		return;
+	}
+
+	of << key;
+	of.close();
+}
+
+std::unique_ptr<RSACrypto> RSACrypto::fromFiles(const std::string &pubKeyFile, const std::string &priKeyFile,
+        bool log_) {
+	std::string publicKey;
+
+	{
+		std::ifstream pubIF(pubKeyFile, std::ios::in | std::ios::binary);
+
+		if (!pubIF.is_open()) {
+			el::Loggers::getLogger("PlayPG")->fatal("Couldn't open public key file %v for reading.", pubKeyFile);
+		}
+
+		std::stringstream ss;
+
+		ss << pubIF.rdbuf();
+
+		publicKey = ss.str();
+	}
+
+	std::string privateKey;
+
+	{
+		std::ifstream priIF(priKeyFile, std::ios::in | std::ios::binary);
+
+		if (!priIF.is_open()) {
+			el::Loggers::getLogger("PlayPG")->fatal("Couldn't open private key file %v for reading.", priKeyFile);
+		}
+
+		std::stringstream ss;
+
+		ss << priIF.rdbuf();
+
+		privateKey = ss.str();
+	}
+
+	return std::make_unique<RSACrypto>(std::move(publicKey), std::move(privateKey), log_);
 }
 
 }
