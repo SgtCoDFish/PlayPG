@@ -71,7 +71,7 @@ std::unique_ptr<APG::Socket> Server::getSocket(const std::string &hostname_, con
 #ifndef APG_NO_SDL
 	return std::make_unique<APG::SDLSocket>(hostname_, port_, autoConnect_, bufferSize_);
 #else
-	return std::make_unique<APG::NativeAcceptorSocket>(hostname_, port_, autoConnect_, bufferSize_);
+	return std::make_unique<APG::NativeSocket>(hostname_, port_, autoConnect_, bufferSize_);
 #endif
 }
 
