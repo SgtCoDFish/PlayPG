@@ -40,8 +40,6 @@ AuthenticationChallenge::AuthenticationChallenge(const std::string &version_, co
 		        versionHash { versionHash_ },
 		        name { name_ },
 		        pubKey { pubKey_ } {
-	buffer.putShort(static_cast<opcode_type_t>(opcode));
-
 	APG::JSONSerializer<AuthenticationChallenge> toJson;
 
 	const std::string json = toJson.toJSON(*this);
@@ -55,8 +53,6 @@ AuthenticationResponse::AuthenticationResponse(bool successful_, int attemptsRem
 		        successful { successful_ },
 		        attemptsRemaining { attemptsRemaining_ },
 		        message { message_ } {
-	buffer.putShort(static_cast<opcode_type_t>(opcode));
-
 	APG::JSONSerializer<AuthenticationResponse> toJson;
 
 	const std::string json = toJson.toJSON(*this);
@@ -68,9 +64,7 @@ AuthenticationIdentity::AuthenticationIdentity(const std::string &username_, std
 		        ClientPacket(ClientOpcode::LOGIN_AUTHENTICATION_IDENTITY),
 		        unameLength { static_cast<decltype(unameLength)>(username_.length()) },
 		        username { username_ },
-		        password { password_ } {
-	buffer.putShort(static_cast<opcode_type_t>(opcode));
-
+		        password { std::move(password_) } {
 	APG::JSONSerializer<AuthenticationIdentity> toJson;
 
 	json = toJson.toJSON(*this);
@@ -83,8 +77,6 @@ AuthenticationIdentity::AuthenticationIdentity(const std::string &username_, std
 ServerPubKey::ServerPubKey(const std::string &pubKeyPEM) :
 		        ServerPacket(ServerOpcode::SERVER_PUBKEY),
 		        pubKey { pubKeyPEM } {
-	buffer.putShort(static_cast<opcode_type_t>(opcode));
-
 	buffer.putLong(pubKey.size());
 
 	buffer.putString(pubKey);
@@ -92,17 +84,20 @@ ServerPubKey::ServerPubKey(const std::string &pubKeyPEM) :
 
 VersionMismatch::VersionMismatch() :
 		        ClientPacket(ClientOpcode::VERSION_MISMATCH) {
-	buffer.putShort(static_cast<opcode_type_t>(opcode));
 }
 
 MapServerRegistrationRequest::MapServerRegistrationRequest(const std::string &mapServerFriendlyName_) :
 		        ServerPacket(ServerOpcode::MAP_SERVER_REGISTRATION_REQUEST),
 		        mapServerFriendlyName { mapServerFriendlyName_ } {
-	buffer.putShort(static_cast<opcode_type_t>(opcode));
-
 	buffer.putShort(mapServerFriendlyName.size());
 	buffer.putString(mapServerFriendlyName);
 }
 
+MapServerRegistrationResponse::MapServerRegistrationResponse(const std::string &secretRSA_) :
+		        ServerPacket(ServerOpcode::MAP_SERVER_REGISTRATION_RESPONSE),
+		        secretRSA { secretRSA_ } {
+	buffer.putShort(secretRSA.size());
+	buffer.putString(secretRSA);
 }
 
+}

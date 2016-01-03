@@ -60,13 +60,19 @@ void MapServer::run() {
 		return;
 	}
 
+	if (!registerWithMasterServer(logger)) {
+		return;
+	}
+}
+
+bool MapServer::registerWithMasterServer(el::Logger * const logger) {
 	logger->info("Establishing connection with \"%v\" on port %v.", masterServerHostname, masterServerPort);
 
 	masterServerConnection->connect();
 
 	if (masterServerConnection->hasError()) {
 		logger->error("Couldn't connect to master login server.");
-		return;
+		return false;
 	}
 
 	logger->verbose(5, "Waiting for master server to send authentication challenge.");
@@ -80,7 +86,7 @@ void MapServer::run() {
 
 	if (opcode != static_cast<opcode_type_t>(ServerOpcode::LOGIN_AUTHENTICATION_CHALLENGE)) {
 		logger->error("Got opcode %v which doesn't match authentication challenge; bad master login server.");
-		return;
+		return false;
 	}
 
 	const uint16_t jsonSize = masterServerConnection->getShort();
@@ -96,7 +102,7 @@ void MapServer::run() {
 	// Check the server's public key matches the one we've loaded in; if it doesn't we can't continue.
 	if (challenge.pubKey != masterServerCrypto->getPublicKeyPEM()) {
 		logger->error("Server's public key doesn't match the one loaded; incorrect key file.");
-		return;
+		return false;
 	} else {
 		logger->verbose(9, "Server's public key matches expected key.");
 	}
@@ -110,7 +116,7 @@ void MapServer::run() {
 		masterServerConnection->put(&mismatchPacket.buffer);
 		masterServerConnection->send();
 
-		return;
+		return false;
 	}
 
 	logger->info("Version check successful.");
@@ -119,6 +125,31 @@ void MapServer::run() {
 
 	masterServerConnection->put(&regRequest.buffer);
 	masterServerConnection->send();
+	masterServerConnection->clear();
+
+	if (!masterServerConnection->waitForActivity(3000)) {
+		logger->error("Master server timed out while waiting for response to registration request.");
+
+		return false;
+	}
+
+	auto regRequestResponseBytes = masterServerConnection->recv();
+
+	if (regRequestResponseBytes <= 0) {
+		logger->error("Error while receiving response to registration request.");
+
+		return false;
+	}
+
+	const auto regRequestOpcode = masterServerConnection->getShort();
+
+	if (regRequestOpcode != static_cast<opcode_type_t>(ServerOpcode::MAP_SERVER_REGISTRATION_RESPONSE)) {
+		logger->error("Bad master server: incorrect registration response sent: %v", opcode);
+
+		return false;
+	}
+
+	return true;
 }
 
 bool MapServer::parseMaps(el::Logger * const logger) {
@@ -132,18 +163,22 @@ bool MapServer::parseMaps(el::Logger * const logger) {
 			continue;
 		}
 
-		maps.emplace_back(std::move(map));
+		tmxparserMaps.emplace_back(std::move(map));
 	}
 
-	if (maps.size() < mapPaths.size()) {
+	if (tmxparserMaps.size() < mapPaths.size()) {
 		// some maps failed to load
-		logger->error("Couldn't load %v maps.", (mapPaths.size() - maps.size()));
+		logger->error("Couldn't load %v maps.", (mapPaths.size() - tmxparserMaps.size()));
 
-		if (maps.size() == 0) {
+		if (tmxparserMaps.size() == 0) {
 			return false;
 		}
 	} else {
-		logger->verbose(1, "Parsed all maps successfully.");
+		logger->verbose(1, "Parsed all tmxparser maps successfully.");
+	}
+
+	for (const auto &map : tmxparserMaps) {
+		maps.emplace_back(Map(map.get()));
 	}
 
 	return true;

@@ -145,7 +145,7 @@ std::vector<uint8_t> RSACrypto::encryptStringPublic(const std::string &str) {
 
 		char * err = ERR_error_string(ERR_get_error(), nullptr);
 
-		el::Loggers::getLogger("PlayPG")->error("Couldn't encrypt string: %v", err);
+		el::Loggers::getLogger("PlayPG")->error("Couldn't encrypt string (public): %v", err);
 		return vec;
 	}
 
@@ -178,6 +178,67 @@ std::string RSACrypto::decryptStringPrivate(const std::vector<uint8_t> &encStr) 
 	}
 
 	return std::string(buffer.get(), decryptedLength);
+}
+
+std::vector<uint8_t> RSACrypto::signStringPrivate(const std::string &str) {
+	std::vector<uint8_t> ret;
+
+	const auto bufSize = ::RSA_size(keyPair.get());
+
+	if (!hasPriKey) {
+		el::Loggers::getLogger("PlayPG")->error("Can't signStringPrivate without a private key.");
+		return ret;
+	}
+
+	auto buffer = std::make_unique<uint8_t[]>(bufSize);
+	const auto encryptedLength = ::RSA_private_encrypt(str.size(), reinterpret_cast<const unsigned char *>(str.data()),
+	        buffer.get(), keyPair.get(), RSA_PKCS1_OAEP_PADDING);
+
+	if (encryptedLength == -1) {
+		ERR_load_crypto_strings();
+
+		char * err = ERR_error_string(ERR_get_error(), nullptr);
+
+		el::Loggers::getLogger("PlayPG")->error("Couldn't encrypt string: %v", err);
+		return ret;
+	}
+
+	ret.reserve(bufSize);
+
+	for (auto i = 0; i < bufSize; ++i) {
+		ret.emplace_back(buffer[i]);
+	}
+
+	return ret;
+}
+
+std::string RSACrypto::unsignStringPublic(const std::vector<uint8_t> &encStr) {
+	if (!hasPubKey) {
+		el::Loggers::getLogger("PlayPG")->error("Can't unsignStringPublic without a public key.");
+		return "";
+	}
+
+	auto buffer = std::make_unique<char[]>(::RSA_size(keyPair.get()));
+
+	const auto decryptedLength = ::RSA_public_decrypt(encStr.size(), encStr.data(),
+	        reinterpret_cast<unsigned char *>(buffer.get()), keyPair.get(), RSA_PKCS1_OAEP_PADDING);
+
+	if (decryptedLength == -1) {
+		ERR_load_crypto_strings();
+
+		char * err = ERR_error_string(ERR_get_error(), nullptr);
+
+		el::Loggers::getLogger("PlayPG")->error("Couldn't unsigne string (public): %v", err);
+		return "";
+	}
+
+	return std::string(buffer.get(), decryptedLength);
+}
+
+bool RSACrypto::verifyStringPublic(const std::vector<uint8_t> &vec, const std::string &expected) {
+	const auto deSignedString = unsignStringPublic(vec);
+
+	return (deSignedString == expected);
 }
 
 void RSACrypto::writePublicKeyFile(const std::string &filename) {

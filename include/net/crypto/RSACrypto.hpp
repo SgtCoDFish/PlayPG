@@ -47,7 +47,8 @@ public:
 	constexpr static const int KEY_LENGTH = 4096;
 	constexpr static const int KEY_EXPONENT = 3;
 
-	static std::unique_ptr<RSACrypto> fromFiles(const std::string &pubKeyFile, const std::string &priKeyFile, bool log_ = false);
+	static std::unique_ptr<RSACrypto> fromFiles(const std::string &pubKeyFile, const std::string &priKeyFile,
+	        bool log_ = false);
 
 	/**
 	 * Initialise with a PEM-formatted pubkey (likely received over the network.)
@@ -70,6 +71,26 @@ public:
 	 * the matching public key.
 	 */
 	std::string decryptStringPrivate(const std::vector<uint8_t> &vec);
+
+	/**
+	 * Signs a string using a private key; this would allow an actor possessing the public key to verify
+	 * that the message comes from the private key.
+	 */
+	std::vector<uint8_t> signStringPrivate(const std::string &str);
+
+	/**
+	 * "Unsigns" the given byte array that was signed with the private key matching the public key we have.
+	 * To also verify the contents, use verifyStringPublic.
+	 */
+	std::string unsignStringPublic(const std::vector<uint8_t> &vec);
+
+	/**
+	 * Checks that the string encoded in vec was signed with the private key associated with the
+	 * public key we have.
+	 *
+	 * @return true if the string was signed and matches, false otherwise.
+	 */
+	bool verifyStringPublic(const std::vector<uint8_t> &vec, const std::string &expected);
 
 	std::string getPublicKeyPEM() const {
 		return publicKey;

@@ -48,14 +48,15 @@ enum class PacketType
 using packet_type_t = std::underlying_type<PacketType>::type;
 
 struct Packet {
-	explicit Packet(opcode_type_t opcode_, packet_type_t type_) :
+	explicit Packet(opcode_type_t opcode_, PacketType type_) :
 			        opcode { opcode_ },
 			        type { type_ } {
+		buffer.putShort(opcode);
 	}
 
 	opcode_type_t opcode;
 
-	packet_type_t type;
+	PacketType type;
 
 	APG::ByteBuffer buffer;
 };
@@ -65,7 +66,8 @@ struct Packet {
  */
 struct ServerPacket : public Packet {
 	explicit ServerPacket(ServerOpcode opcode_) :
-			        Packet(static_cast<opcode_type_t>(opcode_), static_cast<packet_type_t>(PacketType::SERVER)) {
+			        Packet(static_cast<opcode_type_t>(opcode_), PacketType::SERVER) {
+
 	}
 };
 
@@ -74,7 +76,7 @@ struct ServerPacket : public Packet {
  */
 struct ClientPacket : public Packet {
 	explicit ClientPacket(ClientOpcode opcode_) :
-			        Packet(static_cast<opcode_type_t>(opcode_), static_cast<packet_type_t>(PacketType::CLIENT)) {
+			        Packet(static_cast<opcode_type_t>(opcode_), PacketType::CLIENT) {
 	}
 };
 

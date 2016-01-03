@@ -102,6 +102,13 @@ public:
 	const std::string mapServerFriendlyName;
 };
 
+class MapServerRegistrationResponse final : public ServerPacket {
+public:
+	explicit MapServerRegistrationResponse(const std::string &secretRSA_);
+
+	const std::string secretRSA;
+};
+
 class VersionMismatch final : public ClientPacket {
 public:
 	explicit VersionMismatch();
@@ -163,7 +170,6 @@ public:
 		d.Parse(json);
 
 		std::vector<uint8_t> chrs;
-
 
 		const auto &pass = d["password"];
 

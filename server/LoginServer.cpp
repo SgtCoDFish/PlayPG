@@ -237,7 +237,7 @@ void LoginServer::processChallengeSentSocket(IncomingConnection &connection, el:
 
 		logger->verbose(9, "Got a map server registration request from %v", str);
 
-		if(!processMapAutenticationRequest(connection, logger)) {
+		if (!processMapAuthenticationRequest(connection, logger)) {
 			return;
 		}
 	} else {
@@ -391,10 +391,16 @@ bool LoginServer::processLoginAttempt(IncomingConnection &connection, const Auth
 	}
 }
 
-bool LoginServer::processMapAutenticationRequest(IncomingConnection &connection, el::Logger * const logger) {
+bool LoginServer::processMapAuthenticationRequest(IncomingConnection &connection, el::Logger * const logger) {
+	MapServerRegistrationResponse regResponse("hello, world");
 
+	connection.socket->clear();
+	connection.socket->put(&regResponse.buffer);
+	connection.socket->send();
 
-	return false;
+	connection.state = IncomingConnectionState::DONE;
+
+	return true;
 }
 
 void LoginServer::initDB(el::Logger * const logger) {

@@ -35,6 +35,7 @@
 #include <tmxparser/TmxMap.h>
 
 #include "ServerCommon.hpp"
+#include "Map.hpp"
 #include "net/crypto/RSACrypto.hpp"
 
 namespace PlayPG {
@@ -42,19 +43,21 @@ namespace PlayPG {
 class MapServer final : public Server {
 public:
 	explicit MapServer(const ServerDetails &details, const DatabaseDetails &databaseDetails_,
-	        std::vector<std::string> &&maps, const std::string &masterServer_, const uint16_t &masterPort, const std::string &masterPublicKeyFile_,
-	        const std::string &masterPrivateKeyFile_);
+	        std::vector<std::string> &&maps, const std::string &masterServer_, const uint16_t &masterPort,
+	        const std::string &masterPublicKeyFile_, const std::string &masterPrivateKeyFile_);
 	virtual ~MapServer() = default;
 
 	virtual void run() override final;
 
 private:
 	bool parseMaps(el::Logger * const logger);
-	bool registerWithMasterServer();
+	bool registerWithMasterServer(el::Logger * const logger);
 
 	const std::vector<std::string> mapPaths;
-	std::vector<std::unique_ptr<Tmx::Map>> maps;
+	std::vector<std::unique_ptr<Tmx::Map>> tmxparserMaps;
+	std::vector<PlayPG::Map> maps;
 
+	std::unique_ptr<APG::AcceptorSocket> playerAcceptor;
 	std::unique_ptr<APG::Socket> connectedPlayers;
 
 	const std::string masterServerHostname;

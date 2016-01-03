@@ -103,7 +103,7 @@ private:
 	bool processLoginAttempt(IncomingConnection &connection, const AuthenticationIdentity &id,
 	        el::Logger * const logger);
 
-	bool processMapAutenticationRequest(IncomingConnection &connection, el::Logger * const logger);
+	bool processMapAuthenticationRequest(IncomingConnection &connection, el::Logger * const logger);
 
 	bool regenerateKeys_ = false;
 	std::unique_ptr<RSACrypto> crypto;

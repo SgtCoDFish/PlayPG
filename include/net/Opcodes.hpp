@@ -57,7 +57,8 @@ enum class ServerOpcode
 		LOGIN_AUTHENTICATION_CHALLENGE = 0xFFFE,
 	LOGIN_AUTHENTICATION_RESPONSE = 0xFFFD,
 	MAP_SERVER_REGISTRATION_REQUEST = 0xFFFC,
-	SERVER_PUBKEY = 0xFFFB,
+	MAP_SERVER_REGISTRATION_RESPONSE = 0XFFFB,
+	SERVER_PUBKEY = 0xFFFA,
 };
 static_assert(std::is_same<std::underlying_type<ClientOpcode>::type, std::underlying_type<ServerOpcode>::type>::value, "ClientOpcodes and ServerOpcodes must have the same underlying type.");
 using opcode_type_t = std::underlying_type<ClientOpcode>::type;
