@@ -51,6 +51,8 @@
 #include <mysql_driver.h>
 #include <mysql_connection.h>
 
+#include <boost/optional.hpp>
+
 #include "net/Opcodes.hpp"
 
 namespace PlayPG {
@@ -67,7 +69,8 @@ enum class DatabaseType {
 class ServerDetails {
 public:
 	explicit ServerDetails(const std::string &friendlyName, const std::string &hostName, uint16_t port,
-	        ServerType serverType);
+	        ServerType serverType, const boost::optional<const std::string> &publicKeyFile_ = boost::none,
+	        const boost::optional<const std::string> &privateKeyFile_ = boost::none);
 	~ServerDetails() = default;
 
 	const std::string friendlyName; // a user-friendly name for the server
@@ -76,6 +79,10 @@ public:
 	const uint16_t port;
 
 	const ServerType serverType;
+
+	const boost::optional<std::string> publicKeyFile;
+	const boost::optional<std::string> privateKeyFile;
+
 };
 
 class DatabaseDetails {
@@ -106,7 +113,8 @@ public:
 	virtual void run() = 0;
 
 protected:
-	std::unique_ptr<APG::Socket> getSocket(const std::string &hostname, const uint16_t &port, bool autoConnect_ = false,uint32_t bufferSize_ = BB_DEFAULT_SIZE);
+	std::unique_ptr<APG::Socket> getSocket(const std::string &hostname, const uint16_t &port, bool autoConnect_ = false,
+	        uint32_t bufferSize_ = BB_DEFAULT_SIZE);
 
 	// This method enables different types of socket to be used depending on platform
 	// e.g. to return a NativeAcceptorSocket where SDL is not available but an SDLAcceptorSocket otherwise.

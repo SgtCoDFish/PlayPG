@@ -82,13 +82,13 @@ struct IncomingConnection {
 
 class LoginServer final : public Server {
 public:
-	explicit LoginServer(const ServerDetails &serverDetails_, const DatabaseDetails &databaseDetails_);
+	explicit LoginServer(const ServerDetails &serverDetails_, const DatabaseDetails &databaseDetails_, bool regenerateKeys_ = false);
 	virtual ~LoginServer() = default;
 
 	virtual void run() override final;
 
 	/**
-	 * Will be run in a separate thread.
+	 * Probably run in a separate thread.
 	 */
 	void processIncoming();
 
@@ -103,7 +103,10 @@ private:
 	bool processLoginAttempt(IncomingConnection &connection, const AuthenticationIdentity &id,
 	        el::Logger * const logger);
 
-	RSACrypto crypto { true };
+	bool processMapAutenticationRequest(IncomingConnection &connection, el::Logger * const logger);
+
+	bool regenerateKeys_ = false;
+	std::unique_ptr<RSACrypto> crypto;
 	SHACrypto hasher { 32000 };
 
 	// For accepting connections from players

@@ -47,15 +47,29 @@
 
 namespace PlayPG {
 
-//static const std::unordered_map<opcode_type_t, OpcodeDetails> acceptedOpcodes_login = { //
-//        { static_cast<opcode_type_t>(ClientOpcode::LOGIN_AUTHENTICATION_IDENTITY), //
-//                OpcodeDetails("Login request", true) }, //
-//                { static_cast<opcode_type_t>(ClientOpcode::VERSION_MISMATCH), //
-//                        OpcodeDetails("The client's version doesn't match the server's.", false) }, };
-
-LoginServer::LoginServer(const ServerDetails &serverDetails_, const DatabaseDetails &databaseDetails_) :
-		        Server(serverDetails_, databaseDetails_) {
+LoginServer::LoginServer(const ServerDetails &serverDetails_, const DatabaseDetails &databaseDetails_,
+        bool makeNewKeys_) :
+		        Server(serverDetails_, databaseDetails_),
+		        regenerateKeys_ { makeNewKeys_ } {
 	playerAcceptor = getAcceptorSocket(serverDetails_.port, true);
+
+	if (regenerateKeys_) {
+		el::Loggers::getLogger("ServPG")->info("Generating RSA public/private key pair.");
+		crypto = std::make_unique<RSACrypto>(true);
+	} else {
+		const std::string pubKeyFile = serverDetails.publicKeyFile.value_or("login.pub");
+		const std::string priKeyFile = serverDetails.privateKeyFile.value_or("login.prv");
+
+		el::Loggers::getLogger("ServPG")->info("Loading RSA public/private key pair from %v (public) and %v (private).",
+		        pubKeyFile, priKeyFile);
+
+		crypto = RSACrypto::fromFiles(pubKeyFile, priKeyFile);
+
+		if (crypto == nullptr) {
+			el::Loggers::getLogger("ServPG")->fatal("Couldn't load keypair from files %v (public) and %v (private).",
+			        pubKeyFile, priKeyFile);
+		}
+	}
 }
 
 void LoginServer::run() {
@@ -68,9 +82,14 @@ void LoginServer::run() {
 
 	initDB(logger);
 
-	logger->verbose(9, "Dumping keys to login.pub and login.prv");
-	crypto.writePublicKeyFile("login.pub");
-	crypto.writePrivateKeyFile("login.prv");
+	if (regenerateKeys_) {
+		const std::string pubKeyFile = serverDetails.publicKeyFile.value_or("login.pub");
+		const std::string priKeyFile = serverDetails.privateKeyFile.value_or("login.prv");
+
+		crypto->writePublicKeyFile(pubKeyFile);
+		crypto->writePrivateKeyFile(priKeyFile);
+		logger->info("Dumped keys to %v (public) and %v (private).", pubKeyFile, priKeyFile);
+	}
 
 	while (!done) {
 		auto newPlayerSocket = playerAcceptor->acceptSocket();
@@ -98,7 +117,7 @@ void LoginServer::processIncoming() {
 
 	auto logger = el::Loggers::getLogger("ServPG");
 	AuthenticationChallenge challenge(Version::versionString, Version::gitHash, serverDetails.friendlyName,
-	        crypto.getPublicKeyPEM());
+	        crypto->getPublicKeyPEM());
 
 	auto start = std::chrono::high_resolution_clock::now();
 
@@ -212,6 +231,15 @@ void LoginServer::processChallengeSentSocket(IncomingConnection &connection, el:
 		logger->verbose(9, "Client had mismatched version.");
 		connection.state = IncomingConnectionState::DONE;
 		return;
+	} else if (opcode == static_cast<opcode_type_t>(ServerOpcode::MAP_SERVER_REGISTRATION_REQUEST)) {
+		const auto strLen = connection.socket->getShort();
+		const auto str = connection.socket->getStringByLength(strLen);
+
+		logger->verbose(9, "Got a map server registration request from %v", str);
+
+		if(!processMapAutenticationRequest(connection, logger)) {
+			return;
+		}
 	} else {
 		logger->verbose(9, "Client sent unexpected data.");
 		// unexpected input; increase their attempts
@@ -232,7 +260,7 @@ void LoginServer::processChallengeSentSocket(IncomingConnection &connection, el:
 }
 
 void LoginServer::processLoginFailedSocket(IncomingConnection &connection, el::Logger * const logger) {
-	// Similar to CHALLENGE_SENT state, except we can ignore VersionMismatch packets
+// Similar to CHALLENGE_SENT state, except we can ignore VersionMismatch packets
 	if (!connection.socket->hasActivity()) {
 		return;
 	}
@@ -250,6 +278,8 @@ void LoginServer::processLoginFailedSocket(IncomingConnection &connection, el::L
 	}
 
 	const auto opcode = connection.socket->getShort();
+
+	// Note that we ignore map server auth requests here. They only get one shot.
 
 	if (opcode == static_cast<opcode_type_t>(ClientOpcode::LOGIN_AUTHENTICATION_IDENTITY)) {
 		// attempt auth
@@ -282,12 +312,12 @@ void LoginServer::processLoginFailedSocket(IncomingConnection &connection, el::L
 }
 
 void LoginServer::processDoneSocket(IncomingConnection &connection, el::Logger * const logger) {
-	// NO OP
+// NO OP
 }
 
 bool LoginServer::processLoginAttempt(IncomingConnection &connection, const AuthenticationIdentity &authID,
         el::Logger * const logger) {
-	const auto decPass = crypto.decryptStringPrivate(authID.password);
+	const auto decPass = crypto->decryptStringPrivate(authID.password);
 
 	auto statement = std::unique_ptr<sql::PreparedStatement>(
 	        mysqlConnection->prepareStatement("SELECT * FROM players WHERE email=?;"));
@@ -359,6 +389,12 @@ bool LoginServer::processLoginAttempt(IncomingConnection &connection, const Auth
 
 		return false;
 	}
+}
+
+bool LoginServer::processMapAutenticationRequest(IncomingConnection &connection, el::Logger * const logger) {
+
+
+	return false;
 }
 
 void LoginServer::initDB(el::Logger * const logger) {

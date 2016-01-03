@@ -103,7 +103,9 @@ std::unique_ptr<PlayPG::Server> initializeProgramOptions(int argc, char *argv[])
 	        "run a login server (listening on the given port if one is given)") //
 	("world-server", po::value<uint16_t>(), "run a world server listening on the given port") //
 	("name", po::value<std::string>()->default_value(std::string("PPGserver") + std::to_string(std::rand())),
-	        "use the given name for the server, defaulting to \"PPGserver\" with a random integer");
+	        "use the given name for the server, defaulting to \"PPGserver\" with a random integer") //
+	("regenerate-keys",
+	        "Instructs the server to regenerate any keys it creates. WARNING: This may overwrite any key files the server uses.");
 
 	po::options_description databaseOptions("Database Options");
 
@@ -201,10 +203,12 @@ std::unique_ptr<PlayPG::LoginServer> startLoginServer(el::Logger * logger, const
 	const auto dbUsername = vm["database-username"].as<std::string>();
 	const auto dbPassword = vm["database-password"].as<std::string>();
 
+	const bool regenerateKeys = vm.count("regenerate-keys");
+
 	PlayPG::ServerDetails serverDetails(serverName, "localhost", serverPort, PlayPG::ServerType::LOGIN_SERVER);
 	PlayPG::DatabaseDetails dbDetails(dbServer, dbPort, dbUsername, dbPassword);
 
-	return std::make_unique<PlayPG::LoginServer>(serverDetails, dbDetails);
+	return std::make_unique<PlayPG::LoginServer>(serverDetails, dbDetails, regenerateKeys);
 }
 
 std::unique_ptr<PlayPG::MapServer> startWorldServer(el::Logger * logger, const po::variables_map &vm) {

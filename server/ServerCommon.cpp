@@ -32,11 +32,14 @@
 namespace PlayPG {
 
 ServerDetails::ServerDetails(const std::string &friendlyName_, const std::string &hostName_, uint16_t port_,
-        ServerType serverType_) :
+        ServerType serverType_, const boost::optional<const std::string> &publicKeyFile_,
+        const boost::optional<const std::string> &privateKeyFile_) :
 		        friendlyName { friendlyName_ },
 		        hostName { hostName_ },
 		        port { port_ },
-		        serverType { serverType_ } {
+		        serverType { serverType_ },
+		        publicKeyFile { publicKeyFile_ },
+		        privateKeyFile { privateKeyFile_ } {
 }
 
 DatabaseDetails::DatabaseDetails(const std::string &hostName_, uint16_t port_, const std::string &username_,

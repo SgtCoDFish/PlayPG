@@ -208,7 +208,8 @@ std::unique_ptr<RSACrypto> RSACrypto::fromFiles(const std::string &pubKeyFile, c
 		std::ifstream pubIF(pubKeyFile, std::ios::in | std::ios::binary);
 
 		if (!pubIF.is_open()) {
-			el::Loggers::getLogger("PlayPG")->fatal("Couldn't open public key file %v for reading.", pubKeyFile);
+			el::Loggers::getLogger("PlayPG")->error("Couldn't open public key file %v for reading.", pubKeyFile);
+			return nullptr;
 		}
 
 		std::stringstream ss;
@@ -224,7 +225,8 @@ std::unique_ptr<RSACrypto> RSACrypto::fromFiles(const std::string &pubKeyFile, c
 		std::ifstream priIF(priKeyFile, std::ios::in | std::ios::binary);
 
 		if (!priIF.is_open()) {
-			el::Loggers::getLogger("PlayPG")->fatal("Couldn't open private key file %v for reading.", priKeyFile);
+			el::Loggers::getLogger("PlayPG")->error("Couldn't open private key file %v for reading.", priKeyFile);
+			return nullptr;
 		}
 
 		std::stringstream ss;
