@@ -83,7 +83,7 @@ std::unique_ptr<APG::AcceptorSocket> Server::getAcceptorSocket(const uint16_t po
 #ifndef APG_NO_SDL
 	return std::make_unique<APG::SDLAcceptorSocket>(port, autoListen, bufferSize_);
 #else
-	return std::make_unique<APG::NativeAcceptorSocket>(port, autoListen, bufferSize_);
+	return std::make_unique<APG::NativeDualAcceptorSocket>(port, autoListen, bufferSize_);
 #endif
 }
 

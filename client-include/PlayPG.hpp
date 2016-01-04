@@ -101,7 +101,7 @@ private:
 	std::unique_ptr<RSACrypto> crypto;
 	std::string serverPubKey { "" };
 
-	APG::SDLSocket socket;
+	APG::NativeSocket socket;
 };
 
 }
