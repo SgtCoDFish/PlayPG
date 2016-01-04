@@ -57,8 +57,8 @@ LoginServer::LoginServer(const ServerDetails &serverDetails_, const DatabaseDeta
 		el::Loggers::getLogger("ServPG")->info("Generating RSA public/private key pair.");
 		crypto = std::make_unique<RSACrypto>(true);
 	} else {
-		const std::string pubKeyFile = serverDetails.publicKeyFile.value_or("login.pub");
-		const std::string priKeyFile = serverDetails.privateKeyFile.value_or("login.prv");
+		const std::string pubKeyFile = (serverDetails.publicKeyFile ? *serverDetails.publicKeyFile : "login.pub");
+		const std::string priKeyFile = (serverDetails.privateKeyFile ? *serverDetails.privateKeyFile : "login.prv");
 
 		el::Loggers::getLogger("ServPG")->info("Loading RSA public/private key pair from %v (public) and %v (private).",
 		        pubKeyFile, priKeyFile);
@@ -83,8 +83,8 @@ void LoginServer::run() {
 	initDB(logger);
 
 	if (regenerateKeys_) {
-		const std::string pubKeyFile = serverDetails.publicKeyFile.value_or("login.pub");
-		const std::string priKeyFile = serverDetails.privateKeyFile.value_or("login.prv");
+		const std::string pubKeyFile = (serverDetails.publicKeyFile ? *serverDetails.publicKeyFile : "login.pub");
+		const std::string priKeyFile = (serverDetails.privateKeyFile ? *serverDetails.privateKeyFile : "login.prv");
 
 		crypto->writePublicKeyFile(pubKeyFile);
 		crypto->writePrivateKeyFile(priKeyFile);
