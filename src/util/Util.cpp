@@ -25,32 +25,39 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef INCLUDE_UTIL_UTIL_HPP_
-#define INCLUDE_UTIL_UTIL_HPP_
+#include <cassert>
 
-#include <string>
-#include <vector>
-#include <type_traits>
+#include <iostream>
+#include <sstream>
+#include <iomanip>
+
+#include "util/Util.hpp"
 
 namespace PlayPG {
 
-namespace util {
+std::string ByteArrayUtil::byteVectorToString(const std::vector<uint8_t> &vec) {
+	std::stringstream ss;
 
-template<typename T> constexpr auto to_integral(T t) -> typename std::underlying_type_t<T> {
-	return static_cast<typename std::underlying_type_t<T>>(t);
+	for (const auto &c : vec) {
+		ss << std::hex << std::setw(2) << std::setfill('0') << (static_cast<uint16_t>(c) & 0xFF);
+	}
+
+	return ss.str();
+}
+
+std::vector<uint8_t> ByteArrayUtil::hexStringToByteVector(const std::string &str) {
+	assert(str.size() % 2 == 0);
+
+	std::vector<uint8_t> ret;
+	ret.reserve(str.size() / 2);
+
+	for (std::string::size_type i = 0; i < str.size(); i += 2) {
+		const auto subString = str.substr(i, 2);
+		ret.emplace_back(static_cast<uint8_t>(std::strtoul(subString.c_str(), nullptr, 16) & 0xFF));
+
+	}
+
+	return ret;
 }
 
 }
-
-class ByteArrayUtil {
-public:
-	static std::string byteVectorToString(const std::vector<uint8_t> &vec);
-	static std::vector<uint8_t> hexStringToByteVector(const std::string &str);
-
-	ByteArrayUtil() = delete;
-	~ByteArrayUtil() = delete;
-};
-
-}
-
-#endif /* INCLUDE_UTIL_UTIL_HPP_ */

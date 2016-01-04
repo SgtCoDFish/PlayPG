@@ -32,6 +32,7 @@
 
 #include <APG/s11n/JSON.hpp>
 
+#include "util/Util.hpp"
 #include "net/Packet.hpp"
 
 namespace PlayPG {
@@ -169,15 +170,7 @@ public:
 
 		d.Parse(json);
 
-		std::vector<uint8_t> chrs;
-
-		const auto &pass = d["password"];
-
-		assert(d["password"].IsArray());
-
-		for (auto i = 0u; i < pass.Size(); ++i) {
-			chrs.emplace_back(pass[i].GetUint() & 0xFF);
-		}
+		const std::vector<uint8_t> chrs = PlayPG::ByteArrayUtil::hexStringToByteVector(d["password"].GetString());
 
 		return PlayPG::AuthenticationIdentity(d["username"].GetString(), std::move(chrs));
 	}
@@ -193,13 +186,7 @@ public:
 		writer->String("password");
 //		writer->String(t.password.c_str());
 
-		writer->StartArray();
-
-		for (const auto &c : t.password) {
-			writer->Uint(c);
-		}
-
-		writer->EndArray();
+		writer->String(PlayPG::ByteArrayUtil::byteVectorToString(t.password).c_str());
 
 		writer->EndObject();
 
