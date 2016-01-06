@@ -101,7 +101,8 @@ private:
 	std::unique_ptr<RSACrypto> crypto;
 	std::string serverPubKey { "" };
 
-#ifdef _WIN32
+//#ifdef _WIN32
+#if 0
 	APG::SDLSocket socket;
 #else
 	APG::NativeSocket socket;
