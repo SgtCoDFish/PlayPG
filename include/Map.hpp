@@ -54,7 +54,7 @@ struct MapTile final {
 
 class Map final {
 public:
-	explicit Map(const Tmx::Map * map);
+	explicit Map(Tmx::Map * map);
 
 	bool isSolidAtTile(uint32_t x, uint32_t y) const {
 		return getTile(x, y).isSolid;
@@ -106,8 +106,14 @@ public:
 		return map;
 	}
 
+	const std::string getName() const {
+		return name_;
+	}
+
 private:
-	const Tmx::Map * map;
+	Tmx::Map * map;
+
+	std::string name_;
 
 	std::vector<MapTile> tiles;
 	glm::ivec2 spawnPoint;
@@ -119,6 +125,14 @@ private:
 	void parseMap();
 	void parseLayers(el::Logger * const logger);
 	void parseTiles(el::Logger * const logger);
+};
+
+class MapIdentifier {
+public:
+	explicit MapIdentifier(const Map &map);
+
+	const std::string mapName;
+	const std::string mapHash;
 };
 
 }

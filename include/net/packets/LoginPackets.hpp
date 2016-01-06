@@ -34,6 +34,7 @@
 
 #include "util/Util.hpp"
 #include "net/Packet.hpp"
+#include "Map.hpp"
 
 namespace PlayPG {
 
@@ -108,6 +109,13 @@ public:
 	explicit MapServerRegistrationResponse(const std::string &secretRSA_);
 
 	const std::string secretRSA;
+};
+
+/**
+ * Sent from map server to login server to indicate what maps the map server can support.
+ */
+class MapServerMapList final : public ServerPacket {
+	explicit MapServerMapList(const std::vector<MapIdentifier> &mapHashes);
 };
 
 class VersionMismatch final : public ClientPacket {

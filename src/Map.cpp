@@ -37,7 +37,7 @@
 
 namespace PlayPG {
 
-Map::Map(const Tmx::Map * map_) :
+Map::Map(Tmx::Map * map_) :
 		        map { map_ } {
 	parseMap();
 }
@@ -48,6 +48,17 @@ const MapTile &Map::getTile(uint32_t x, uint32_t y) const {
 
 void Map::parseMap() {
 	const auto logger = el::Loggers::getLogger("PlayPG");
+
+	const auto mapProperties = map->GetProperties();
+
+	const auto nameFromFile = mapProperties.GetStringProperty("PLAYPG_NAME");
+
+	if (nameFromFile == "") {
+		logger->warn("Map %v has no associated PLAYPG_NAME", map->GetFilename());
+		name_ = map->GetFilename();
+	} else {
+		name_ = nameFromFile;
+	}
 
 	const size_t mapArea = map->GetWidth() * map->GetHeight();
 	tiles.reserve(mapArea);
@@ -105,6 +116,10 @@ void Map::parseTiles(el::Logger * const logger) {
 			tiles.emplace_back(solid, interesting, spawn);
 		}
 	}
+}
+
+MapIdentifier::MapIdentifier(const Map &map) {
+	el::Loggers::getLogger("PlayPG")->fatal("NYI");
 }
 
 }
