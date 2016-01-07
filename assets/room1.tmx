@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.0" orientation="orthogonal" renderorder="right-down" width="100" height="100" tilewidth="16" tileheight="16" backgroundcolor="#000000">
+<map version="1.0" orientation="orthogonal" renderorder="right-down" width="100" height="100" tilewidth="16" tileheight="16" backgroundcolor="#000000" nextobjectid="2">
+ <properties>
+  <property name="PPG_NAME" value="RoomTest"/>
+ </properties>
  <tileset firstgid="1" name="roguelikeSheet_transparent" tilewidth="16" tileheight="16" spacing="1">
   <image source="roguelike_sheet.png" width="969" height="527"/>
   <tile id="202">
@@ -48,7 +51,7 @@
   <properties>
    <property name="interesting" value="true"/>
   </properties>
-  <object type="chest" gid="609" x="208" y="176">
+  <object id="1" type="chest" gid="609" x="208" y="176" width="16" height="16">
    <properties>
     <property name="chest" value="true"/>
    </properties>

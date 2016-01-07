@@ -36,6 +36,8 @@
 #include "net/Packet.hpp"
 #include "Map.hpp"
 
+#include <openssl/md5.h>
+
 namespace PlayPG {
 
 /**
@@ -115,7 +117,10 @@ public:
  * Sent from map server to login server to indicate what maps the map server can support.
  */
 class MapServerMapList final : public ServerPacket {
+public:
 	explicit MapServerMapList(const std::vector<MapIdentifier> &mapHashes);
+
+	const std::vector<MapIdentifier> mapHashes;
 };
 
 class VersionMismatch final : public ClientPacket {
@@ -192,7 +197,6 @@ public:
 		writer->String(t.username.c_str());
 
 		writer->String("password");
-//		writer->String(t.password.c_str());
 
 		writer->String(PlayPG::ByteArrayUtil::byteVectorToString(t.password).c_str());
 
@@ -231,6 +235,59 @@ public:
 
 		writer->String("message");
 		writer->String(t.message.c_str());
+
+		writer->EndObject();
+
+		return std::string(buffer.GetString());
+	}
+};
+
+template<> class JSONSerializer<PlayPG::MapServerMapList> final : public JSONCommon {
+public:
+	JSONSerializer() :
+			        JSONCommon() {
+
+	}
+
+	PlayPG::MapServerMapList fromJSON(const char *json) {
+		rapidjson::Document d;
+
+		d.Parse(json);
+
+		const auto &mapHashes = d["mapHashes"];
+
+		assert(mapHashes.IsArray());
+
+		std::vector<PlayPG::MapIdentifier> ret;
+
+		for (rapidjson::SizeType i = 0; i < mapHashes.Size(); ++i) {
+			const auto &object = mapHashes[i];
+
+			const std::string mapName = object["name"].GetString();
+			const std::string mapHash = object["hash"].GetString();
+
+			ret.emplace_back(PlayPG::MapIdentifier(mapName, mapHash));
+		}
+
+		return PlayPG::MapServerMapList(std::move(ret));
+	}
+
+	std::string toJSON(const PlayPG::MapServerMapList &t) {
+		buffer.Clear();
+
+		writer->StartObject();
+
+		for (const auto &mapIdentifier : t.mapHashes) {
+			writer->StartArray();
+
+			writer->String("name");
+			writer->String(mapIdentifier.mapName.c_str());
+
+			writer->String("hash");
+			writer->String(mapIdentifier.mapHash.c_str());
+
+			writer->EndArray();
+		}
 
 		writer->EndObject();
 

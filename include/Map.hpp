@@ -129,7 +129,10 @@ private:
 
 class MapIdentifier {
 public:
+	static std::string makeMD5Hash(const std::string &base64Hash);
+
 	explicit MapIdentifier(const Map &map);
+	explicit MapIdentifier(const std::string &name, const std::string &hash);
 
 	const std::string mapName;
 	const std::string mapHash;

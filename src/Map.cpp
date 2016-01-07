@@ -34,6 +34,7 @@
 #include <APG/core/APGeasylogging.hpp>
 
 #include "Map.hpp"
+#include <openssl/md5.h>
 
 namespace PlayPG {
 
@@ -59,6 +60,8 @@ void Map::parseMap() {
 	} else {
 		name_ = nameFromFile;
 	}
+
+	logger->verbose(9, "Loading map with name \"%v\".", name_);
 
 	const size_t mapArea = map->GetWidth() * map->GetHeight();
 	tiles.reserve(mapArea);
@@ -118,8 +121,24 @@ void Map::parseTiles(el::Logger * const logger) {
 	}
 }
 
-MapIdentifier::MapIdentifier(const Map &map) {
-	el::Loggers::getLogger("PlayPG")->fatal("NYI");
+std::string MapIdentifier::makeMD5Hash(const std::string &base64Hash) {
+	uint8_t buffer[MD5_DIGEST_LENGTH];
+
+	::MD5(reinterpret_cast<const uint8_t *>(base64Hash.c_str()), base64Hash.size(), buffer);
+
+	return std::string((const char *) buffer, MD5_DIGEST_LENGTH);
+}
+
+MapIdentifier::MapIdentifier(const Map &map) :
+		        mapName { map.getName() },
+		        mapHash { MapIdentifier::makeMD5Hash(map.getTmxMap()->GetFilehash()) } {
+
+}
+
+MapIdentifier::MapIdentifier(const std::string &name, const std::string &hash) :
+		        mapName { name },
+		        mapHash { hash } {
+
 }
 
 }
