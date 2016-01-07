@@ -150,6 +150,7 @@ if ( NOT APG_NO_SDL )
     
                         ${OPENGL_INCLUDE_DIR}
                         ${GLEW_INCLUDE_DIRS}
+                        
                         )
                         
     set(PlayPG_LIBS ${PlayPG_LIBS}
@@ -161,6 +162,8 @@ if ( NOT APG_NO_SDL )
                     
                     ${OPENGL_LIBRARIES}
                     ${GLEW_LIBRARIES}
+                    
+                    ${ZLIB_LIBRARIES}
                     )
 else ()
     add_definitions(-DAPG_NO_SDL -DAPG_NO_GL)
@@ -170,6 +173,7 @@ if( PlayPG_DEBUG )
     set(PlayPG_LIBS ${PlayPG_LIBS}
                     ${APG_DEBUG_LIBRARY}
                     ${AshleyCPP_DEBUG_LIBRARY}
+                    ${TMXPARSER_DEBUG_LIBRARY}
                     )
 
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_BASE} ${PlayPG_DEBUG_FLAGS}")
@@ -177,6 +181,7 @@ else ()
     set(PlayPG_LIBS ${PlayPG_LIBS}
                     ${APG_LIBRARY}
                     ${AshleyCPP_LIBRARY}
+                    ${TMXPARSER_LIBRARY}
                     )
 
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_BASE} ${PlayPG_RELEASE_FLAGS}")
