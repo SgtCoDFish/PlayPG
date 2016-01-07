@@ -37,7 +37,7 @@
 
 namespace PlayPG {
 
-Map::Map(Tmx::Map * map_) :
+Map::Map(const Tmx::Map * map_) :
 		        map { map_ } {
 	parseMap();
 }
