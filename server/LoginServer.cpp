@@ -220,7 +220,7 @@ void LoginServer::processChallengeSentSocket(IncomingConnection &connection, el:
 
 	logger->verbose(9, "Handling CHALLENGE_SENT.");
 
-	logger->info("Read %v bytes", connection.socket->recv(4096));
+	logger->info("Read %v bytes", connection.socket->recv(2048));
 	const auto opcode = connection.socket->getShort();
 
 	if (opcode == static_cast<opcode_type_t>(ClientOpcode::LOGIN_AUTHENTICATION_IDENTITY)) {
@@ -273,7 +273,7 @@ void LoginServer::processLoginFailedSocket(IncomingConnection &connection, el::L
 
 	logger->verbose(9, "Handling LOGIN_FAILED connection.");
 
-	const int dataRec = connection.socket->recv(4096);
+	const int dataRec = connection.socket->recv(2048);
 
 	logger->info("Read %v bytes", dataRec);
 
