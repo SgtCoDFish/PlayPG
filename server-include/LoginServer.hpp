@@ -52,6 +52,7 @@ enum class IncomingConnectionState {
 	CHALLENGE_SENT, // Challenge has been sent, waiting for response.
 	LOGIN_FAILED, // Login failed for some reason and the user has been given the
 	              // chance to try again.
+	MAP_LIST, // The login server is waiting for the map server to send its list of supported maps.
 	DONE // Login was successful/some error caused the socket to close.
 	     // Won't be in this state for long; after this the
 	     // user should be sent to a map server to actually play.
@@ -82,7 +83,8 @@ struct IncomingConnection {
 
 class LoginServer final : public Server {
 public:
-	explicit LoginServer(const ServerDetails &serverDetails_, const DatabaseDetails &databaseDetails_, bool regenerateKeys_ = false);
+	explicit LoginServer(const ServerDetails &serverDetails_, const DatabaseDetails &databaseDetails_,
+	        bool regenerateKeys_ = false);
 	virtual ~LoginServer() = default;
 
 	virtual void run() override final;
@@ -99,6 +101,7 @@ private:
 	        el::Logger * const logger);
 	void processChallengeSentSocket(IncomingConnection &connection, el::Logger * const logger);
 	void processLoginFailedSocket(IncomingConnection &connection, el::Logger * const logger);
+	void processMapListSocket(IncomingConnection &connection, el::Logger * const logger);
 	void processDoneSocket(IncomingConnection &connection, el::Logger * const logger);
 	bool processLoginAttempt(IncomingConnection &connection, const AuthenticationIdentity &id,
 	        el::Logger * const logger);

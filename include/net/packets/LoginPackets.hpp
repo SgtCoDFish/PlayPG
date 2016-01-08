@@ -118,6 +118,7 @@ public:
  */
 class MapServerMapList final : public ServerPacket {
 public:
+	static MapServerMapList listFromMaps(const std::vector<Map> &maps);
 	explicit MapServerMapList(const std::vector<MapIdentifier> &mapHashes);
 
 	const std::vector<MapIdentifier> mapHashes;
@@ -254,7 +255,7 @@ public:
 
 		d.Parse(json);
 
-		const auto &mapHashes = d["mapHashes"];
+		const auto &mapHashes = d["maps"];
 
 		assert(mapHashes.IsArray());
 
@@ -277,8 +278,12 @@ public:
 
 		writer->StartObject();
 
+		writer->String("maps");
+		writer->StartArray();
+
 		for (const auto &mapIdentifier : t.mapHashes) {
-			writer->StartArray();
+
+			writer->StartObject();
 
 			writer->String("name");
 			writer->String(mapIdentifier.mapName.c_str());
@@ -286,8 +291,11 @@ public:
 			writer->String("hash");
 			writer->String(mapIdentifier.mapHash.c_str());
 
-			writer->EndArray();
+			writer->EndObject();
+
 		}
+
+		writer->EndArray();
 
 		writer->EndObject();
 

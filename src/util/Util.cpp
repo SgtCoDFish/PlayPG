@@ -35,6 +35,16 @@
 
 namespace PlayPG {
 
+std::string ByteArrayUtil::byteArrayToString(const uint8_t * array, size_t count) {
+	std::stringstream ss;
+
+	for (size_t i = 0; i < count; ++i) {
+		ss << std::hex << std::setw(2) << std::setfill('0') << (static_cast<uint16_t>(array[i]) & 0xFF);
+	}
+
+	return ss.str();
+}
+
 std::string ByteArrayUtil::byteVectorToString(const std::vector<uint8_t> &vec) {
 	std::stringstream ss;
 

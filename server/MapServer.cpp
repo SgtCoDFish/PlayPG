@@ -143,8 +143,22 @@ bool MapServer::registerWithMasterServer(el::Logger * const logger) {
 
 	const auto regRequestOpcode = masterServerConnection->getShort();
 
-	if (regRequestOpcode != static_cast<opcode_type_t>(ServerOpcode::MAP_SERVER_REGISTRATION_RESPONSE)) {
+	if (regRequestOpcode != util::to_integral(ServerOpcode::MAP_SERVER_REGISTRATION_RESPONSE)) {
 		logger->error("Bad master server: incorrect registration response sent: %v", opcode);
+
+		return false;
+	}
+
+	auto mapHashes = MapServerMapList::listFromMaps(maps);
+
+	masterServerConnection->clear();
+	masterServerConnection->put(&mapHashes.buffer);
+	masterServerConnection->send();
+
+	logger->verbose(9, "Sent map list with %v maps", mapHashes.mapHashes.size());
+
+	if (!masterServerConnection->waitForActivity(3000)) {
+		logger->error("Error receiving response to map list.");
 
 		return false;
 	}

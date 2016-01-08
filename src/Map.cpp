@@ -33,8 +33,10 @@
 
 #include <APG/core/APGeasylogging.hpp>
 
-#include "Map.hpp"
 #include <openssl/md5.h>
+
+#include "Map.hpp"
+#include "util/Util.hpp"
 
 namespace PlayPG {
 
@@ -126,7 +128,7 @@ std::string MapIdentifier::makeMD5Hash(const std::string &base64Hash) {
 
 	::MD5(reinterpret_cast<const uint8_t *>(base64Hash.c_str()), base64Hash.size(), buffer);
 
-	return std::string((const char *) buffer, MD5_DIGEST_LENGTH);
+	return ByteArrayUtil::byteArrayToString(buffer, MD5_DIGEST_LENGTH);
 }
 
 MapIdentifier::MapIdentifier(const Map &map) :

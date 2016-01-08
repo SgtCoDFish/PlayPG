@@ -146,8 +146,14 @@ void LoginServer::processIncoming() {
 				processLoginFailedSocket(connection, logger);
 				break;
 			}
+
 			case (IncomingConnectionState::DONE): {
 				processDoneSocket(connection, logger);
+				break;
+			}
+
+			case (IncomingConnectionState::MAP_LIST): {
+				processMapListSocket(connection, logger);
 				break;
 			}
 			}
@@ -167,7 +173,7 @@ void LoginServer::processIncoming() {
 			const auto removed = sizeBefore - incomingConnections.size();
 
 			if (removed > 0) {
-				logger->info("Purged %v incoming sockets.", removed);
+				logger->verbose(5, "Purged %v incoming sockets.", removed);
 			}
 
 			start = std::chrono::high_resolution_clock::now();
@@ -311,6 +317,49 @@ void LoginServer::processLoginFailedSocket(IncomingConnection &connection, el::L
 	}
 }
 
+void LoginServer::processMapListSocket(IncomingConnection &connection, el::Logger * const logger) {
+	if (!connection.socket->hasActivity()) {
+		return;
+	}
+
+	logger->verbose(9, "Handling MAP_LIST connection.");
+
+	connection.socket->clear();
+	const auto listBytes = connection.socket->recv();
+
+	if (listBytes == 0) {
+		logger->info("Map server failed to correctly send a map list; dropping.");
+		connection.state = IncomingConnectionState::DONE;
+		return;
+	}
+
+	const auto opcode = connection.socket->getShort();
+
+	logger->info("Got opcode: %v", opcode);
+
+//	if (opcode != static_cast<opcode_type_t>(ServerOpcode::MAP_SERVER_MAP_LIST)) {
+//		logger->info("Map server didn't send map list; dropping.");
+//		connection.state = IncomingConnectionState::DONE;
+//		return;
+//	}
+
+	const auto jsonLength = connection.socket->getShort();
+
+	APG::JSONSerializer<MapServerMapList> jsonSerializer;
+
+	const auto json = connection.socket->getStringByLength(jsonLength);
+
+	logger->info("Got json: %v", json);
+
+	const auto mapList = jsonSerializer.fromJSON(json.c_str());
+
+	for (const auto &mapID : mapList.mapHashes) {
+		logger->info("Map server supports \"%v\" with hash: %v", mapID.mapName, mapID.mapHash);
+	}
+
+	connection.state = IncomingConnectionState::DONE;
+}
+
 void LoginServer::processDoneSocket(IncomingConnection &connection, el::Logger * const logger) {
 // NO OP
 }
@@ -396,9 +445,13 @@ bool LoginServer::processMapAuthenticationRequest(IncomingConnection &connection
 
 	connection.socket->clear();
 	connection.socket->put(&regResponse.buffer);
-	connection.socket->send();
 
-	connection.state = IncomingConnectionState::DONE;
+	if(connection.socket->send() <= 0) {
+		logger->error("Couldn't send map server registration response.");
+		return false;
+	}
+
+	connection.state = IncomingConnectionState::MAP_LIST;
 
 	return true;
 }

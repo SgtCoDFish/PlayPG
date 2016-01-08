@@ -44,6 +44,7 @@ template<typename T> constexpr auto to_integral(T t) -> typename std::underlying
 
 class ByteArrayUtil {
 public:
+	static std::string byteArrayToString(const uint8_t * array, size_t count);
 	static std::string byteVectorToString(const std::vector<uint8_t> &vec);
 	static std::vector<uint8_t> hexStringToByteVector(const std::string &str);
 
