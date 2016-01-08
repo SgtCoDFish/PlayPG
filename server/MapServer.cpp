@@ -78,7 +78,12 @@ bool MapServer::registerWithMasterServer(el::Logger * const logger) {
 	logger->verbose(5, "Waiting for master server to send authentication challenge.");
 	masterServerConnection->waitForActivity(5000);
 
-	masterServerConnection->recv();
+	auto authChallengeBytes = masterServerConnection->recv();
+
+	if (authChallengeBytes == 0) {
+		logger->error("Didn't get auth challenge.");
+		return false;
+	}
 
 	// we expect to get an authentication challenge from the master server
 
@@ -91,21 +96,20 @@ bool MapServer::registerWithMasterServer(el::Logger * const logger) {
 
 	const uint16_t jsonSize = masterServerConnection->getShort();
 
-	auto json = masterServerConnection->getStringByLength(jsonSize);
+	const auto json = masterServerConnection->getStringByLength(jsonSize);
 
 	APG::JSONSerializer<AuthenticationChallenge> challengeS11N;
 	const auto challenge = challengeS11N.fromJSON(json.c_str());
 
 	logger->info("Got challenge from \"%v\", v%v (%v).", challenge.name, challenge.version, challenge.versionHash);
-	masterServerConnection->clear();
 
 	// Check the server's public key matches the one we've loaded in; if it doesn't we can't continue.
 	if (challenge.pubKey != masterServerCrypto->getPublicKeyPEM()) {
 		logger->error("Server's public key doesn't match the one loaded; incorrect key file.");
 		return false;
-	} else {
-		logger->verbose(9, "Server's public key matches expected key.");
 	}
+
+	logger->verbose(9, "Server's public key matches expected key.");
 
 	if (std::strcmp(challenge.version.c_str(), Version::versionString) != 0
 	        || std::strcmp(challenge.versionHash.c_str(), Version::gitHash) != 0) {
@@ -113,6 +117,7 @@ bool MapServer::registerWithMasterServer(el::Logger * const logger) {
 
 		VersionMismatch mismatchPacket;
 
+		masterServerConnection->clear();
 		masterServerConnection->put(&mismatchPacket.buffer);
 		masterServerConnection->send();
 
@@ -123,9 +128,9 @@ bool MapServer::registerWithMasterServer(el::Logger * const logger) {
 
 	MapServerRegistrationRequest regRequest(serverDetails.friendlyName);
 
+	masterServerConnection->clear();
 	masterServerConnection->put(&regRequest.buffer);
 	masterServerConnection->send();
-	masterServerConnection->clear();
 
 	if (!masterServerConnection->waitForActivity(3000)) {
 		logger->error("Master server timed out while waiting for response to registration request.");
@@ -133,7 +138,7 @@ bool MapServer::registerWithMasterServer(el::Logger * const logger) {
 		return false;
 	}
 
-	auto regRequestResponseBytes = masterServerConnection->recv();
+	const auto regRequestResponseBytes = masterServerConnection->recv();
 
 	if (regRequestResponseBytes <= 0) {
 		logger->error("Error while receiving response to registration request.");
@@ -143,7 +148,7 @@ bool MapServer::registerWithMasterServer(el::Logger * const logger) {
 
 	const auto regRequestOpcode = masterServerConnection->getShort();
 
-	if (regRequestOpcode != util::to_integral(ServerOpcode::MAP_SERVER_REGISTRATION_RESPONSE)) {
+	if (regRequestOpcode != static_cast<opcode_type_t>(ServerOpcode::MAP_SERVER_REGISTRATION_RESPONSE)) {
 		logger->error("Bad master server: incorrect registration response sent: %v", opcode);
 
 		return false;

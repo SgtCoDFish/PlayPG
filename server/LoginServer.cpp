@@ -189,11 +189,10 @@ void LoginServer::processFreshSocket(IncomingConnection &connection, Authenticat
 
 	logger->verbose(9, "Got fresh socket.");
 
+	connection.socket->clear();
 	connection.socket->put(&challenge.buffer);
-	challenge.buffer.setReadPos(0);
 
 	connection.socket->send();
-	connection.socket->clear();
 
 	if (connection.socket->hasError()) {
 		logger->verbose(9, "Socket entered error state for fresh connection, dropping.");
@@ -211,6 +210,8 @@ void LoginServer::processChallengeSentSocket(IncomingConnection &connection, el:
 	 * - AuthenticationIdentity (correct): they're done and sent to a map server.
 	 * - AuthenticationIdentity (incorrect): they lose a login attempt and get another
 	 * 										 go/disconnected depending on their attempts used
+	 * - MapServerRegistrationRequest: if they fail, we disconnect them immediately (a real map server has
+	 * 								   our private key and they should be right first time, every time
 	 * - Something else: they lose a login attempt and go again/get disconnected
 	 */
 
@@ -220,13 +221,23 @@ void LoginServer::processChallengeSentSocket(IncomingConnection &connection, el:
 
 	logger->verbose(9, "Handling CHALLENGE_SENT.");
 
-	logger->info("Read %v bytes", connection.socket->recv(2048));
+	const auto bytesFromChallenge = connection.socket->recv(2048);
+
+	logger->info("Read %v bytes", bytesFromChallenge);
+
+	if(bytesFromChallenge == 0) {
+		logger->error("Couldn't read after CHALLENGE_SENT");
+		connection.state = IncomingConnectionState::DONE;
+		return;
+	}
+
 	const auto opcode = connection.socket->getShort();
 
 	if (opcode == static_cast<opcode_type_t>(ClientOpcode::LOGIN_AUTHENTICATION_IDENTITY)) {
 		// attempt auth
 		const auto jsonLength = connection.socket->getShort();
 		const auto json = connection.socket->getStringByLength(jsonLength);
+		connection.socket->clear();
 
 		APG::JSONSerializer<AuthenticationIdentity> idDecoder;
 		const AuthenticationIdentity authID = idDecoder.fromJSON(json.c_str());
@@ -235,11 +246,15 @@ void LoginServer::processChallengeSentSocket(IncomingConnection &connection, el:
 	} else if (opcode == static_cast<opcode_type_t>(ClientOpcode::VERSION_MISMATCH)) {
 		// we can't really help in this case
 		logger->verbose(9, "Client had mismatched version.");
+		connection.socket->clear();
+
 		connection.state = IncomingConnectionState::DONE;
 		return;
 	} else if (opcode == static_cast<opcode_type_t>(ServerOpcode::MAP_SERVER_REGISTRATION_REQUEST)) {
 		const auto strLen = connection.socket->getShort();
 		const auto str = connection.socket->getStringByLength(strLen);
+
+		connection.socket->clear();
 
 		logger->verbose(9, "Got a map server registration request from %v", str);
 
@@ -247,7 +262,7 @@ void LoginServer::processChallengeSentSocket(IncomingConnection &connection, el:
 			return;
 		}
 	} else {
-		logger->verbose(9, "Client sent unexpected data.");
+		logger->verbose(9, "Client sent unexpected data (opcode %v)", opcode);
 		// unexpected input; increase their attempts
 		connection.state = IncomingConnectionState::LOGIN_FAILED;
 		connection.loginAttempts += 1;
@@ -324,7 +339,6 @@ void LoginServer::processMapListSocket(IncomingConnection &connection, el::Logge
 
 	logger->verbose(9, "Handling MAP_LIST connection.");
 
-	connection.socket->clear();
 	const auto listBytes = connection.socket->recv();
 
 	if (listBytes == 0) {
@@ -337,11 +351,11 @@ void LoginServer::processMapListSocket(IncomingConnection &connection, el::Logge
 
 	logger->info("Got opcode: %v", opcode);
 
-//	if (opcode != static_cast<opcode_type_t>(ServerOpcode::MAP_SERVER_MAP_LIST)) {
-//		logger->info("Map server didn't send map list; dropping.");
-//		connection.state = IncomingConnectionState::DONE;
-//		return;
-//	}
+	if (opcode != static_cast<opcode_type_t>(ServerOpcode::MAP_SERVER_MAP_LIST)) {
+		logger->info("Map server didn't send map list; dropping.");
+		connection.state = IncomingConnectionState::DONE;
+		return;
+	}
 
 	const auto jsonLength = connection.socket->getShort();
 
@@ -387,7 +401,6 @@ bool LoginServer::processLoginAttempt(IncomingConnection &connection, const Auth
 		connection.socket->clear();
 		connection.socket->put(&response.buffer);
 		connection.socket->send();
-		connection.socket->clear();
 
 		return false;
 	}
@@ -434,7 +447,6 @@ bool LoginServer::processLoginAttempt(IncomingConnection &connection, const Auth
 		connection.socket->clear();
 		connection.socket->put(&response.buffer);
 		connection.socket->send();
-		connection.socket->clear();
 
 		return false;
 	}
@@ -446,10 +458,14 @@ bool LoginServer::processMapAuthenticationRequest(IncomingConnection &connection
 	connection.socket->clear();
 	connection.socket->put(&regResponse.buffer);
 
-	if(connection.socket->send() <= 0) {
+	const int respSent = connection.socket->send();
+
+	if (respSent <= 0) {
 		logger->error("Couldn't send map server registration response.");
 		return false;
 	}
+
+	logger->verbose(9, "Sent %v map registration response bytes.", respSent);
 
 	connection.state = IncomingConnectionState::MAP_LIST;
 
