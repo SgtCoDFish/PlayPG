@@ -69,7 +69,7 @@ enum class DatabaseType {
 class ServerDetails {
 public:
 	explicit ServerDetails(const std::string &friendlyName, const std::string &hostName, uint16_t port,
-	        ServerType serverType, const boost::optional<const std::string> &publicKeyFile_ = boost::none,
+	        ServerType serverType, const boost::optional<std::vector<std::string>> &maps = boost::none, const boost::optional<const std::string> &publicKeyFile_ = boost::none,
 	        const boost::optional<const std::string> &privateKeyFile_ = boost::none);
 	~ServerDetails() = default;
 
@@ -79,6 +79,8 @@ public:
 	const uint16_t port;
 
 	const ServerType serverType;
+
+	const boost::optional<std::vector<std::string>> maps;
 
 	const boost::optional<std::string> publicKeyFile;
 	const boost::optional<std::string> privateKeyFile;

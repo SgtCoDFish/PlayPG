@@ -35,6 +35,8 @@
 #include <utility>
 #include <mutex>
 
+#include <boost/optional.hpp>
+
 #include "ServerCommon.hpp"
 #include "net/PlayerSession.hpp"
 #include "net/Opcodes.hpp"
@@ -42,6 +44,8 @@
 
 #include "net/crypto/RSACrypto.hpp"
 #include "net/crypto/SHACrypto.hpp"
+
+#include "Map.hpp"
 
 #include <APG/core/APGeasylogging.hpp>
 
@@ -53,6 +57,8 @@ enum class IncomingConnectionState {
 	LOGIN_FAILED, // Login failed for some reason and the user has been given the
 	              // chance to try again.
 	MAP_LIST, // The login server is waiting for the map server to send its list of supported maps.
+	MAP_WAIT_ACK, // The login server is waiting for the map server to acknowledge that it will
+	              // support the maps the login server requested.
 	DONE // Login was successful/some error caused the socket to close.
 	     // Won't be in this state for long; after this the
 	     // user should be sent to a map server to actually play.
@@ -79,6 +85,31 @@ struct IncomingConnection {
 	int getAttemptsRemaining() const {
 		return MAX_ATTEMPTS_ALLOWED - loginAttempts;
 	}
+
+	boost::optional<std::string> mapServerFriendlyName = boost::none;
+	boost::optional<uint16_t> mapServerPort = boost::none;
+	boost::optional<std::string> mapServerListenAddress = boost::none;
+	boost::optional<std::vector<MapIdentifier>> maps = boost::none;
+};
+
+struct MapServerConnection {
+	explicit MapServerConnection(const std::string &hostname_, const uint16_t &port_,
+	        std::unique_ptr<APG::Socket> &&connection_, std::vector<MapIdentifier> &&maps_,
+	        const std::string &friendlyName_) :
+			        connection { std::move(connection_) },
+			        maps { std::move(maps_) },
+			        hostname { hostname_ },
+			        port { port_ },
+			        friendlyName { friendlyName_ } {
+	}
+
+	std::unique_ptr<APG::Socket> connection;
+	const std::vector<MapIdentifier> maps;
+
+	const std::string hostname;
+	const uint16_t port;
+
+	const std::string friendlyName;
 };
 
 class LoginServer final : public Server {
@@ -102,11 +133,14 @@ private:
 	void processChallengeSentSocket(IncomingConnection &connection, el::Logger * const logger);
 	void processLoginFailedSocket(IncomingConnection &connection, el::Logger * const logger);
 	void processMapListSocket(IncomingConnection &connection, el::Logger * const logger);
+	void processMapWaitAckSocket(IncomingConnection &connection, el::Logger * const logger);
 	void processDoneSocket(IncomingConnection &connection, el::Logger * const logger);
 	bool processLoginAttempt(IncomingConnection &connection, const AuthenticationIdentity &id,
 	        el::Logger * const logger);
 
 	bool processMapAuthenticationRequest(IncomingConnection &connection, el::Logger * const logger);
+
+	void processMaps(el::Logger * const logger);
 
 	bool regenerateKeys_ = false;
 	std::unique_ptr<RSACrypto> crypto;
@@ -121,11 +155,13 @@ private:
 	std::vector<IncomingConnection> incomingConnections;
 	std::mutex incomingConnectionsMutex;
 
-	// For accepting connections from map servers which have just spun up
-	std::unique_ptr<APG::AcceptorSocket> mapServerAcceptor;
+	std::vector<MapIdentifier> allMaps;
 
 	// A list of connected map servers
-	std::vector<APG::Socket> mapServers;
+	std::vector<MapServerConnection> mapServers;
+	std::unordered_map<std::string, const MapServerConnection *> mapNameToConnection;
+
+	std::mutex mapServersMutex;
 
 	bool done = false;
 	std::thread processingThread;

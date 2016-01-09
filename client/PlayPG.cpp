@@ -168,26 +168,28 @@ bool PlayPG::doLogin() {
 
 	const auto respOpcode = socket.getShort();
 
-	if (respOpcode == static_cast<opcode_type_t>(ServerOpcode::LOGIN_AUTHENTICATION_RESPONSE)) {
-		const auto respSize = socket.getShort();
-		const auto respJSON = socket.getStringByLength(respSize);
-		logger->info("Got authentication response: %v", respJSON);
-
-		APG::JSONSerializer<AuthenticationResponse> responseS11N;
-		const auto response = responseS11N.fromJSON(respJSON.c_str());
-
-		if (!response.successful) {
-			logger->info("Authentication failed with username %v: %v", username, response.message);
-
-			if (response.attemptsRemaining == 0) {
-				socket.disconnect();
-			}
-
-			return false;
-		}
-	} else {
+	if (respOpcode != static_cast<opcode_type_t>(ServerOpcode::LOGIN_AUTHENTICATION_RESPONSE)) {
 		return false;
 	}
+
+	const auto respSize = socket.getShort();
+	const auto respJSON = socket.getStringByLength(respSize);
+	logger->info("Got authentication response: %v", respJSON);
+
+	APG::JSONSerializer<AuthenticationResponse> responseS11N;
+	const auto response = responseS11N.fromJSON(respJSON.c_str());
+
+	if (!response.successful) {
+		logger->info("Authentication failed with username %v: %v", username, response.message);
+
+		if (response.attemptsRemaining == 0) {
+			socket.disconnect();
+		}
+
+		return false;
+	}
+
+	logger->info("Need to connect to: %v (port %v) for map server.", *response.mapServer, *response.mapServerPort);
 
 	return true;
 }

@@ -60,6 +60,8 @@ std::unique_ptr<PlayPG::LoginServer> startLoginServer(el::Logger * logger, const
         false);
 std::unique_ptr<PlayPG::MapServer> startWorldServer(el::Logger * logger, const po::variables_map& vm);
 
+std::vector<std::string> loadMaps(el::Logger * logger, const po::variables_map &vm);
+
 void initSockets();
 void shutdownSockets();
 
@@ -105,7 +107,9 @@ std::unique_ptr<PlayPG::Server> initializeProgramOptions(int argc, char *argv[])
 	("name", po::value<std::string>()->default_value(std::string("PPGserver") + std::to_string(std::rand())),
 	        "use the given name for the server, defaulting to \"PPGserver\" with a random integer") //
 	("regenerate-keys",
-	        "Instructs the server to regenerate any keys it creates. WARNING: This may overwrite any key files the server uses.");
+	        "Instructs the server to regenerate any keys it creates. WARNING: This may overwrite any key files the server uses.") //
+	("map-dir", po::value<std::string>()->default_value("./maps/"),
+	        "A directory in which to search for maps. Defaults to \"./maps\"");
 
 	po::options_description databaseOptions("Database Options");
 
@@ -117,9 +121,7 @@ std::unique_ptr<PlayPG::Server> initializeProgramOptions(int argc, char *argv[])
 
 	po::options_description worldServerOptions("World Server Specific Options");
 
-	worldServerOptions.add_options()("map-dir", po::value<std::string>()->default_value("."),
-	        "A directory in which to search for maps. Defaults to \".\"") //
-	("master-address", po::value<std::string>(),
+	worldServerOptions.add_options()("master-address", po::value<std::string>(),
 	        "The address of the login server which will act as the master server and will send users to the appropriate map server as they log in.") //
 	("master-port", po::value<uint16_t>()->default_value(DEFAULT_LOGIN_PORT),
 	        "The port of the master login server, defaults to the default login port.") //
@@ -197,6 +199,12 @@ std::unique_ptr<PlayPG::LoginServer> startLoginServer(el::Logger * logger, const
 		return nullptr;
 	}
 
+	auto mapNames = loadMaps(logger, vm);
+
+	if (mapNames.empty()) {
+		return nullptr;
+	}
+
 	const auto serverName = vm["name"].as<std::string>();
 
 	const auto dbServer = vm["database-server"].as<std::string>();
@@ -205,7 +213,8 @@ std::unique_ptr<PlayPG::LoginServer> startLoginServer(el::Logger * logger, const
 
 	const bool regenerateKeys = vm.count("regenerate-keys");
 
-	PlayPG::ServerDetails serverDetails(serverName, "localhost", serverPort, PlayPG::ServerType::LOGIN_SERVER);
+	PlayPG::ServerDetails serverDetails(serverName, "localhost", serverPort, PlayPG::ServerType::LOGIN_SERVER,
+	        std::move(mapNames));
 	PlayPG::DatabaseDetails dbDetails(dbServer, dbPort, dbUsername, dbPassword);
 
 	return std::make_unique<PlayPG::LoginServer>(serverDetails, dbDetails, regenerateKeys);
@@ -232,40 +241,11 @@ std::unique_ptr<PlayPG::MapServer> startWorldServer(el::Logger * logger, const p
 		return nullptr;
 	}
 
-	const fs::path mapDir = vm["map-dir"].as<std::string>();
+	auto mapNames = loadMaps(logger, vm);
 
-	if (!fs::exists(mapDir)) {
-		logger->error("Map directory %v doesn't exist.", mapDir.c_str());
+	if (mapNames.empty()) {
 		return nullptr;
 	}
-
-	if (!fs::is_directory(mapDir)) {
-		logger->error("Map directory %v is not a directory.", mapDir.c_str());
-		return nullptr;
-	}
-
-	std::vector<std::string> mapNames;
-
-	fs::directory_iterator endIter;
-
-	for (fs::directory_iterator it(mapDir); it != endIter; ++it) {
-		const auto fileName = it->path().leaf();
-		const auto extension = fileName.extension();
-
-		if (extension != ".tmx" && extension != ".ppg") {
-			logger->verbose(1, "Skipping %v because it has an irrelevant extension.", fileName);
-			continue;
-		}
-
-		mapNames.emplace_back(it->path().string());
-	}
-
-	if (mapNames.size() == 0) {
-		logger->error("Couldn't find any maps in %v. Exiting.", mapDir);
-		return nullptr;
-	}
-
-	logger->verbose(1, "Loaded %v maps.", mapNames.size());
 
 	if (!vm.count("master-address")) {
 		logger->error(
@@ -285,11 +265,50 @@ std::unique_ptr<PlayPG::MapServer> startWorldServer(el::Logger * logger, const p
 	const auto dbUsername = vm["database-username"].as<std::string>();
 	const auto dbPassword = vm["database-password"].as<std::string>();
 
-	PlayPG::ServerDetails serverDetails(serverName, "localhost", serverPort, PlayPG::ServerType::WORLD_SERVER);
+	PlayPG::ServerDetails serverDetails(serverName, "localhost", serverPort, PlayPG::ServerType::WORLD_SERVER,
+	        std::move(mapNames));
 	PlayPG::DatabaseDetails dbDetails(dbServer, dbPort, dbUsername, dbPassword);
 
-	return std::make_unique<PlayPG::MapServer>(serverDetails, dbDetails, std::move(mapNames), masterHostname,
-	        masterPort, publicKeyFile, privateKeyFile);
+	return std::make_unique<PlayPG::MapServer>(serverDetails, dbDetails, masterHostname, masterPort, publicKeyFile,
+	        privateKeyFile);
+}
+
+std::vector<std::string> loadMaps(el::Logger * logger, const po::variables_map &vm) {
+	std::vector<std::string> mapNames;
+
+	const fs::path mapDir = vm["map-dir"].as<std::string>();
+
+	if (!fs::exists(mapDir)) {
+		logger->error("Map directory %v doesn't exist.", mapDir.c_str());
+		return mapNames;
+	}
+
+	if (!fs::is_directory(mapDir)) {
+		logger->error("Map directory %v is not a directory.", mapDir.c_str());
+		return mapNames;
+	}
+
+	fs::directory_iterator endIter;
+
+	for (fs::directory_iterator it(mapDir); it != endIter; ++it) {
+		const auto fileName = it->path().leaf();
+		const auto extension = fileName.extension();
+
+		if (extension != ".tmx" && extension != ".ppg") {
+			logger->verbose(1, "Skipping %v because it has an irrelevant extension.", fileName);
+			continue;
+		}
+
+		mapNames.emplace_back(it->path().string());
+	}
+
+	if (mapNames.size() == 0) {
+		logger->error("Couldn't find any maps in %v. Exiting.", mapDir);
+		return mapNames;
+	}
+
+	logger->verbose(1, "Loaded %v maps.", mapNames.size());
+	return mapNames;
 }
 
 void initSockets() {

@@ -41,14 +41,16 @@
 namespace PlayPG {
 
 MapServer::MapServer(const ServerDetails &serverDetails_, const DatabaseDetails &databaseDetails_,
-        std::vector<std::string> &&maps, const std::string &masterServer_, const uint16_t &masterPort_,
-        const std::string &masterPublicKeyFile_, const std::string &masterPrivateKeyFile_) :
+        const std::string &masterServer_, const uint16_t &masterPort_, const std::string &masterPublicKeyFile_,
+        const std::string &masterPrivateKeyFile_) :
 		        Server(serverDetails_, databaseDetails_),
-		        mapPaths { std::move(maps) },
 		        masterServerHostname { masterServer_ },
 		        masterServerPort { masterPort_ },
 		        masterServerCrypto { RSACrypto::fromFiles(masterPublicKeyFile_, masterPrivateKeyFile_) },
 		        masterServerConnection { getSocket(masterServerHostname, masterServerPort) } {
+	if (serverDetails.maps == boost::none) {
+		el::Loggers::getLogger("ServPG")->fatal("No maps passed in to map server (through serverdetails).");
+	}
 }
 
 void MapServer::run() {
@@ -62,6 +64,29 @@ void MapServer::run() {
 
 	if (!registerWithMasterServer(logger)) {
 		return;
+	}
+
+	playerAcceptor = getAcceptorSocket(serverDetails.port, true);
+
+	if (playerAcceptor == nullptr || playerAcceptor->hasError()) {
+		logger->error("Couldn't open player acceptor socket.");
+		return;
+	}
+
+	logger->info("Listening on port %v.", serverDetails.port);
+
+	while (true) {
+		auto newPlayerSocket = playerAcceptor->acceptSocket();
+
+		if (newPlayerSocket != nullptr) {
+			logger->verbose(9, "Accepted a connection from: %v. Sending to processing thread.",
+			        newPlayerSocket->remoteHost);
+		} else {
+			if (playerAcceptor->hasError()) {
+				logger->error("Error in playerAcceptor, exiting.");
+				break;
+			}
+		}
 	}
 }
 
@@ -126,7 +151,7 @@ bool MapServer::registerWithMasterServer(el::Logger * const logger) {
 
 	logger->info("Version check successful.");
 
-	MapServerRegistrationRequest regRequest(serverDetails.friendlyName);
+	MapServerRegistrationRequest regRequest(serverDetails.friendlyName, serverDetails.hostName, serverDetails.port);
 
 	masterServerConnection->clear();
 	masterServerConnection->put(&regRequest.buffer);
@@ -168,10 +193,40 @@ bool MapServer::registerWithMasterServer(el::Logger * const logger) {
 		return false;
 	}
 
+	const auto mapListResponseBytes = masterServerConnection->recv();
+
+	if (mapListResponseBytes == 0) {
+		logger->error("Error receiving response to map list: nothing recv()ed.");
+
+		return false;
+	}
+
+	const auto mapListResponseOpcode = masterServerConnection->getShort();
+
+	if (mapListResponseOpcode != util::to_integral(ServerOpcode::MAP_SERVER_MAP_LIST)) {
+		logger->error("Error receiving response to map list: invalid opcode \"%v\".", mapListResponseOpcode);
+
+		return false;
+	}
+
+	const auto mapListResponseJSONLength = masterServerConnection->getShort();
+	const auto mapListResponseJSON = masterServerConnection->getStringByLength(mapListResponseJSONLength);
+
+	APG::JSONSerializer<MapServerMapList> responseSerializer;
+	const auto responseMapList = responseSerializer.fromJSON(mapListResponseJSON.c_str());
+
+	logger->info("Got %v response maps.", responseMapList.mapHashes.size());
+
+	masterServerConnection->clear();
+	masterServerConnection->putShort(util::to_integral(ServerOpcode::MAP_SERVER_ACK));
+	masterServerConnection->send();
+
 	return true;
 }
 
 bool MapServer::parseMaps(el::Logger * const logger) {
+	auto &mapPaths = serverDetails.maps.get();
+
 	for (const auto & mapPath : mapPaths) {
 		auto map = std::make_unique<Tmx::Map>();
 
@@ -193,7 +248,7 @@ bool MapServer::parseMaps(el::Logger * const logger) {
 			return false;
 		}
 	} else {
-		logger->verbose(1, "Parsed all tmxparser maps successfully.");
+		logger->verbose(5, "Parsed all tmxparser maps successfully.");
 	}
 
 	for (const auto &map : tmxparserMaps) {

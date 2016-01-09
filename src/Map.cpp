@@ -52,16 +52,7 @@ const MapTile &Map::getTile(uint32_t x, uint32_t y) const {
 void Map::parseMap() {
 	const auto logger = el::Loggers::getLogger("PlayPG");
 
-	const auto mapProperties = map->GetProperties();
-
-	const auto nameFromFile = mapProperties.GetStringProperty("PLAYPG_NAME");
-
-	if (nameFromFile == "") {
-		logger->warn("Map %v has no associated PLAYPG_NAME", map->GetFilename());
-		name_ = map->GetFilename();
-	} else {
-		name_ = nameFromFile;
-	}
+	name_ = Map::resolveNameFromMap(map, logger);
 
 	logger->verbose(9, "Loading map with name \"%v\".", name_);
 
@@ -120,6 +111,17 @@ void Map::parseTiles(el::Logger * const logger) {
 
 			tiles.emplace_back(solid, interesting, spawn);
 		}
+	}
+}
+
+std::string Map::resolveNameFromMap(const Tmx::Map * map, el::Logger * const logger) {
+	const auto nameFromFile = map->GetProperties().GetStringProperty("PPG_NAME");
+
+	if (nameFromFile == "") {
+		logger->warn("Map %v has no associated PPG_NAME", map->GetFilename());
+		return map->GetFilename();
+	} else {
+		return nameFromFile;
 	}
 }
 

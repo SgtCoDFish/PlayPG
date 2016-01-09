@@ -59,7 +59,9 @@ enum class ServerOpcode
 	MAP_SERVER_REGISTRATION_REQUEST = 0xFFFC,
 	MAP_SERVER_REGISTRATION_RESPONSE = 0xFFFB,
 	MAP_SERVER_MAP_LIST = 0xFFFA,
-	SERVER_PUBKEY = 0xFFF9,
+	MAP_SERVER_NOT_NEEDED = 0XFFF9,
+	MAP_SERVER_ACK = 0xFFF8,
+	SERVER_PUBKEY = 0xFFF7,
 };
 static_assert(std::is_same<std::underlying_type<ClientOpcode>::type, std::underlying_type<ServerOpcode>::type>::value, "ClientOpcodes and ServerOpcodes must have the same underlying type.");
 using opcode_type_t = std::underlying_type<ClientOpcode>::type;

@@ -32,6 +32,7 @@
 #include <algorithm>
 
 #include <APG/core/APGeasylogging.hpp>
+#include <APG/internal/Assert.hpp>
 
 #include "mysql_connection.h"
 #include "mysql_driver.h"
@@ -51,11 +52,23 @@ LoginServer::LoginServer(const ServerDetails &serverDetails_, const DatabaseDeta
         bool makeNewKeys_) :
 		        Server(serverDetails_, databaseDetails_),
 		        regenerateKeys_ { makeNewKeys_ } {
-	playerAcceptor = getAcceptorSocket(serverDetails_.port, true);
+	playerAcceptor = getAcceptorSocket(serverDetails.port, true);
+
+	if (serverDetails.maps == boost::none) {
+		el::Loggers::getLogger("ServPG")->fatal("No maps passed to LoginServer through ServerDetails");
+		return;
+	}
 
 	if (regenerateKeys_) {
 		el::Loggers::getLogger("ServPG")->info("Generating RSA public/private key pair.");
 		crypto = std::make_unique<RSACrypto>(true);
+
+		const std::string pubKeyFile = (serverDetails.publicKeyFile ? *serverDetails.publicKeyFile : "login.pub");
+		const std::string priKeyFile = (serverDetails.privateKeyFile ? *serverDetails.privateKeyFile : "login.prv");
+
+		crypto->writePublicKeyFile(pubKeyFile);
+		crypto->writePrivateKeyFile(priKeyFile);
+		el::Loggers::getLogger("ServPG")->info("Dumped keys to %v (public) and %v (private).", pubKeyFile, priKeyFile);
 	} else {
 		const std::string pubKeyFile = (serverDetails.publicKeyFile ? *serverDetails.publicKeyFile : "login.pub");
 		const std::string priKeyFile = (serverDetails.privateKeyFile ? *serverDetails.privateKeyFile : "login.prv");
@@ -75,21 +88,14 @@ LoginServer::LoginServer(const ServerDetails &serverDetails_, const DatabaseDeta
 void LoginServer::run() {
 	auto logger = el::Loggers::getLogger("ServPG");
 
+	processMaps(logger);
+
 	logger->info("Running login server on port %v.", serverDetails.port);
 	logger->info("\"%v\", version %v (%v)", serverDetails.friendlyName, Version::versionString, Version::gitHash);
 
 	processingThread = std::thread([this]() {this->processIncoming();});
 
 	initDB(logger);
-
-	if (regenerateKeys_) {
-		const std::string pubKeyFile = (serverDetails.publicKeyFile ? *serverDetails.publicKeyFile : "login.pub");
-		const std::string priKeyFile = (serverDetails.privateKeyFile ? *serverDetails.privateKeyFile : "login.prv");
-
-		crypto->writePublicKeyFile(pubKeyFile);
-		crypto->writePrivateKeyFile(priKeyFile);
-		logger->info("Dumped keys to %v (public) and %v (private).", pubKeyFile, priKeyFile);
-	}
 
 	while (!done) {
 		auto newPlayerSocket = playerAcceptor->acceptSocket();
@@ -147,13 +153,18 @@ void LoginServer::processIncoming() {
 				break;
 			}
 
-			case (IncomingConnectionState::DONE): {
-				processDoneSocket(connection, logger);
+			case (IncomingConnectionState::MAP_LIST): {
+				processMapListSocket(connection, logger);
 				break;
 			}
 
-			case (IncomingConnectionState::MAP_LIST): {
-				processMapListSocket(connection, logger);
+			case (IncomingConnectionState::MAP_WAIT_ACK): {
+				processMapWaitAckSocket(connection, logger);
+				break;
+			}
+
+			case (IncomingConnectionState::DONE): {
+				processDoneSocket(connection, logger);
 				break;
 			}
 			}
@@ -225,7 +236,7 @@ void LoginServer::processChallengeSentSocket(IncomingConnection &connection, el:
 
 	logger->info("Read %v bytes", bytesFromChallenge);
 
-	if(bytesFromChallenge == 0) {
+	if (bytesFromChallenge == 0) {
 		logger->error("Couldn't read after CHALLENGE_SENT");
 		connection.state = IncomingConnectionState::DONE;
 		return;
@@ -251,12 +262,21 @@ void LoginServer::processChallengeSentSocket(IncomingConnection &connection, el:
 		connection.state = IncomingConnectionState::DONE;
 		return;
 	} else if (opcode == static_cast<opcode_type_t>(ServerOpcode::MAP_SERVER_REGISTRATION_REQUEST)) {
-		const auto strLen = connection.socket->getShort();
-		const auto str = connection.socket->getStringByLength(strLen);
+		const auto nameLen = connection.socket->getShort();
+		const auto name = connection.socket->getStringByLength(nameLen);
+
+		const auto addressLen = connection.socket->getShort();
+		const auto address = connection.socket->getStringByLength(addressLen);
+
+		const auto port = connection.socket->getShort();
 
 		connection.socket->clear();
 
-		logger->verbose(9, "Got a map server registration request from %v", str);
+		connection.mapServerFriendlyName = name;
+		connection.mapServerListenAddress = address;
+		connection.mapServerPort = port;
+
+		logger->verbose(9, "Got a map server registration request from %v (%v on port %v)", name, address, port);
 
 		if (!processMapAuthenticationRequest(connection, logger)) {
 			return;
@@ -367,8 +387,92 @@ void LoginServer::processMapListSocket(IncomingConnection &connection, el::Logge
 
 	const auto mapList = jsonSerializer.fromJSON(json.c_str());
 
+	std::vector<MapIdentifier> responseMapList;
+
 	for (const auto &mapID : mapList.mapHashes) {
-		logger->info("Map server supports \"%v\" with hash: %v", mapID.mapName, mapID.mapHash);
+		bool weSupport = false;
+
+		for (const auto &ourMap : allMaps) {
+			if (mapID.mapName == ourMap.mapName) {
+				if (mapID.mapHash == ourMap.mapHash) {
+					weSupport = true;
+					responseMapList.emplace_back(MapIdentifier(mapID));
+				} else {
+					logger->warn("Map names same but hash differs for %v.", mapID.mapName);
+				}
+
+				break;
+			}
+		}
+
+		logger->verbose(7, "Map server supports \"%v\" with hash: %v (%v by this login server)", mapID.mapName,
+		        mapID.mapHash, (weSupport ? "recognised" : "ignored"));
+	}
+
+	if (responseMapList.empty()) {
+		logger->verbose(1, "Map server doesn't support any new maps for this login server, ignoring.");
+
+		connection.socket->clear();
+		connection.socket->putShort(util::to_integral(ServerOpcode::MAP_SERVER_NOT_NEEDED));
+		connection.socket->send();
+
+		connection.state = IncomingConnectionState::DONE;
+		return;
+	}
+
+	MapServerMapList requiredMaps(responseMapList);
+
+	connection.socket->clear();
+	connection.socket->put(&requiredMaps.buffer);
+	const auto reqMapBytes = connection.socket->send();
+
+	if (reqMapBytes == 0) {
+		logger->error("Couldn't send required maps to map server.");
+	}
+
+	connection.maps = std::move(responseMapList);
+
+	connection.state = IncomingConnectionState::MAP_WAIT_ACK;
+}
+
+void LoginServer::processMapWaitAckSocket(IncomingConnection &connection, el::Logger * const logger) {
+	if (!connection.socket->hasActivity()) {
+		return;
+	}
+
+	REQUIRE(connection.maps != boost::none, "Connection maps must be initialised when waiting for ack.");
+	REQUIRE(connection.mapServerFriendlyName != boost::none,
+	        "Connection friendly name must be initialised when waiting for ack.");
+	REQUIRE(connection.mapServerPort != boost::none, "Connection port must be initialised when waiting for ack.");
+	REQUIRE(connection.mapServerListenAddress != boost::none,
+	        "Connection address must be initialised when waiting for ack.");
+
+	const auto bytesRec = connection.socket->recv();
+
+	if (bytesRec == 0) {
+		logger->error("Couldn't receive map ACK");
+		connection.state = IncomingConnectionState::DONE;
+
+		return;
+	}
+
+	{
+		// lock guard avoids concurrent modification, ensures .back() is valid while we're using it
+		std::lock_guard<std::mutex> mapGuard(mapServersMutex);
+
+		mapServers.emplace_back(*connection.mapServerListenAddress, *connection.mapServerPort,
+		        std::move(connection.socket), std::move(*(connection.maps)), *connection.mapServerFriendlyName);
+
+		const auto &newestServer = mapServers.back();
+
+		logger->info("Registered new map server \"%v\": %v on port %v.", newestServer.friendlyName,
+		        newestServer.hostname, newestServer.port);
+
+		for (const auto &map : newestServer.maps) {
+			mapNameToConnection.emplace(
+			        std::pair<std::string, const MapServerConnection *>(map.mapName, &newestServer));
+		}
+
 	}
 
 	connection.state = IncomingConnectionState::DONE;
@@ -421,7 +525,7 @@ bool LoginServer::processLoginAttempt(IncomingConnection &connection, const Auth
 	const std::string hashString = hasher.sha512ToString(hashedPass);
 
 	if (sha512 == hashString) {
-		AuthenticationResponse response(true, connection.getAttemptsRemaining(), "Authentication successful.");
+		AuthenticationResponse response(true, connection.getAttemptsRemaining(), "Authentication successful.", "localhost", 10000);
 
 		connection.socket->clear();
 		connection.socket->put(&response.buffer);
@@ -470,6 +574,26 @@ bool LoginServer::processMapAuthenticationRequest(IncomingConnection &connection
 	connection.state = IncomingConnectionState::MAP_LIST;
 
 	return true;
+}
+
+void LoginServer::processMaps(el::Logger * const logger) {
+	auto &mapPaths = serverDetails.maps.get();
+
+	for (const auto & mapPath : mapPaths) {
+		auto map = std::make_unique<Tmx::Map>();
+
+		map->ParseFile(mapPath);
+
+		if (map->HasError()) {
+			logger->error("Couldn't parse %v: %v.", mapPath, map->GetErrorText());
+			continue;
+		}
+
+		allMaps.emplace_back(Map::resolveNameFromMap(map.get(), logger),
+		        MapIdentifier::makeMD5Hash(map->GetFilehash()));
+	}
+
+	mapServers.reserve(allMaps.size());
 }
 
 void LoginServer::initDB(el::Logger * const logger) {

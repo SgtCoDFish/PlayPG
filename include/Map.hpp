@@ -54,6 +54,8 @@ struct MapTile final {
 
 class Map final {
 public:
+	static std::string resolveNameFromMap(const Tmx::Map * map, el::Logger * const logger);
+
 	explicit Map(const Tmx::Map * map);
 
 	bool isSolidAtTile(uint32_t x, uint32_t y) const {

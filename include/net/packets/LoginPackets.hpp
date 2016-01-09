@@ -61,12 +61,16 @@ public:
 class AuthenticationResponse final : public ServerPacket {
 public:
 	explicit AuthenticationResponse(bool successful_, int attemptsRemaining_, const std::string &message_);
+	explicit AuthenticationResponse(bool successful_, int attemptsRemaining_, const std::string &message_, const std::string &mapServer_, const uint16_t &mapServerPort_);
 
 	const bool successful;
 
 	const int attemptsRemaining;
 
 	const std::string message;
+
+	std::unique_ptr<std::string> mapServer;
+	std::unique_ptr<uint16_t> mapServerPort;
 };
 
 class ServerPubKey final : public ServerPacket {
@@ -101,9 +105,12 @@ public:
 
 class MapServerRegistrationRequest final : public ServerPacket {
 public:
-	explicit MapServerRegistrationRequest(const std::string &mapServerFriendlyName_);
+	explicit MapServerRegistrationRequest(const std::string &mapServerFriendlyName_,
+	        const std::string &mapServerListenAddress_, const uint16_t &port_);
 
 	const std::string mapServerFriendlyName;
+	const std::string mapServerListenAddress;
+	const uint16_t port;
 };
 
 class MapServerRegistrationResponse final : public ServerPacket {
@@ -219,8 +226,18 @@ public:
 
 		d.Parse(json);
 
-		return PlayPG::AuthenticationResponse(d["successful"].GetBool(), d["attemptsRemaining"].GetInt(),
+		auto resp = PlayPG::AuthenticationResponse(d["successful"].GetBool(), d["attemptsRemaining"].GetInt(),
 		        d["message"].GetString());
+
+		if (!d["mapServer"].IsNull()) {
+			resp.mapServer = std::make_unique<std::string>(d["mapServer"].GetString());
+		}
+
+		if (!d["mapServerPort"].IsNull()) {
+			resp.mapServerPort = std::make_unique<uint16_t>(d["mapServerPort"].GetInt());
+		}
+
+		return resp;
 	}
 
 	std::string toJSON(const PlayPG::AuthenticationResponse &t) {
@@ -236,6 +253,14 @@ public:
 
 		writer->String("message");
 		writer->String(t.message.c_str());
+
+		writer->String("mapServer");
+
+		t.mapServer != nullptr ? writer->String(t.mapServer->c_str()) : writer->Null();
+
+		writer->String("mapServerPort");
+
+		t.mapServer != nullptr ? writer->Int(*t.mapServerPort) : writer->Null();
 
 		writer->EndObject();
 

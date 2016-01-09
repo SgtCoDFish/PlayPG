@@ -60,6 +60,21 @@ AuthenticationResponse::AuthenticationResponse(bool successful_, int attemptsRem
 	buffer.putString(json);
 }
 
+AuthenticationResponse::AuthenticationResponse(bool successful_, int attemptsRemaining_, const std::string &message_,
+        const std::string &mapServer_, const uint16_t &mapServerPort_) :
+		        ServerPacket(ServerOpcode::LOGIN_AUTHENTICATION_RESPONSE),
+		        successful { successful_ },
+		        attemptsRemaining { attemptsRemaining_ },
+		        message { message_ },
+		        mapServer { std::make_unique<std::string>(mapServer_) },
+		        mapServerPort { std::make_unique<uint16_t>(mapServerPort_) } {
+	APG::JSONSerializer<AuthenticationResponse> toJson;
+
+	const std::string json = toJson.toJSON(*this);
+	buffer.putShort(static_cast<uint16_t>(json.size()));
+	buffer.putString(json);
+}
+
 AuthenticationIdentity::AuthenticationIdentity(const std::string &username_, std::vector<uint8_t> password_) :
 		        ClientPacket(ClientOpcode::LOGIN_AUTHENTICATION_IDENTITY),
 		        unameLength { static_cast<decltype(unameLength)>(username_.length()) },
@@ -86,11 +101,19 @@ VersionMismatch::VersionMismatch() :
 		        ClientPacket(ClientOpcode::VERSION_MISMATCH) {
 }
 
-MapServerRegistrationRequest::MapServerRegistrationRequest(const std::string &mapServerFriendlyName_) :
+MapServerRegistrationRequest::MapServerRegistrationRequest(const std::string &mapServerFriendlyName_,
+        const std::string &mapServerListenAddress_, const uint16_t &port_) :
 		        ServerPacket(ServerOpcode::MAP_SERVER_REGISTRATION_REQUEST),
-		        mapServerFriendlyName { mapServerFriendlyName_ } {
+		        mapServerFriendlyName { mapServerFriendlyName_ },
+		        mapServerListenAddress { mapServerListenAddress_ },
+		        port { port_ } {
 	buffer.putShort(mapServerFriendlyName.size());
 	buffer.putString(mapServerFriendlyName);
+
+	buffer.putShort(mapServerListenAddress.size());
+	buffer.putString(mapServerListenAddress);
+
+	buffer.putShort(port);
 }
 
 MapServerRegistrationResponse::MapServerRegistrationResponse(const std::string &secretRSA_) :
