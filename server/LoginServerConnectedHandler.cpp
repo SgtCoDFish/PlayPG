@@ -102,16 +102,16 @@ void LoginServer::processConnected() {
 			}
 
 			if (shouldClear) {
-				const auto sizeBefore = playerSessions.size();
+				const int32_t sizeBefore = playerSessions.size();
 
 				playerSessions.erase(
 				        std::remove_if(playerSessions.begin(), playerSessions.end(),
 				                [](const std::unique_ptr<PlayerSession> &ptr) {return ptr == nullptr;}),
 				        playerSessions.end());
 
-				const auto sizeAfter = playerSessions.size();
+				const int32_t sizeAfter = playerSessions.size();
 
-				logger->info("Purged %v connected sockets.", (sizeAfter - sizeBefore));
+				logger->info("Purged %v connected sockets.", (sizeBefore - sizeAfter));
 			}
 		}
 	}
