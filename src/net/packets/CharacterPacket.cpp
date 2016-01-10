@@ -25,43 +25,28 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef INCLUDE_NET_PLAYERSESSION_HPP_
-#define INCLUDE_NET_PLAYERSESSION_HPP_
-
-#include <cstdint>
-
-#include <atomic>
-
-#include <APG/core/Random.hpp>
-#include <APG/APGNet.hpp>
+#include "net/packets/CharacterPackets.hpp"
 
 namespace PlayPG {
 
-class PlayerSession final {
-public:
-	static std::string generateSessionKey(const std::string &username, const uint_fast64_t &key);
-
-	/**
-	 * Create a new player session with the given username and socket.
-	 * If random is nullptr, a new random number generator will be created for this session.
-	 */
-	explicit PlayerSession(const uint32_t &playerID, const std::string &username, std::unique_ptr<APG::Socket> &&socket,
-	        APG::Random<uint_fast64_t> &random);
-	~PlayerSession() = default;
-
-	const uint32_t playerID;
-	const std::string username;
-	const std::string sessionKey;
-
-	uint64_t guid;
-	std::unique_ptr<APG::Socket> socket;
-
-	bool authenticated = false;
-
-private:
-	static std::atomic<uint64_t> nextGUID;
-};
-
+PlayerCharacters::PlayerCharacters(const std::vector<Character> &characters_) :
+		        ServerPacket(ServerOpcode::PLAYER_CHARACTERS),
+		        characters { characters_ } {
+	putJSON();
 }
 
-#endif /* INCLUDE_NET_PLAYERSESSION_HPP_ */
+PlayerCharacters::PlayerCharacters(std::vector<Character> &&characters_) :
+		        ServerPacket(ServerOpcode::PLAYER_CHARACTERS),
+		        characters { std::move(characters_) } {
+	putJSON();
+}
+
+void PlayerCharacters::putJSON() {
+	APG::JSONSerializer<PlayerCharacters> s11n;
+	const auto json = s11n.toJSON(*this);
+
+	buffer.putShort(json.size());
+	buffer.putString(json);
+}
+
+}

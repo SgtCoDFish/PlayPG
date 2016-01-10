@@ -28,18 +28,35 @@
 #include <cstdint>
 
 #include <memory>
+#include <array>
 #include <utility>
+#include <string>
+
+#include <openssl/md5.h>
 
 #include "net/PlayerSession.hpp"
+#include "util/Util.hpp"
 
 namespace PlayPG {
 
 std::atomic<uint64_t> PlayerSession::nextGUID { 0ull };
 
-PlayerSession::PlayerSession(const std::string &username_, std::unique_ptr<APG::Socket> &&socket_) :
+PlayerSession::PlayerSession(const uint32_t &playerID_, const std::string &username_,
+        std::unique_ptr<APG::Socket> &&socket_, APG::Random<uint_fast64_t> &random) :
+		        playerID { playerID_ },
 		        username { username_ },
+		        sessionKey { PlayerSession::generateSessionKey(username, random.getDiceRoll()) },
 		        guid { nextGUID++ },
 		        socket { std::move(socket_) } {
+}
+
+std::string PlayerSession::generateSessionKey(const std::string &username, const uint_fast64_t &key) {
+	std::array<uint8_t, MD5_DIGEST_LENGTH> buffer;
+	const auto combinedString = username + std::to_string(key);
+
+	::MD5(reinterpret_cast<const uint8_t *>(combinedString.c_str()), combinedString.size(), buffer.data());
+
+	return ByteArrayUtil::byteArrayToString(buffer.data(), MD5_DIGEST_LENGTH);
 }
 
 }

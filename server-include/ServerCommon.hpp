@@ -128,7 +128,7 @@ protected:
 
 	std::random_device randomDevice;
 	std::mt19937_64 mersenneTwister;
-	APG::Random random;
+	APG::Random<uint_fast64_t> random;
 };
 
 }

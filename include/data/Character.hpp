@@ -45,34 +45,6 @@ public:
 	const std::string name;
 
 	Stats stats { 100, 10, 5 };
-
-	std::string to_json() {
-		rapidjson::StringBuffer buffer;
-		rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
-
-		writer.StartObject();
-
-		writer.String("name");
-		writer.String(name.c_str());
-
-		writer.String("stats");
-		writer.StartObject();
-
-		writer.String("maxHP");
-		writer.Int(stats.maxHP);
-
-		writer.String("strength");
-		writer.Int(stats.strength);
-
-		writer.String("intelligence");
-		writer.Int(stats.intelligence);
-
-		writer.EndObject();
-
-		writer.EndObject();
-
-		return buffer.GetString();
-	}
 };
 
 }

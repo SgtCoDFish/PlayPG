@@ -189,8 +189,6 @@ bool PlayPG::doLogin() {
 		return false;
 	}
 
-	logger->info("Need to connect to: %v (port %v) for map server.", *response.mapServer, *response.mapServerPort);
-
 	return true;
 }
 
@@ -232,11 +230,42 @@ void PlayPG::render(float deltaTime) {
 	case GameState::LOGIN: {
 		if (inputManager->isKeyJustPressed(SDL_SCANCODE_SPACE)) {
 			if (doLogin()) {
-				gameState = GameState::PLAYING;
+				gameState = GameState::CHARACTER_SELECT;
 			}
 		} else if (inputManager->isKeyJustPressed(SDL_SCANCODE_1)) {
 			username = "SgtCoDFish@example.com";
 		}
+		break;
+	}
+
+	case GameState::CHARACTER_SELECT: {
+		if (inputManager->isKeyJustPressed(SDL_SCANCODE_RETURN)) {
+			socket.clear();
+			socket.putShort(util::to_integral(ClientOpcode::REQUEST_CHARACTERS));
+			socket.send();
+
+			socket.waitForActivity();
+			const auto charBytes = socket.recv();
+
+			if (charBytes == 0) {
+				logger->error("Couldn't get characters from LoginServer");
+				break;
+			}
+
+			const auto charOpcode = socket.getShort();
+
+			if (charOpcode != util::to_integral(ServerOpcode::PLAYER_CHARACTERS)) {
+				logger->error("Got invalid response from server.");
+				break;
+			}
+
+			const auto jsonLength = socket.getShort();
+			const auto json = socket.getStringByLength(jsonLength);
+
+			logger->info("Got %v.", json);
+			gameState = GameState::PLAYING;
+		}
+
 		break;
 	}
 

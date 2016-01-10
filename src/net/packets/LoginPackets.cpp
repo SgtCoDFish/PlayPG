@@ -60,21 +60,6 @@ AuthenticationResponse::AuthenticationResponse(bool successful_, int attemptsRem
 	buffer.putString(json);
 }
 
-AuthenticationResponse::AuthenticationResponse(bool successful_, int attemptsRemaining_, const std::string &message_,
-        const std::string &mapServer_, const uint16_t &mapServerPort_) :
-		        ServerPacket(ServerOpcode::LOGIN_AUTHENTICATION_RESPONSE),
-		        successful { successful_ },
-		        attemptsRemaining { attemptsRemaining_ },
-		        message { message_ },
-		        mapServer { std::make_unique<std::string>(mapServer_) },
-		        mapServerPort { std::make_unique<uint16_t>(mapServerPort_) } {
-	APG::JSONSerializer<AuthenticationResponse> toJson;
-
-	const std::string json = toJson.toJSON(*this);
-	buffer.putShort(static_cast<uint16_t>(json.size()));
-	buffer.putString(json);
-}
-
 AuthenticationIdentity::AuthenticationIdentity(const std::string &username_, std::vector<uint8_t> password_) :
 		        ClientPacket(ClientOpcode::LOGIN_AUTHENTICATION_IDENTITY),
 		        unameLength { static_cast<decltype(unameLength)>(username_.length()) },
@@ -127,7 +112,7 @@ MapServerMapList::MapServerMapList(const std::vector<MapIdentifier> &mapHashes_)
 		        ServerPacket(ServerOpcode::MAP_SERVER_MAP_LIST),
 		        mapHashes { mapHashes_ } {
 	APG::JSONSerializer<MapServerMapList> toJson;
-	const std::string & jsonString = toJson.toJSON(*this);
+	const std::string jsonString = toJson.toJSON(*this);
 
 	buffer.putShort(jsonString.size());
 	buffer.putString(jsonString);
@@ -141,6 +126,20 @@ MapServerMapList MapServerMapList::listFromMaps(const std::vector<Map> &maps) {
 	}
 
 	return MapServerMapList(std::move(ids));
+}
+
+MapServerConnectionInstructions::MapServerConnectionInstructions(const std::string &friendlyName_,
+        const std::string &hostName_, const uint16_t &port_) :
+		        ServerPacket(ServerOpcode::MAP_SERVER_CONNECTION_INSTRUCTIONS),
+		        friendlyName { friendlyName_ },
+		        hostName { hostName_ },
+		        port { port_ } {
+	APG::JSONSerializer<MapServerConnectionInstructions> jsonS11N;
+
+	const std::string json = jsonS11N.toJSON(*this);
+
+	buffer.putShort(json.size());
+	buffer.putString(json);
 }
 
 }

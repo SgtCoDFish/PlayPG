@@ -203,6 +203,11 @@ bool MapServer::registerWithMasterServer(el::Logger * const logger) {
 
 	const auto mapListResponseOpcode = masterServerConnection->getShort();
 
+	if (mapListResponseOpcode == util::to_integral(ServerOpcode::MAP_SERVER_NOT_NEEDED)) {
+		logger->error("This map server doesn't support any maps which the login server needs. Exiting.");
+		return false;
+	}
+
 	if (mapListResponseOpcode != util::to_integral(ServerOpcode::MAP_SERVER_MAP_LIST)) {
 		logger->error("Error receiving response to map list: invalid opcode \"%v\".", mapListResponseOpcode);
 

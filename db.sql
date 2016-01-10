@@ -18,9 +18,9 @@ CREATE TABLE `characters` (
 
   `name` varchar(12) UNIQUE NOT NULL,
 
-  `baseMaxHP` int(11) NOT NULL,
-  `baseStrength` int(11) NOT NULL,
-  `baseIntelligence` int(11) NOT NULL,
+  `maxHP` int(11) NOT NULL,
+  `strength` int(11) NOT NULL,
+  `intelligence` int(11) NOT NULL,
 
   PRIMARY KEY (`id`),
 

@@ -53,6 +53,7 @@ namespace PlayPG {
 
 enum class GameState {
 	LOGIN,
+	CHARACTER_SELECT,
 	PLAYING
 };
 

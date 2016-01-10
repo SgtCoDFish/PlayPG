@@ -28,6 +28,7 @@
 #ifndef INCLUDE_SERVER_LOGINSERVER_HPP_
 #define INCLUDE_SERVER_LOGINSERVER_HPP_
 
+#include <list>
 #include <vector>
 #include <memory>
 #include <array>
@@ -98,18 +99,18 @@ struct MapServerConnection {
 	        const std::string &friendlyName_) :
 			        connection { std::move(connection_) },
 			        maps { std::move(maps_) },
+			        friendlyName { friendlyName_ },
 			        hostname { hostname_ },
-			        port { port_ },
-			        friendlyName { friendlyName_ } {
+			        port { port_ } {
 	}
 
 	std::unique_ptr<APG::Socket> connection;
 	const std::vector<MapIdentifier> maps;
 
+	const std::string friendlyName;
+
 	const std::string hostname;
 	const uint16_t port;
-
-	const std::string friendlyName;
 };
 
 class LoginServer final : public Server {
@@ -125,9 +126,16 @@ public:
 	 */
 	void processIncoming();
 
+	/**
+	 * Probably run in a separate thread; manages players who're already connected.
+	 */
+	void processConnected();
+
 private:
 	void initDB(el::Logger * const logger);
+	void processMaps(el::Logger * const logger);
 
+	// Methods used to process incoming connections
 	void processFreshSocket(IncomingConnection &connection, AuthenticationChallenge &challange,
 	        el::Logger * const logger);
 	void processChallengeSentSocket(IncomingConnection &connection, el::Logger * const logger);
@@ -137,10 +145,10 @@ private:
 	void processDoneSocket(IncomingConnection &connection, el::Logger * const logger);
 	bool processLoginAttempt(IncomingConnection &connection, const AuthenticationIdentity &id,
 	        el::Logger * const logger);
-
 	bool processMapAuthenticationRequest(IncomingConnection &connection, el::Logger * const logger);
 
-	void processMaps(el::Logger * const logger);
+	// Methods used to process connections which have already been established.
+	void processCharacterRequest(const std::unique_ptr<PlayerSession> &session, el::Logger * const logger);
 
 	bool regenerateKeys_ = false;
 	std::unique_ptr<RSACrypto> crypto;
@@ -149,7 +157,9 @@ private:
 	// For accepting connections from players
 	std::unique_ptr<APG::AcceptorSocket> playerAcceptor;
 
-	std::vector<std::unique_ptr<PlayerSession>> playerSessions;
+	std::list<std::unique_ptr<PlayerSession>> playerSessions;
+	std::unordered_map<std::string, const PlayerSession *> usernameToPlayerSession;
+	std::mutex playerSessionMutex;
 
 	// connections which haven't authenticated themselves yet and so cannot have a session made.
 	std::vector<IncomingConnection> incomingConnections;
@@ -165,6 +175,7 @@ private:
 
 	bool done = false;
 	std::thread processingThread;
+	std::thread connectedThread;
 };
 
 }
