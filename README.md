@@ -91,6 +91,16 @@ cd odb-2.4.0
 make -j4
 sudo make install
 ```
+
+Finally, you probably also need to add -fno-devirtualize to PlayPG when you compile it (because of the same bug). For example, assuming you're building a headless server:
+
+```
+cmake -DCMAKE_CXX_FLAGS=-fno-devirtualize -DCMAKE_BUILD_TYPE=Debug -DAPG_NO_SDL=ON ..
+make -j4
+```
+
+There might be problems with building in Debug mode too; you might need to experiment. Once the Debian family is past the C++11 ABI change, these sorts of things should be much more clean.
+
 #### Boost
 You'll have to recompile from scratch because the Boost libraries provided by default are really out-of-date (1.55 at time of writing, when 1.60 is out). It's not pleasant and it's strongly recommended that if you have a cross compiler for the Pi you use it, because compiling natively is likely going to take a long time. PlayPG requires at least 1.56 but if you're compiling from scratch, why not use a more modern version anyway?
 
