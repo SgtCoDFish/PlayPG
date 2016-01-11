@@ -13,7 +13,8 @@ odb_compile(PlayPG_ODB FILES ${PlayPG_ODB_HEADERS} ${PlayPG_ODB_SOURCES}
             DB mysql STANDARD c++14
             INCLUDE
                 ${PROJECT_SOURCE_DIR}/include
-                ${PROJECT_SOURCE_DIR}/include/data)
+                ${PROJECT_SOURCE_DIR}/include/data
+            GENERATE_QUERY)
 
 include_directories("server-include"
                     ${Boost_INCLUDE_DIR}
@@ -38,4 +39,4 @@ add_executable(${PlayPG_SERVER_NAME}
                ${PlayPG_NON_DATA_HEADERS}
                ${PlayPG_SERVER_HEADERS}
                ${PlayPG_ODB})
-target_link_libraries(${PlayPG_SERVER_NAME} ${PlayPG_SERVER_LIBS} mysqlcppconn)
+target_link_libraries(${PlayPG_SERVER_NAME} ${PlayPG_SERVER_LIBS})

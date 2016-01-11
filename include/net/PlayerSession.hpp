@@ -45,11 +45,11 @@ public:
 	 * Create a new player session with the given username and socket.
 	 * If random is nullptr, a new random number generator will be created for this session.
 	 */
-	explicit PlayerSession(const uint32_t &playerID, const std::string &username, std::unique_ptr<APG::Socket> &&socket,
+	explicit PlayerSession(const uint64_t &playerID, const std::string &username, std::unique_ptr<APG::Socket> &&socket,
 	        APG::Random<uint_fast64_t> &random);
 	~PlayerSession() = default;
 
-	const uint32_t playerID;
+	const uint64_t playerID;
 	const std::string username;
 	const std::string sessionKey;
 

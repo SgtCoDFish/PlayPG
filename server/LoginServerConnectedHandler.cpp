@@ -28,14 +28,13 @@
 #include <utility>
 #include <memory>
 
+#include <odb/transaction.hxx>
+
 #include "LoginServer.hpp"
-#include "Character.hpp"
 #include "net/packets/CharacterPackets.hpp"
 
-#include <cppconn/driver.h>
-#include <cppconn/resultset.h>
-#include <cppconn/statement.h>
-#include <cppconn/prepared_statement.h>
+#include "Character.hpp"
+#include "odb/Character_odb.hpp"
 
 namespace PlayPG {
 
@@ -118,23 +117,20 @@ void LoginServer::processConnected() {
 }
 
 void LoginServer::processCharacterRequest(const std::unique_ptr<PlayerSession> &session, el::Logger * const logger) {
-	auto ps = std::unique_ptr<sql::PreparedStatement>(
-	        mysqlConnection->prepareStatement("SELECT * FROM characters WHERE playerID=?;"));
-	ps->setUInt(1, session->playerID);
+	odb::transaction t(db->begin());
 
-	auto results = std::unique_ptr<sql::ResultSet>(ps->executeQuery());
+	odb::query<Character> q(odb::query<Character>::playerID == odb::query<Character>::_ref(session->playerID));
+
+	auto result = odb::result<Character>(db->query<Character>(q));
 
 	std::vector<Character> characters;
+	characters.reserve(result.size());
 
-	if (results->rowsCount() > 0) {
-		while (results->next()) {
-			const std::string name = results->getString("name");
+	logger->info("Retrieved %v characters.", result.size());
 
-			const auto maxHP = results->getInt("maxHP");
-			const auto strength = results->getInt("strength");
-			const auto intelligence = results->getInt("intelligence");
-
-			characters.emplace_back(name, maxHP, strength, intelligence);
+	if (!result.empty()) {
+		for(const auto &chara : result) {
+			characters.emplace_back(chara);
 		}
 	}
 
@@ -150,9 +146,9 @@ void LoginServer::processCharacterRequest(const std::unique_ptr<PlayerSession> &
 
 		session->socket->disconnect();
 		session->socket->setError();
-
-		return;
 	}
+
+	t.commit();
 }
 
 }

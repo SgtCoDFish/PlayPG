@@ -29,6 +29,8 @@
 
 #include "ServerCommon.hpp"
 
+#include <odb/database.hxx>
+
 namespace PlayPG {
 
 ServerDetails::ServerDetails(const std::string &friendlyName_, const std::string &hostName_, uint16_t port_,
@@ -58,17 +60,11 @@ DatabaseDetails::DatabaseDetails(const std::string &hostName_, uint16_t port_, c
 Server::Server(const ServerDetails &serverDetails_, const DatabaseDetails &databaseDetails_) :
 		        serverDetails { serverDetails_ },
 		        databaseDetails { databaseDetails_ },
-		        driver { sql::mysql::get_driver_instance() },
-		        mysqlConnection { std::unique_ptr<sql::Connection>(
-		                driver->connect(databaseDetails.fullHostName.c_str(), databaseDetails.userName.c_str(),
-		                        databaseDetails.password.c_str())) },
-//		        mersenneTwister {
-//		                static_cast<std::mt19937_64::result_type>(std::chrono::high_resolution_clock::now().time_since_epoch().count()) },
+		        db { Server::getDatabaseConnection(databaseDetails) },
 		        mersenneTwister {
 		                static_cast<std::mt19937_64::result_type>(static_cast<std::mt19937_64::result_type>(randomDevice())
 		                        << 32 | static_cast<std::mt19937_64::result_type>(randomDevice())) },
 		        random { mersenneTwister } {
-	mysqlConnection->setSchema("ppg");
 }
 
 std::unique_ptr<APG::Socket> Server::getSocket(const std::string &hostname_, const uint16_t &port_, bool autoConnect_,
@@ -86,6 +82,15 @@ std::unique_ptr<APG::AcceptorSocket> Server::getAcceptorSocket(const uint16_t po
 	return std::make_unique<APG::SDLAcceptorSocket>(port, autoListen, bufferSize_);
 #else
 	return std::make_unique<APG::NativeDualAcceptorSocket>(port, autoListen, bufferSize_);
+#endif
+}
+
+std::unique_ptr<odb::database> Server::getDatabaseConnection(const DatabaseDetails &details) {
+#ifdef DATABASE_MYSQL
+	return std::unique_ptr<odb::database>(new odb::mysql::database(details.userName.c_str(), details.password.c_str(), "ppg", details.hostName.c_str(),
+	        details.port));
+#else
+#error "ONLY CONFIGURED FOR MYSQL SO FAR"
 #endif
 }
 

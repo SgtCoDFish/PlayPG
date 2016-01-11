@@ -27,14 +27,14 @@
 
 #include <APG/internal/Assert.hpp>
 
-#include <cppconn/driver.h>
-#include <cppconn/resultset.h>
-#include <cppconn/statement.h>
-#include <cppconn/prepared_statement.h>
+#include <odb/transaction.hxx>
+#include <odb/result.hxx>
 
 #include "LoginServer.hpp"
 
 #include "PlayPGVersion.hpp"
+#include "Player.hpp"
+#include "odb/Player_odb.hpp"
 
 namespace PlayPG {
 
@@ -416,15 +416,13 @@ bool LoginServer::processLoginAttempt(IncomingConnection &connection, const Auth
         el::Logger * const logger) {
 	const auto decPass = crypto->decryptStringPrivate(authID.password);
 
-	auto statement = std::unique_ptr<sql::PreparedStatement>(
-	        mysqlConnection->prepareStatement("SELECT * FROM players WHERE email=?;"));
-	statement->setString(1, authID.username);
+	odb::transaction t(db->begin());
 
-	auto results = std::unique_ptr<sql::ResultSet>(statement->executeQuery());
+	odb::query<Player> q(odb::query<Player>::_ref(authID.username) == odb::query<Player>::username);
 
-	const auto rowCount = results->rowsCount();
+	odb::result<Player> result(db->query<Player>(q));
 
-	if (rowCount == 0) {
+	if (result.empty()) {
 		connection.state = IncomingConnectionState::LOGIN_FAILED;
 		connection.loginAttempts += 1;
 
@@ -436,21 +434,22 @@ bool LoginServer::processLoginAttempt(IncomingConnection &connection, const Auth
 		connection.socket->put(&response.buffer);
 		connection.socket->send();
 
+		t.commit();
 		return false;
 	}
 
 #ifndef NDEBUG
-	if (rowCount > 1) {
+	if (result.size() > 1) {
 		logger->warn("Possible data integrity issue; multiple rows retrieved for email %v. Using first only.",
 		        authID.username);
 	}
 #endif
 
-	results->next();
+	const auto person = result.begin();
 
-	const uint32_t playerID = results->getUInt("id");
-	const std::string sha512 = results->getString("password");
-	const std::string saltString = results->getString("salt");
+	const uint32_t playerID = person->id;
+	const std::string sha512 = person->password;
+	const std::string saltString = person->salt;
 	const auto dbSalt = hasher.stringToSalt(saltString);
 
 	const auto hashedPass = hasher.hashPasswordSHA512(decPass, dbSalt);
@@ -481,8 +480,10 @@ bool LoginServer::processLoginAttempt(IncomingConnection &connection, const Auth
 
 		connection.state = IncomingConnectionState::DONE;
 
+		t.commit();
 		return true;
 	} else {
+		t.commit();
 		connection.state = IncomingConnectionState::LOGIN_FAILED;
 		connection.loginAttempts += 1;
 

@@ -48,8 +48,8 @@
 #include <SDL2/SDL.h>
 #endif
 
-#include <mysql_driver.h>
-#include <mysql_connection.h>
+#include "PlayPGODB.hpp"
+#include <odb/database.hxx>
 
 #include <boost/optional.hpp>
 
@@ -123,8 +123,9 @@ protected:
 	std::unique_ptr<APG::AcceptorSocket> getAcceptorSocket(const uint16_t port, bool autoListen = false,
 	        uint32_t bufferSize_ = BB_DEFAULT_SIZE);
 
-	sql::mysql::MySQL_Driver * driver;
-	std::unique_ptr<sql::Connection> mysqlConnection;
+	static std::unique_ptr<odb::database> getDatabaseConnection(const DatabaseDetails &details);
+
+	std::unique_ptr<odb::database> db;
 
 	std::random_device randomDevice;
 	std::mt19937_64 mersenneTwister;

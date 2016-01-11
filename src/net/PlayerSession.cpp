@@ -41,7 +41,7 @@ namespace PlayPG {
 
 std::atomic<uint64_t> PlayerSession::nextGUID { 0ull };
 
-PlayerSession::PlayerSession(const uint32_t &playerID_, const std::string &username_,
+PlayerSession::PlayerSession(const uint64_t &playerID_, const std::string &username_,
         std::unique_ptr<APG::Socket> &&socket_, APG::Random<uint_fast64_t> &random) :
 		        playerID { playerID_ },
 		        username { username_ },

@@ -25,8 +25,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef INCLUDE_DATA_CHARACTER_HPP_
-#define INCLUDE_DATA_CHARACTER_HPP_
+#ifndef ODB_CHARACTER_HPP_
+#define ODB_CHARACTER_HPP_
 
 #include <cstdint>
 
@@ -38,11 +38,12 @@
 
 namespace PlayPG {
 
-#pragma db object
+#pragma db object table("characters")
 class Character {
 public:
 	explicit Character(std::string name_, const int64_t &maxHP_, const int64_t &strength_, const int64_t &intelligence_) :
 			        id { 0 },
+			        playerID { 0 },
 			        name { std::move(name_) },
 			        maxHP { maxHP_ },
 			        currentHP { maxHP },
@@ -52,6 +53,8 @@ public:
 
 #pragma db id auto
 	uint64_t id;
+
+	uint64_t playerID;
 
 	std::string name;
 
@@ -86,6 +89,7 @@ private:
 
 	Character() :
 			        id { 0 },
+			        playerID { 0 },
 			        maxHP { 0 },
 			        currentHP { 0 },
 			        strength { 0 },

@@ -34,17 +34,14 @@
 #include <APG/core/APGeasylogging.hpp>
 #include <APG/internal/Assert.hpp>
 
-#include "mysql_connection.h"
-#include "mysql_driver.h"
-
-#include <cppconn/driver.h>
-#include <cppconn/resultset.h>
-#include <cppconn/statement.h>
-#include <cppconn/prepared_statement.h>
+#include <odb/transaction.hxx>
 
 #include "net/Opcodes.hpp"
 #include "net/packets/LoginPackets.hpp"
 #include "PlayPGVersion.hpp"
+
+#include "Player.hpp"
+#include "odb/Player_odb.hpp"
 
 namespace PlayPG {
 
@@ -141,38 +138,28 @@ void LoginServer::processMaps(el::Logger * const logger) {
 }
 
 void LoginServer::initDB(el::Logger * const logger) {
-	auto ps = std::unique_ptr<sql::Statement>(mysqlConnection->createStatement());
+	odb::transaction t(db->begin());
 
-	auto res = std::unique_ptr<sql::ResultSet>(ps->executeQuery("SELECT COUNT(*) AS playerCount FROM players;"));
+	PlayerCount playerCount(db->query_value<PlayerCount>());
 
-	res->next();
-	const auto playerCount = res->getUInt("playerCount");
-
-	if (playerCount == 0u) {
+	if(playerCount.count == 0u) {
 		static const char * const suID = "SgtCoDFish@example.com";
 		static const char * const suPWD = "testa";
+
+		logger->info("DB is empty, creating super-user \"%v\".", suID);
 
 		const auto salt = hasher.generateSalt();
 		const auto hashedPassword = hasher.hashPasswordSHA512(suPWD, salt);
 
-		logger->info("DB is empty, creating super-user \"%v\".", suID);
-
-		auto insert = std::unique_ptr<sql::Statement>(mysqlConnection->createStatement());
-
 		const auto pwdString = hasher.sha512ToString(hashedPassword);
 		const auto saltString = hasher.saltToString(salt);
 
-//		logger->info("\nPassword: %v\n"
-//				"Salt    : %v", pwdString, saltString);
+		Player superUser(suID, pwdString, saltString);
+		superUser.id = 1;
 
-		const char * const sqlString = "INSERT INTO players (email, password, salt) VALUES (?, ?, ?);";
+		db->persist(superUser);
 
-		auto prep = std::unique_ptr<sql::PreparedStatement>(mysqlConnection->prepareStatement(sqlString));
-		prep->setString(1, suID);
-		prep->setString(2, pwdString);
-		prep->setString(3, saltString);
-
-		prep->execute();
+		t.commit();
 
 		logger->info("Created super-user.");
 	}
