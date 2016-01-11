@@ -68,7 +68,9 @@ cd boost_1_59_0
 ./b2 toolset=<clang|gcc> cxxflags="-std=c++14 -w" define=_GLIBCXX_USE_CXX11_ABI=1 -j4
 ```
 
-### Raspberry Pi
+### Raspberry Pi (Raspbian/DietPi Jessie)
+#### ODB
+*Note: This also applies to Debian Jessie*
 No libraries for ODB are provided in DietPi repos (unsure about Raspbian), so you need to compile yourself, although the process is as standard as you can get:
 
 ```
@@ -76,6 +78,28 @@ sudo apt-get install libmysqld-dev
 ./configure
 make -j4
 sudo make install
+```
+
+The harder part is the lack of an executable; the error message you'll get if you charge ahead is that g++ was compiled without plugin support, which it does actually have. You just need to install some more libraries relating to plugin development.
+
+There's also a bug under g++ 4.9.2 which will stop you from compiling odb-2.4.0, see [here](http://www.codesynthesis.com/pipermail/odb-users/2015-February/002378.html). This is fixed by passing -fno-devirtualize to ./configure.
+
+```
+sudo apt-get install gcc-4.9-plugin-dev libcutl-dev libexpat-dev
+cd odb-2.4.0
+./configure CXXFLAGS=-fno-devirtualize
+make -j4
+sudo make install
+```
+#### Boost
+You'll have to recompile from scratch because the Boost libraries provided by default are really out-of-date (1.55 at time of writing, when 1.60 is out). It's not pleasant and it's strongly recommended that if you have a cross compiler for the Pi you use it, because compiling natively is likely going to take a long time. PlayPG requires at least 1.56 but if you're compiling from scratch, why not use a more modern version anyway?
+
+```
+cd boost_1_60_0 # or whatever version you're using
+./bootstrap.sh --with-libraries=filesystem,system,program_options # build them all by removing this option
+																  # but if you're compiling natively and you do that, you're nuts
+./b2 cxxflags="-std=c++1y" link=static threading=multi
+sudo ./b2 install
 ```
 
 ### Windows
