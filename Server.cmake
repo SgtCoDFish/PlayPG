@@ -17,6 +17,7 @@ odb_compile(PlayPG_ODB FILES ${PlayPG_ODB_HEADERS} ${PlayPG_ODB_SOURCES}
             GENERATE_QUERY)
 
 include_directories("server-include"
+                    "ODB"
                     ${Boost_INCLUDE_DIR}
                     ${ODB_COMPILE_OUTPUT_DIR}
                     ${ODB_INCLUDE_DIRS}
