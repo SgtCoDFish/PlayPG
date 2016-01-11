@@ -82,7 +82,7 @@ find_package(TmxParser REQUIRED)
 find_package(TinyXML2 REQUIRED)
 find_package(ZLIB REQUIRED)
 
-add_definitions(-DGLM_FORCE_RADIANS)
+add_definitions(-DGLM_FORCE_RADIANS -DTMXPARSER_HASH)
 
 file(GLOB_RECURSE PlayPG_SOURCES ${PROJECT_SOURCE_DIR}/src/*.cpp)
 file(GLOB_RECURSE PlayPG_HEADERS ${PROJECT_SOURCE_DIR}/include/*.hpp)
@@ -109,7 +109,8 @@ else ()
 		set(PlayPG_SOURCES ${PlayPG_SOURCES} ${PROJECT_SOURCE_DIR}/MSVC/vs2015_io_fix.cpp)
 	endif()
 	
-	set(CMAKE_CXX_FLAGS_BASE "${CMAKE_CXX_FLAGS_BASE} /EHsc")
+	# /wd4005 = silence macro redefinition warnings we get from SDL
+	set(CMAKE_CXX_FLAGS_BASE "${CMAKE_CXX_FLAGS_BASE} /EHsc /MP /wd4005")
 	
 	set(PlayPG_DEBUG_FLAGS "/Od /Gs")
 	set(PlayPG_RELEASE_FLAGS "/Ox")

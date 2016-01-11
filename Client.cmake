@@ -1,4 +1,5 @@
 file(GLOB_RECURSE PlayPG_CLIENT_SOURCES ${PROJECT_SOURCE_DIR}/client/*.cpp)
+file(GLOB_RECURSE PlayPG_CLIENT_HEADERS ${PROJECT_SOURCE_DIR}/client-include/*.cpp)
 
 file(MAKE_DIRECTORY assets)
 file(COPY ${PlayPG_TEST_ASSETS} DESTINATION assets)
@@ -14,5 +15,5 @@ if ( PlayPG_DEBUG )
     set(PlayPG_CLIENT_NAME "${PlayPG_CLIENT_NAME}-d")
 endif ()
 
-add_executable(${PlayPG_CLIENT_NAME} ${PlayPG_SOURCES} ${PlayPG_CLIENT_SOURCES})
+add_executable(${PlayPG_CLIENT_NAME} ${PlayPG_SOURCES} ${PlayPG_CLIENT_SOURCES} ${PlayPG_CLIENT_HEADERS} ${PlayPG_HEADERS})
 target_link_libraries(${PlayPG_CLIENT_NAME} ${PlayPG_CLIENT_LIBS})
