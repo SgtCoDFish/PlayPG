@@ -48,8 +48,8 @@ ODB is built using the old ABI and must be rebuilt. This isn't too hard; for exa
 apt-get source libodb-dev
 apt-get source libodb-mysql-dev
 
-# extract both files
-# then, in each directory...
+> extract both files
+> then, in each directory...
 
 ./configure CXXFLAGS=-std=c++1y -DGLIB_CXX_USE_CXX11_ABI=1
 make -j4
@@ -66,6 +66,16 @@ tar xf boost_1_59_0.tar.gz # replace version as appropriate
 cd boost_1_59_0
 ./bootstrap.sh --with-toolset=<clang|gcc> --with-libraries=program_options,filesystem,system # toolset and libraries as needed
 ./b2 toolset=<clang|gcc> cxxflags="-std=c++14 -w" define=_GLIBCXX_USE_CXX11_ABI=1 -j4
+```
+
+### Raspberry Pi
+No libraries for ODB are provided in DietPi repos (unsure about Raspbian), so you need to compile yourself, although the process is as standard as you can get:
+
+```
+sudo apt-get install libmysqld-dev
+./configure
+make -j4
+sudo make install
 ```
 
 ### Windows
