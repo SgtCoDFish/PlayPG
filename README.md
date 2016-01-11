@@ -40,10 +40,24 @@ Platform Specific Tips
 
 ### Ubuntu 15.10
 #### General
-- CMake can struggle to find mysqlcppconn; as such the dependency is there but `find_package` might not be.
+
+#### ODB
+ODB is built using the old ABI and must be rebuilt. This isn't too hard; for example, using MySQL:
+
+```
+apt-get source libodb-dev
+apt-get source libodb-mysql-dev
+
+# extract both files
+# then, in each directory...
+
+./configure CXXFLAGS=-std=c++1y -DGLIB_CXX_USE_CXX11_ABI=1
+make -j4
+sudo make install
+```
 
 #### Boost
-By default, the boost packages with Ubuntu 15.10 (wily) are built with the old C++ ABI and are therefore completely useless if you're otherwise using a standard toolset for modern C++.
+By default, the boost packages with Ubuntu 15.10 (wily) are built with the old C++ ABI and are therefore completely useless if you're otherwise using the standard toolset for modern C++.
 
 To build boost on the new abi (assuming you've downloaded the latest source of boost from [the boost downloads page](http://www.boost.org/users/download/)):
 

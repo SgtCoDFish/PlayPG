@@ -85,8 +85,15 @@ find_package(ZLIB REQUIRED)
 add_definitions(-DGLM_FORCE_RADIANS -DTMXPARSER_HASH)
 
 file(GLOB_RECURSE PlayPG_SOURCES ${PROJECT_SOURCE_DIR}/src/*.cpp)
-file(GLOB_RECURSE PlayPG_HEADERS ${PROJECT_SOURCE_DIR}/include/*.hpp)
 file(GLOB_RECURSE PlayPG_TEST_ASSETS ${PROJECT_SOURCE_DIR}/assets/*)
+
+file(GLOB_RECURSE PlayPG_HEADERS ${PROJECT_SOURCE_DIR}/include/*.hpp)
+file(GLOB PlayPG_ODB_HEADERS ${PROJECT_SOURCE_DIR}/ODB/*.hpp)
+
+message (${PlayPG_ODB_HEADERS})
+
+set(PlayPG_NON_ODB_HEADERS ${PlayPG_HEADERS})
+set(PlayPG_ALL_HEADERS ${PlayPG_NON_DATA_HEADERS} ${PlayPG_ODB_HEADERS})
 
 set(OS_LIBS "")
 
@@ -96,13 +103,13 @@ endif ()
 
 if ( NOT MSVC )
 	set(CMAKE_CXX_COMPILER_ARG1 "-std=c++1y")
-	set(CMAKE_CXX_FLAGS_BASE "-Wall -Wextra -Wno-unused-parameter -pthread")
+	set(CMAKE_CXX_FLAGS_BASE "-Wall -Wextra -Wno-unused-parameter -Wno-unknown-pragmas -pthread")
 	
 	set(PlayPG_DEBUG_FLAGS "-g3 -O0")
 	set(PlayPG_RELEASE_FLAGS "-g0 -O3")
 else ()
     set(OS_LIBS ${OS_LIBS} ws2_32)
-	# VS 2015 has a linker issue, this should fix it
+	# VS 2015 has a linker issue with current SDL2 binaries, this should fix it
 	if( MSVC_VERSION GREATER 1800)
 		message ("Using legacy STDIO fix for MSVC 15.")
 		set(OS_LIBS ${OS_LIBS} legacy_stdio_definitions)
@@ -110,6 +117,8 @@ else ()
 	endif()
 	
 	# /wd4005 = silence macro redefinition warnings we get from SDL
+	# /EHsc = enable exceptions
+	# /MP = multiprocessor compilation
 	set(CMAKE_CXX_FLAGS_BASE "${CMAKE_CXX_FLAGS_BASE} /EHsc /MP /wd4005")
 	
 	set(PlayPG_DEBUG_FLAGS "/Od /Gs")
@@ -151,7 +160,6 @@ if ( NOT APG_NO_SDL )
     
                         ${OPENGL_INCLUDE_DIR}
                         ${GLEW_INCLUDE_DIRS}
-                        
                         )
                         
     set(PlayPG_LIBS ${PlayPG_LIBS}

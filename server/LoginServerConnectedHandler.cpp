@@ -29,7 +29,7 @@
 #include <memory>
 
 #include "LoginServer.hpp"
-#include "data/Character.hpp"
+#include "Character.hpp"
 #include "net/packets/CharacterPackets.hpp"
 
 #include <cppconn/driver.h>
@@ -134,7 +134,7 @@ void LoginServer::processCharacterRequest(const std::unique_ptr<PlayerSession> &
 			const auto strength = results->getInt("strength");
 			const auto intelligence = results->getInt("intelligence");
 
-			characters.emplace_back(name, Stats { maxHP, strength, intelligence });
+			characters.emplace_back(name, maxHP, strength, intelligence);
 		}
 	}
 

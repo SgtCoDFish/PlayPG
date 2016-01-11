@@ -40,7 +40,7 @@
 #include <Ashley/Ashley.hpp>
 
 #include "Map.hpp"
-#include "data/Character.hpp"
+#include "Character.hpp"
 
 #include "net/crypto/RSACrypto.hpp"
 #include "net/crypto/SHACrypto.hpp"

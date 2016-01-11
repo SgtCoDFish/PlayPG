@@ -32,10 +32,10 @@
 
 #include <APG/s11n/JSON.hpp>
 
-#include "data/Character.hpp"
 #include "util/Util.hpp"
 #include "net/Packet.hpp"
 #include "Map.hpp"
+#include "Character.hpp"
 
 #ifndef INCLUDE_NET_PACKETS_CHARACTERPACKETS_HPP_
 #define INCLUDE_NET_PACKETS_CHARACTERPACKETS_HPP_
@@ -85,17 +85,15 @@ public:
 		std::vector<PlayPG::Character> characters;
 
 		for (rapidjson::SizeType i = 0; i < charObject.Size(); ++i) {
-			const auto name = charObject[i]["name"].GetString();
+			const auto &playerObject = charObject[i];
 
-			const auto &statsObject = charObject[i]["stats"];
+			const auto name = playerObject["name"].GetString();
 
-			const auto maxHP = statsObject["maxHP"].GetInt();
-			const auto str = statsObject["strength"].GetInt();
-			const auto intelligence = statsObject["intelligence"].GetInt();
+			const auto maxHP = playerObject["maxHP"].GetInt();
+			const auto str = playerObject["strength"].GetInt();
+			const auto intelligence = playerObject["intelligence"].GetInt();
 
-			PlayPG::Stats stats { maxHP, str, intelligence };
-
-			characters.emplace_back(name, std::move(stats));
+			characters.emplace_back(name, maxHP, str, intelligence);
 		}
 
 		return PlayPG::PlayerCharacters(std::move(characters));
@@ -110,31 +108,15 @@ public:
 		writer->StartArray();
 
 		for (const auto &character : t.characters) {
-			writer->StartObject();
-
-			writer->String("name");
-			writer->String(character.name.c_str());
-
-			writer->String("stats");
-			writer->StartObject();
-
-			writer->String("maxHP");
-			writer->Int(character.stats.maxHP);
-
-			writer->String("strength");
-			writer->Int(character.stats.strength);
-
-			writer->String("intelligence");
-			writer->Int(character.stats.intelligence);
-
-			writer->EndObject();
-
-			writer->EndObject();
+			character.toJson(writer.get());
 		}
 
 		writer->EndArray();
 
 		writer->EndObject();
+
+		el::Loggers::getLogger("TEST")->info("%v", buffer.GetString());
+
 		return std::string(buffer.GetString());
 	}
 };

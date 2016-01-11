@@ -25,16 +25,22 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <utility>
+#ifndef INCLUDE_PLAYPGODB_HPP_
+#define INCLUDE_PLAYPGODB_HPP_
 
-#include "data/Character.hpp"
+#ifdef PLAYPG_BUILD_SERVER
 
-namespace PlayPG {
+#include <odb/core.hxx>
+#define ODB_FRIEND friend class odb::access;
 
-Character::Character(std::string name_, Stats stats_) :
-		        name { std::move(name_) },
-		        stats { std::move(stats_) } {
-}
+#ifdef DATABASE_MYSQL
+#include <odb/mysql/database.hxx>
+#endif
 
+#else
 
-}
+#define ODB_FRIEND
+
+#endif
+
+#endif /* INCLUDE_PLAYPGODB_HPP_ */

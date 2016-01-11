@@ -32,19 +32,65 @@
 
 #include <string>
 
-#include "Stats.hpp"
+#include <rapidjson/writer.h>
 
-#include <rapidjson/prettywriter.h>
+#include "PlayPGODB.hpp"
 
 namespace PlayPG {
 
+#pragma db object
 class Character {
 public:
-	explicit Character(std::string name_, Stats stats_);
+	explicit Character(std::string name_, const int64_t &maxHP_, const int64_t &strength_, const int64_t &intelligence_) :
+			        id { 0 },
+			        name { std::move(name_) },
+			        maxHP { maxHP_ },
+			        currentHP { maxHP },
+			        strength { strength_ },
+			        intelligence { intelligence_ } {
+	}
 
-	const std::string name;
+#pragma db id auto
+	uint64_t id;
 
-	Stats stats { 100, 10, 5 };
+	std::string name;
+
+	int64_t maxHP;
+
+#pragma db transient
+	int64_t currentHP;
+
+	int64_t strength;
+	int64_t intelligence;
+
+	void toJson(rapidjson::Writer<rapidjson::StringBuffer> * writer) const {
+		writer->StartObject();
+
+		writer->String("name");
+		writer->String(name.c_str());
+
+		writer->String("maxHP");
+		writer->Int(maxHP);
+
+		writer->String("strength");
+		writer->Int(strength);
+
+		writer->String("intelligence");
+		writer->Int(intelligence);
+
+		writer->EndObject();
+	}
+
+private:
+	ODB_FRIEND
+
+	Character() :
+			        id { 0 },
+			        maxHP { 0 },
+			        currentHP { 0 },
+			        strength { 0 },
+			        intelligence { 0 } {
+	}
 };
 
 }
