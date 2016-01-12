@@ -115,8 +115,6 @@ public:
 
 		writer->EndObject();
 
-		el::Loggers::getLogger("TEST")->info("%v", buffer.GetString());
-
 		return std::string(buffer.GetString());
 	}
 };

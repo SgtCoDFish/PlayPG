@@ -47,6 +47,7 @@
 #include "ClientMapUtil.hpp"
 
 #include "net/packets/LoginPackets.hpp"
+#include "net/packets/CharacterPackets.hpp"
 
 using namespace APG;
 
@@ -263,6 +264,17 @@ void PlayPG::render(float deltaTime) {
 			const auto json = socket.getStringByLength(jsonLength);
 
 			logger->info("Got %v.", json);
+
+			APG::JSONSerializer<PlayerCharacters> charS11N;
+			const auto charList = charS11N.fromJSON(json.c_str());
+
+			if(charList.characters.size() == 0) {
+				logger->fatal("Server has no characters for this account. Exiting.");
+				break;
+			}
+
+			currentCharacter = std::make_unique<Character>(charList.characters[0]);
+
 			gameState = GameState::PLAYING;
 		}
 
