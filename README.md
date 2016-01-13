@@ -70,7 +70,6 @@ cd boost_1_59_0
 
 ### Raspberry Pi (Raspbian/DietPi Jessie)
 #### ODB
-*Note: This also applies to Debian Jessie*
 No libraries for ODB are provided in DietPi repos (unsure about Raspbian), so you need to compile yourself, although the process is as standard as you can get:
 
 ```
@@ -110,6 +109,13 @@ cd boost_1_60_0 # or whatever version you're using
 																  # but if you're compiling natively and you do that, you're nuts
 ./b2 cxxflags="-std=c++1y" link=static threading=multi
 sudo ./b2 install
+```
+
+### Debian (Jessie)
+On the whole, the same applies for Debian as applies for Raspbian Jessie. The main difference is that, by default, it seems the odb libraries build without including the mysql libraries (assuming that you're using mysql). You'll need to specify -lmysqlclient and -lmysqld manually. E.g.:
+
+```
+cmake -DAPG_NO_SDL=ON -DPlayPG_SERVER_LIBS=mysqlclient ..
 ```
 
 ### Windows

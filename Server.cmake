@@ -23,7 +23,7 @@ include_directories("server-include"
                     ${ODB_INCLUDE_DIRS}
                     )
                     
-set(PlayPG_SERVER_LIBS ${PlayPG_LIBS}
+list(APPEND PlayPG_SERVER_LIBS ${PlayPG_LIBS}
                 ${Boost_LIBRARIES}
                 ${ODB_LIBRARIES}
                 )
