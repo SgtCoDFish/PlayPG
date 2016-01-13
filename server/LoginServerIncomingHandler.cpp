@@ -154,7 +154,7 @@ void LoginServer::processChallengeSentSocket(IncomingConnection &connection, el:
 
 	const auto bytesFromChallenge = connection.socket->recv(2048);
 
-	logger->info("Read %v bytes", bytesFromChallenge);
+//	logger->info("Read %v bytes", bytesFromChallenge);
 
 	if (bytesFromChallenge == 0) {
 		logger->error("Couldn't read after CHALLENGE_SENT");

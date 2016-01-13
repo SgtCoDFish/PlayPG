@@ -112,7 +112,7 @@ sudo ./b2 install
 ```
 
 ### Debian (Jessie)
-On the whole, the same applies for Debian as applies for Raspbian Jessie. The main difference is that, by default, it seems the odb libraries build without including the mysql libraries (assuming that you're using mysql). You'll need to specify -lmysqlclient and -lmysqld manually. E.g.:
+On the whole, the same applies for Debian as applies for Raspbian Jessie. The main difference is that, by default, it seems the odb libraries build without including the mysql libraries (assuming that you're using mysql). You'll need to specify -lmysqlclient manually. E.g.:
 
 ```
 cmake -DAPG_NO_SDL=ON -DPlayPG_SERVER_LIBS=mysqlclient ..
