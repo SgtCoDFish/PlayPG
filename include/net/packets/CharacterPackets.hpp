@@ -63,6 +63,14 @@ private:
 	void putJSON();
 };
 
+class CharacterSelect final : public ClientPacket {
+public:
+	explicit CharacterSelect(const Character &character_);
+	explicit CharacterSelect(const uint64_t &characterID_);
+
+	const uint64_t characterID;
+};
+
 }
 
 namespace APG {
@@ -94,6 +102,9 @@ public:
 			const auto intelligence = playerObject["intelligence"].GetInt();
 
 			characters.emplace_back(name, maxHP, str, intelligence);
+
+			characters.back().id = static_cast<uint64_t>(playerObject["id"].GetInt64());
+			characters.back().playerID = static_cast<uint64_t>(playerObject["playerID"].GetInt64());
 		}
 
 		return PlayPG::PlayerCharacters(std::move(characters));

@@ -50,6 +50,7 @@ enum class ClientOpcode
 		LOGIN_AUTHENTICATION_IDENTITY = 0x0001,
 	VERSION_MISMATCH = 0x0002,
 	REQUEST_CHARACTERS = 0x0003,
+	CHARACTER_SELECT = 0x0004,
 	MOVE = 0x000A,
 };
 
@@ -63,9 +64,11 @@ enum class ServerOpcode
 	MAP_SERVER_NOT_NEEDED = 0XFFF9,
 	MAP_SERVER_ACK = 0xFFF8,
 	MAP_SERVER_CONNECTION_INSTRUCTIONS = 0xFFF7,
-	PLAYER_CHARACTERS = 0XFFF6,
+	PLAYER_CHARACTERS = 0xFFF6,
 	SERVER_PUBKEY = 0xFFF5,
+	MALFORMED_PACKET = 0xFFF4,
 };
+
 static_assert(std::is_same<std::underlying_type<ClientOpcode>::type, std::underlying_type<ServerOpcode>::type>::value, "ClientOpcodes and ServerOpcodes must have the same underlying type.");
 using opcode_type_t = std::underlying_type<ClientOpcode>::type;
 // can safely use the type of ClientOpcode since we mandate that the underlying type must match that of the server opcodes.

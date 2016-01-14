@@ -69,6 +69,12 @@ public:
 	void toJson(rapidjson::Writer<rapidjson::StringBuffer> * writer) const {
 		writer->StartObject();
 
+		writer->String("id");
+		writer->Int64(id);
+
+		writer->String("playerID");
+		writer->Int64(playerID);
+
 		writer->String("name");
 		writer->String(name.c_str());
 

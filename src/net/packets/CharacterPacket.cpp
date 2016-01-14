@@ -49,4 +49,15 @@ void PlayerCharacters::putJSON() {
 	buffer.putString(json);
 }
 
+CharacterSelect::CharacterSelect(const Character &character_) :
+		        CharacterSelect(character_.id) {
+
+}
+
+CharacterSelect::CharacterSelect(const uint64_t &characterID_) :
+		        ClientPacket(ClientOpcode::CHARACTER_SELECT),
+		        characterID { characterID_ } {
+	buffer.putLong(characterID);
+}
+
 }

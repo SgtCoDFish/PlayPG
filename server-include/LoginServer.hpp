@@ -149,6 +149,7 @@ private:
 
 	// Methods used to process connections which have already been established.
 	void processCharacterRequest(const std::unique_ptr<PlayerSession> &session, el::Logger * const logger);
+	void processCharacterSelect(const std::unique_ptr<PlayerSession> &session, el::Logger * const logger);
 
 	bool regenerateKeys_ = false;
 	std::unique_ptr<RSACrypto> crypto;

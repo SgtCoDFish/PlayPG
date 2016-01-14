@@ -32,6 +32,7 @@
 
 #include "LoginServer.hpp"
 #include "net/packets/CharacterPackets.hpp"
+#include "net/packets/ErrorPackets.hpp"
 
 #include "Character.hpp"
 #include "odb/Character_odb.hpp"
@@ -92,6 +93,11 @@ void LoginServer::processConnected() {
 						break;
 					}
 
+					case util::to_integral(ClientOpcode::CHARACTER_SELECT): {
+						processCharacterSelect(session, logger);
+						break;
+					}
+
 					default: {
 						logger->verbose(8, "Unhandled opcode received: %v", opcode);
 						break;
@@ -129,7 +135,7 @@ void LoginServer::processCharacterRequest(const std::unique_ptr<PlayerSession> &
 	logger->info("Retrieved %v characters.", result.size());
 
 	if (!result.empty()) {
-		for(const auto &chara : result) {
+		for (const auto &chara : result) {
 			characters.emplace_back(chara);
 		}
 	}
@@ -149,6 +155,56 @@ void LoginServer::processCharacterRequest(const std::unique_ptr<PlayerSession> &
 	}
 
 	t.commit();
+}
+
+void LoginServer::processCharacterSelect(const std::unique_ptr<PlayerSession> &session, el::Logger * const logger) {
+	if (session->socket->recv(sizeof(uint64_t)) != sizeof(uint64_t)) {
+		logger->verbose(9, "Malformed character select packet.");
+
+		MalformedPacket response;
+
+		session->socket->clear();
+		session->socket->put(&response.buffer);
+		session->socket->send();
+
+		return;
+	}
+
+	const uint64_t theirCharacterID = session->socket->getLong();
+
+	odb::transaction t(db->begin());
+
+	// Check database to make sure the player isn't trying to log in with somebody else's character
+	odb::query<Character> q(
+	        odb::query<Character>::playerID == odb::query<Character>::_ref(session->playerID)
+	                && odb::query<Character>::id == odb::query<Character>::_ref(theirCharacterID));
+
+	auto queryResult = db->query(q);
+
+	if (queryResult.size() != 1) {
+		/*
+		 * Either we've got an database integrity failure, or a user integrity failure.
+		 * Either way we fail!
+		 *
+		 * Since a user integrity failure is far more likely, we just disconnect because it's most likely
+		 * someone trying to hack.
+		 */
+
+		session->socket->clear();
+		session->socket->disconnect();
+
+		logger->verbose(1, "Player %v tried to log into a non-owned character (id %v)", session->playerID, theirCharacterID);
+
+		return;
+	}
+
+	t.commit();
+
+	session->characterID = theirCharacterID;
+
+	logger->verbose(9, "Player %v chose character %v.", session->playerID, session->characterID);
+
+	// TODO: Send map server details.
 }
 
 }

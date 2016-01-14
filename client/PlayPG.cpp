@@ -275,6 +275,11 @@ void PlayPG::render(float deltaTime) {
 
 			currentCharacter = std::make_unique<Character>(charList.characters[0]);
 
+			CharacterSelect selectPacket(*currentCharacter);
+			socket.clear();
+			socket.put(&selectPacket.buffer);
+			socket.send();
+
 			gameState = GameState::PLAYING;
 		}
 

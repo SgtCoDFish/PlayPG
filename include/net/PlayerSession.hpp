@@ -53,6 +53,8 @@ public:
 	const std::string username;
 	const std::string sessionKey;
 
+	uint64_t characterID = 0;
+
 	uint64_t guid;
 	std::unique_ptr<APG::Socket> socket;
 
