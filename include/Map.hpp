@@ -55,6 +55,7 @@ struct MapTile final {
 class Map final {
 public:
 	static std::string resolveNameFromMap(const Tmx::Map * map, el::Logger * const logger);
+	static uint32_t resolveVersionFromMap(const Tmx::Map * map, el::Logger * const logger);
 
 	explicit Map(const Tmx::Map * map);
 
@@ -108,14 +109,19 @@ public:
 		return map;
 	}
 
-	const std::string getName() const {
+	const std::string &getName() const {
 		return name_;
+	}
+
+	uint32_t getVersion() const {
+		return version_;
 	}
 
 private:
 	const Tmx::Map * map;
 
 	std::string name_;
+	uint32_t version_;
 
 	std::vector<MapTile> tiles;
 	glm::ivec2 spawnPoint;
@@ -127,17 +133,6 @@ private:
 	void parseMap();
 	void parseLayers(el::Logger * const logger);
 	void parseTiles(el::Logger * const logger);
-};
-
-class MapIdentifier {
-public:
-	static std::string makeMD5Hash(const std::string &base64Hash);
-
-	explicit MapIdentifier(const Map &map);
-	explicit MapIdentifier(const std::string &name, const std::string &hash);
-
-	const std::string mapName;
-	const std::string mapHash;
 };
 
 }

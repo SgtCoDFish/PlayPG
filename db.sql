@@ -42,12 +42,10 @@ CREATE TABLE `locations` (
   `id` int(11) NOT NULL UNIQUE AUTO_INCREMENT,
 
   `locationName` VARCHAR(50) NOT NULL,
-  `knownFileName` VARCHAR(50) NOT NULL,
-  `knownMD5Hash` VARCHAR(50) NOT NULL,
+  `knownFileName` VARCHAR(255) NOT NULL,
+  `knownMD5Hash` VARCHAR(25) NOT NULL,
 
-  `versionMajor` SMALLINT NOT NULL,
-  `versionMinor` SMALLINT NOT NULL,
-  `versionPatch` SMALLINT NOT NULL,
+  `version` int(11) NOT NULL,
 
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=0;
@@ -59,6 +57,9 @@ CREATE TABLE `races` (
 
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=0;
+
+INSERT INTO `races` VALUES (1, 'human');
+INSERT INTO `races` VALUES (2, 'dog');
 
 CREATE TABLE `characters` (
   `id` int(11) NOT NULL UNIQUE AUTO_INCREMENT,
@@ -96,7 +97,3 @@ CREATE TABLE `characters` (
 -- INSERT INTO `players` VALUES (2, 'ad299@example.com', 'testa');
 
 -- INSERT INTO `characters` VALUES (1, 1, 'Kurxka', 100, 5, 2);
-
-INSERT INTO `races` VALUES (1, 'human');
-INSERT INTO `races` VALUES (2, 'dog');
-

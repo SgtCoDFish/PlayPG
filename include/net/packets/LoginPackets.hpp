@@ -35,6 +35,7 @@
 #include "util/Util.hpp"
 #include "net/Packet.hpp"
 #include "Map.hpp"
+#include "Location.hpp"
 
 #include <openssl/md5.h>
 
@@ -122,9 +123,9 @@ public:
 class MapServerMapList final : public ServerPacket {
 public:
 	static MapServerMapList listFromMaps(const std::vector<Map> &maps);
-	explicit MapServerMapList(const std::vector<MapIdentifier> &mapHashes);
+	explicit MapServerMapList(const std::vector<Location> &mapHashes);
 
-	const std::vector<MapIdentifier> mapHashes;
+	const std::vector<Location> mapHashes;
 };
 
 class VersionMismatch final : public ClientPacket {
@@ -274,15 +275,17 @@ public:
 
 		assert(mapHashes.IsArray());
 
-		std::vector<PlayPG::MapIdentifier> ret;
+		std::vector<PlayPG::Location> ret;
 
 		for (rapidjson::SizeType i = 0; i < mapHashes.Size(); ++i) {
 			const auto &object = mapHashes[i];
 
 			const std::string mapName = object["name"].GetString();
+			const std::string knownFileName = object["knownFileName"].GetString();
 			const std::string mapHash = object["hash"].GetString();
+			const uint64_t version = object["version"].GetInt64();
 
-			ret.emplace_back(PlayPG::MapIdentifier(mapName, mapHash));
+			ret.emplace_back(PlayPG::Location(mapName, knownFileName, mapHash, version));
 		}
 
 		return PlayPG::MapServerMapList(std::move(ret));
@@ -296,15 +299,20 @@ public:
 		writer->String("maps");
 		writer->StartArray();
 
-		for (const auto &mapIdentifier : t.mapHashes) {
-
+		for (const auto &location : t.mapHashes) {
 			writer->StartObject();
 
 			writer->String("name");
-			writer->String(mapIdentifier.mapName.c_str());
+			writer->String(location.locationName.c_str());
 
 			writer->String("hash");
-			writer->String(mapIdentifier.mapHash.c_str());
+			writer->String(location.knownMD5Hash.c_str());
+
+			writer->String("knownFileName");
+			writer->String(location.knownFileName.c_str());
+
+			writer->String("version");
+			writer->Int64(location.version);
 
 			writer->EndObject();
 

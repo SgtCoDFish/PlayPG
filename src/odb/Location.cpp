@@ -25,57 +25,25 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef ODB_LOCATION_HPP_
-#define ODB_LOCATION_HPP_
+#include <openssl/md5.h>
 
-#include <cstdint>
-
-#include <string>
-
-#include "Map.hpp"
-
-#include "PlayPGODB.hpp"
+#include "Location.hpp"
+#include "util/Util.hpp"
 
 namespace PlayPG {
 
-#pragma db object table("locations")
-class Location {
-public:
-	static std::string makeMD5Hash(const std::string &base64Hash);
-
-	explicit Location(const Map &map);
-
-	explicit Location(const std::string &locationName_, const std::string &knownFileName_,
-	        const std::string &knownMD5Hash_, const uint32_t &version_) :
-			        id { 0u },
-			        locationName { locationName_ },
-			        knownFileName { knownFileName_ },
-			        knownMD5Hash { knownMD5Hash_ },
-			        version { version_ } {
-	}
-
-#pragma db id auto
-	uint64_t id;
-
-	std::string locationName;
-
-	std::string knownFileName;
-	std::string knownMD5Hash;
-
-	uint32_t version;
-
-private:
-	ODB_FRIEND;
-
-	explicit Location() :
-	id {0u},
-	locationName {""},
-	knownFileName {""},
-	knownMD5Hash {""},
-	version {0u} {
-	}
-};
+Location::Location(const Map &map) :
+		        Location(map.getName(), map.getTmxMap()->GetFilename(),
+		                Location::makeMD5Hash(map.getTmxMap()->GetFilehash()), map.getVersion()) {
 
 }
 
-#endif /* ODB_LOCATION_HPP_ */
+std::string Location::makeMD5Hash(const std::string &base64Hash) {
+	uint8_t buffer[MD5_DIGEST_LENGTH];
+
+	::MD5(reinterpret_cast<const uint8_t *>(base64Hash.c_str()), base64Hash.size(), buffer);
+
+	return ByteArrayUtil::byteArrayToString(buffer, MD5_DIGEST_LENGTH);
+}
+
+}

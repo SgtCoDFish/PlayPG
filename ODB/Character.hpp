@@ -45,6 +45,8 @@ public:
 			        id { 0 },
 			        playerID { 0 },
 			        name { std::move(name_) },
+			        raceID { 0 },
+			        locationID { 0 },
 			        maxHP { maxHP_ },
 			        currentHP { maxHP },
 			        strength { strength_ },
@@ -57,6 +59,9 @@ public:
 	uint64_t playerID;
 
 	std::string name;
+	uint64_t raceID;
+
+	uint64_t locationID;
 
 	int64_t maxHP;
 
@@ -78,6 +83,9 @@ public:
 		writer->String("name");
 		writer->String(name.c_str());
 
+		writer->String("raceID");
+		writer->Int64(raceID);
+
 		writer->String("maxHP");
 		writer->Int(maxHP);
 
@@ -91,15 +99,10 @@ public:
 	}
 
 private:
-	ODB_FRIEND
+	ODB_FRIEND;
 
-	Character() :
-			        id { 0 },
-			        playerID { 0 },
-			        maxHP { 0 },
-			        currentHP { 0 },
-			        strength { 0 },
-			        intelligence { 0 } {
+	explicit Character () :
+	Character("", 0, 0, 0) {
 	}
 };
 

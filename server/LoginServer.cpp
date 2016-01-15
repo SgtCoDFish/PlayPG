@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 See AUTHORS file.
+ * Copyright (c) 2015,2016 See AUTHORS file.
  * All rights reserved.
 
  * Redistribution and use in source and binary forms, with or without
@@ -42,6 +42,9 @@
 
 #include "Player.hpp"
 #include "odb/Player_odb.hpp"
+
+#include "Location.hpp"
+#include "odb/Location_odb.hpp"
 
 namespace PlayPG {
 
@@ -130,11 +133,75 @@ void LoginServer::processMaps(el::Logger * const logger) {
 			continue;
 		}
 
-		allMaps.emplace_back(Map::resolveNameFromMap(map.get(), logger),
-		        MapIdentifier::makeMD5Hash(map->GetFilehash()));
+		auto loadedLocation = Location(Map::resolveNameFromMap(map.get(), logger), mapPath,
+		        Location::makeMD5Hash(map->GetFilehash()), Map::resolveVersionFromMap(map.get(), logger));
+
+		odb::transaction t(db->begin());
+
+		odb::query<Location> q(odb::query<Location>::locationName == odb::query<Location>::_ref(loadedLocation.locationName));
+
+		auto results = db->query<Location>(q);
+
+#ifndef NDEBUG
+		if (results.size() > 1) {
+			logger->warn(
+			        "More than one location was found for the map named \"%v\". This is a possible data integrity issue.",
+			        loadedLocation.locationName);
+		}
+#endif
+
+		if (results.empty()) {
+			// New map
+			auto newLocID = db->persist(loadedLocation);
+
+			logger->info("Created new db entry for map %v (id %v)", loadedLocation.locationName, newLocID);
+		} else {
+			// Existing map, need to check its integrity
+			auto locIterator = results.begin();
+			Location databaseLocation = *locIterator;
+
+			if (loadedLocation.version == databaseLocation.version) {
+				if (locIterator->knownMD5Hash != loadedLocation.knownMD5Hash) {
+					/*
+					 * As implemented, this is incredibly unlikely because changing the version number will change the hash.
+					 *
+					 * This probably should be changed.
+					 */
+					logger->error("Map hash difference for %v (id %v), despite matching version number: %v.",
+					        databaseLocation.locationName, databaseLocation.id, loadedLocation.version);
+					logger->error("This is almost certainly a mistake with versioning.");
+				} else {
+					logger->verbose(8, "Map %v matches expected values.", loadedLocation.locationName);
+				}
+			} else {
+				if (loadedLocation.version > databaseLocation.version) {
+					// We have a newer version of the map; update in the database.
+
+					databaseLocation.knownMD5Hash = loadedLocation.knownMD5Hash;
+					databaseLocation.version = loadedLocation.version;
+
+					db->update<Location>(databaseLocation);
+					logger->verbose(1, "Updated map %v to new version %v in the database.", loadedLocation.locationName,
+							loadedLocation.version);
+				} else {
+					logger->error(
+					        "Map %v is outdated according to the database. Try replacing it with the newer version \"%v\".",
+					        loadedLocation.locationName, databaseLocation.version);
+					/*
+					 * There's nothing sensible to really do here;
+					 * we'll keep trying to start but likely the server won't be much use
+					 * with an outdated map.
+					 */
+				}
+			}
+		}
+
+		t.commit();
+		allMaps.emplace_back(std::move(loadedLocation));
 	}
 
 	mapServers.reserve(allMaps.size());
+
 }
 
 void LoginServer::initDB(el::Logger * const logger) {
@@ -142,7 +209,7 @@ void LoginServer::initDB(el::Logger * const logger) {
 
 	PlayerCount playerCount(db->query_value<PlayerCount>());
 
-	if(playerCount.count == 0u) {
+	if (playerCount.count == 0u) {
 		static const char * const suID = "SgtCoDFish@example.com";
 		static const char * const suPWD = "testa";
 

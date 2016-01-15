@@ -46,6 +46,7 @@
 #include "net/crypto/RSACrypto.hpp"
 #include "net/crypto/SHACrypto.hpp"
 
+#include "Location.hpp"
 #include "Map.hpp"
 
 #include <APG/core/APGeasylogging.hpp>
@@ -90,12 +91,12 @@ struct IncomingConnection {
 	boost::optional<std::string> mapServerFriendlyName = boost::none;
 	boost::optional<uint16_t> mapServerPort = boost::none;
 	boost::optional<std::string> mapServerListenAddress = boost::none;
-	boost::optional<std::vector<MapIdentifier>> maps = boost::none;
+	boost::optional<std::vector<Location>> maps = boost::none;
 };
 
 struct MapServerConnection {
 	explicit MapServerConnection(const std::string &hostname_, const uint16_t &port_,
-	        std::unique_ptr<APG::Socket> &&connection_, std::vector<MapIdentifier> &&maps_,
+	        std::unique_ptr<APG::Socket> &&connection_, std::vector<Location> &&maps_,
 	        const std::string &friendlyName_) :
 			        connection { std::move(connection_) },
 			        maps { std::move(maps_) },
@@ -105,7 +106,7 @@ struct MapServerConnection {
 	}
 
 	std::unique_ptr<APG::Socket> connection;
-	const std::vector<MapIdentifier> maps;
+	const std::vector<Location> maps;
 
 	const std::string friendlyName;
 
@@ -166,7 +167,7 @@ private:
 	std::vector<IncomingConnection> incomingConnections;
 	std::mutex incomingConnectionsMutex;
 
-	std::vector<MapIdentifier> allMaps;
+	std::vector<Location> allMaps;
 
 	// A list of connected map servers
 	std::vector<MapServerConnection> mapServers;

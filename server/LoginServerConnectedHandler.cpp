@@ -179,7 +179,7 @@ void LoginServer::processCharacterSelect(const std::unique_ptr<PlayerSession> &s
 	        odb::query<Character>::playerID == odb::query<Character>::_ref(session->playerID)
 	                && odb::query<Character>::id == odb::query<Character>::_ref(theirCharacterID));
 
-	auto queryResult = db->query(q);
+	auto queryResult = db->query<Character>(q);
 
 	if (queryResult.size() != 1) {
 		/*
@@ -187,24 +187,25 @@ void LoginServer::processCharacterSelect(const std::unique_ptr<PlayerSession> &s
 		 * Either way we fail!
 		 *
 		 * Since a user integrity failure is far more likely, we just disconnect because it's most likely
-		 * someone trying to hack.
+		 * someone trying to hack + gain access to somebody else's character.
 		 */
 
 		session->socket->clear();
 		session->socket->disconnect();
 
-		logger->verbose(1, "Player %v tried to log into a non-owned character (id %v)", session->playerID, theirCharacterID);
+		logger->verbose(1, "Player %v tried to log into a non-owned character (char id %v)", session->playerID, theirCharacterID);
 
 		return;
 	}
-
-	t.commit();
 
 	session->characterID = theirCharacterID;
 
 	logger->verbose(9, "Player %v chose character %v.", session->playerID, session->characterID);
 
-	// TODO: Send map server details.
+	auto character = queryResult.begin();
+
+
+	t.commit();
 }
 
 }

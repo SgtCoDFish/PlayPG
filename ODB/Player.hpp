@@ -45,10 +45,10 @@ public:
 #endif
 
 private:
-	ODB_FRIEND
+	ODB_FRIEND;
 
 	Player() :
-			        Player("", "", "") {
+	Player("", "", "") {
 	}
 };
 

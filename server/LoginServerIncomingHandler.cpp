@@ -307,27 +307,27 @@ void LoginServer::processMapListSocket(IncomingConnection &connection, el::Logge
 
 	const auto mapList = jsonSerializer.fromJSON(json.c_str());
 
-	std::vector<MapIdentifier> responseMapList;
+	std::vector<Location> responseMapList;
 
 	for (const auto &mapID : mapList.mapHashes) {
 		bool weSupport = false;
 		bool weIgnore = true;
 
 		for (const auto &ourMap : allMaps) {
-			if (mapID.mapName == ourMap.mapName) {
-				if (mapID.mapHash == ourMap.mapHash) {
+			if (mapID.locationName == ourMap.locationName) {
+				if (mapID.knownMD5Hash == ourMap.knownMD5Hash) {
 					weSupport = true;
 
-					if (mapNameToConnection.find(mapID.mapName) == mapNameToConnection.end()) {
-						// already have a server supporting this map.
-						responseMapList.emplace_back(MapIdentifier(mapID));
+					if (mapNameToConnection.find(mapID.locationName) == mapNameToConnection.end()) {
+						// we don't already have a server supporting this map.
+						responseMapList.emplace_back(Location(ourMap));
 						weIgnore = false;
 					} else {
 						weIgnore = true;
 					}
 
 				} else {
-					logger->warn("Map names same but hash differs for %v.", mapID.mapName);
+					logger->warn("Map names same but hash differs for %v.", mapID.locationName);
 				}
 
 				break;
@@ -335,7 +335,7 @@ void LoginServer::processMapListSocket(IncomingConnection &connection, el::Logge
 		}
 
 		logger->verbose(7, "Map server supports \"%v\" with hash: %v (%v by this login server) (%v by this server)",
-		        mapID.mapName, mapID.mapHash, (weSupport ? "recognised" : "not recognised"),
+		        mapID.locationName, mapID.knownMD5Hash, (weSupport ? "recognised" : "not recognised"),
 		        (weIgnore ? "ignored" : "not ignored"));
 	}
 
@@ -400,7 +400,7 @@ void LoginServer::processMapWaitAckSocket(IncomingConnection &connection, el::Lo
 
 		for (const auto &map : newestServer.maps) {
 			mapNameToConnection.emplace(
-			        std::pair<std::string, const MapServerConnection *>(map.mapName, &newestServer));
+			        std::pair<std::string, const MapServerConnection *>(map.locationName, &newestServer));
 		}
 
 	}
@@ -451,6 +451,20 @@ bool LoginServer::processLoginAttempt(IncomingConnection &connection, const Auth
 	const std::string sha512 = person->password;
 	const std::string saltString = person->salt;
 	const auto dbSalt = hasher.stringToSalt(saltString);
+
+	if(person->locked) {
+		AuthenticationResponse response(false, 0, "Account is locked. If you think this is an error, please contact an administrator.");
+
+		connection.socket->clear();
+		connection.socket->put(&response.buffer);
+		connection.socket->send();
+
+		connection.socket->disconnect();
+		connection.state = IncomingConnectionState::DONE;
+
+		t.commit();
+		return false;
+	}
 
 	const auto hashedPass = hasher.hashPasswordSHA512(decPass, dbSalt);
 

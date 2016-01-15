@@ -33,8 +33,6 @@
 
 #include <APG/core/APGeasylogging.hpp>
 
-#include <openssl/md5.h>
-
 #include "Map.hpp"
 #include "util/Util.hpp"
 
@@ -53,6 +51,7 @@ void Map::parseMap() {
 	const auto logger = el::Loggers::getLogger("PlayPG");
 
 	name_ = Map::resolveNameFromMap(map, logger);
+	version_ = Map::resolveVersionFromMap(map, logger);
 
 	logger->verbose(9, "Loading map with name \"%v\".", name_);
 
@@ -115,7 +114,8 @@ void Map::parseTiles(el::Logger * const logger) {
 }
 
 std::string Map::resolveNameFromMap(const Tmx::Map * map, el::Logger * const logger) {
-	const auto nameFromFile = map->GetProperties().GetStringProperty("PPG_NAME");
+	const auto mapProperties = map->GetProperties();
+	const auto nameFromFile = mapProperties.GetStringProperty("PPG_NAME");
 
 	if (nameFromFile == "") {
 		logger->warn("Map %v has no associated PPG_NAME", map->GetFilename());
@@ -125,24 +125,16 @@ std::string Map::resolveNameFromMap(const Tmx::Map * map, el::Logger * const log
 	}
 }
 
-std::string MapIdentifier::makeMD5Hash(const std::string &base64Hash) {
-	uint8_t buffer[MD5_DIGEST_LENGTH];
+uint32_t Map::resolveVersionFromMap(const Tmx::Map * map, el::Logger * const logger) {
+	const auto mapProperties = map->GetProperties();
+	const auto versionFromFile = mapProperties.GetIntProperty("PPG_VERSION", -1);
 
-	::MD5(reinterpret_cast<const uint8_t *>(base64Hash.c_str()), base64Hash.size(), buffer);
-
-	return ByteArrayUtil::byteArrayToString(buffer, MD5_DIGEST_LENGTH);
-}
-
-MapIdentifier::MapIdentifier(const Map &map) :
-		        mapName { map.getName() },
-		        mapHash { MapIdentifier::makeMD5Hash(map.getTmxMap()->GetFilehash()) } {
-
-}
-
-MapIdentifier::MapIdentifier(const std::string &name, const std::string &hash) :
-		        mapName { name },
-		        mapHash { hash } {
-
+	if (versionFromFile <= -1) {
+		logger->warn("Map %v has no associated PPG_VERSION", map->GetFilename());
+		return 0;
+	} else {
+		return static_cast<uint32_t>(versionFromFile);
+	}
 }
 
 }

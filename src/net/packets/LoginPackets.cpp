@@ -108,7 +108,7 @@ MapServerRegistrationResponse::MapServerRegistrationResponse(const std::string &
 	buffer.putString(secretRSA);
 }
 
-MapServerMapList::MapServerMapList(const std::vector<MapIdentifier> &mapHashes_) :
+MapServerMapList::MapServerMapList(const std::vector<Location> &mapHashes_) :
 		        ServerPacket(ServerOpcode::MAP_SERVER_MAP_LIST),
 		        mapHashes { mapHashes_ } {
 	APG::JSONSerializer<MapServerMapList> toJson;
@@ -119,10 +119,10 @@ MapServerMapList::MapServerMapList(const std::vector<MapIdentifier> &mapHashes_)
 }
 
 MapServerMapList MapServerMapList::listFromMaps(const std::vector<Map> &maps) {
-	std::vector<MapIdentifier> ids;
+	std::vector<Location> ids;
 
 	for (const auto &map : maps) {
-		ids.emplace_back(MapIdentifier(map));
+		ids.emplace_back(Location(map));
 	}
 
 	return MapServerMapList(std::move(ids));
