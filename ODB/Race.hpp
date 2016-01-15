@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 See AUTHORS file.
+ * Copyright (c) 2015-16 See AUTHORS file.
  * All rights reserved.
 
  * Redistribution and use in source and binary forms, with or without
@@ -25,24 +25,39 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef INCLUDE_PLAYPGODB_HPP_
-#define INCLUDE_PLAYPGODB_HPP_
+#ifndef ODB_RACE_HPP_
+#define ODB_RACE_HPP_
 
-#ifdef PLAYPG_BUILD_SERVER
+#include <cstdint>
 
-#include <odb/core.hxx>
-#define ODB_FRIEND friend class odb::access;
+#include <string>
 
-#ifdef DATABASE_MYSQL
-#include <odb/mysql/database.hxx>
-#endif
+#include "PlayPGODB.hpp"
 
-#include <boost/date_time/posix_time/ptime.hpp>
+namespace PlayPG {
 
-#else
+#pragma db object table("races")
+class Race {
+public:
+	explicit Race(const std::string &raceName_) :
+			        id { 0 },
+			        raceName { raceName_ } {
+	}
 
-#define ODB_FRIEND
+#pragma db id auto
+	uint64_t id;
 
-#endif
+	std::string raceName;
 
-#endif /* INCLUDE_PLAYPGODB_HPP_ */
+private:
+	ODB_FRIEND
+
+	explicit Race() :
+			        id { 0u },
+			        raceName { "" } {
+	}
+};
+
+}
+
+#endif /* ODB_RACE_HPP_ */

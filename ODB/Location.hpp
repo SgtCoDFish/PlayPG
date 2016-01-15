@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 See AUTHORS file.
+ * Copyright (c) 2015-16 See AUTHORS file.
  * All rights reserved.
 
  * Redistribution and use in source and binary forms, with or without
@@ -25,24 +25,57 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef INCLUDE_PLAYPGODB_HPP_
-#define INCLUDE_PLAYPGODB_HPP_
+#ifndef ODB_LOCATION_HPP_
+#define ODB_LOCATION_HPP_
 
-#ifdef PLAYPG_BUILD_SERVER
+#include <cstdint>
 
-#include <odb/core.hxx>
-#define ODB_FRIEND friend class odb::access;
+#include <string>
 
-#ifdef DATABASE_MYSQL
-#include <odb/mysql/database.hxx>
-#endif
+#include "PlayPGODB.hpp"
 
-#include <boost/date_time/posix_time/ptime.hpp>
+namespace PlayPG {
 
-#else
+#pragma db object table("locations")
+class Location {
+public:
+	explicit Location(const std::string &locationName_, const std::string &knownFileName_,
+	        const std::string &knownMD5Hash_) :
+			        id { 0u },
+			        locationName { locationName_ },
+			        knownFileName { knownFileName_ },
+			        knownMD5Hash { knownMD5Hash_ },
+			        versionMajor { 0u },
+			        versionMinor { 0u },
+			        versionPatch { 0u } {
+	}
 
-#define ODB_FRIEND
+#pragma db id auto
+	uint64_t id;
 
-#endif
+	std::string locationName;
 
-#endif /* INCLUDE_PLAYPGODB_HPP_ */
+	std::string knownFileName;
+	std::string knownMD5Hash;
+
+	uint16_t versionMajor;
+	uint16_t versionMinor;
+	uint16_t versionPatch;
+
+private:
+	ODB_FRIEND
+
+	explicit Location() :
+			        id { 0u },
+			        locationName { "" },
+			        knownFileName { "" },
+			        knownMD5Hash { "" },
+			        versionMajor { 0u },
+			        versionMinor { 0u },
+			        versionPatch { 0u } {
+	}
+};
+
+}
+
+#endif /* ODB_LOCATION_HPP_ */

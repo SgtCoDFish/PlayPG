@@ -447,7 +447,7 @@ bool LoginServer::processLoginAttempt(IncomingConnection &connection, const Auth
 
 	const auto person = result.begin();
 
-	const uint32_t playerID = person->id;
+	const auto playerID = person->id;
 	const std::string sha512 = person->password;
 	const std::string saltString = person->salt;
 	const auto dbSalt = hasher.stringToSalt(saltString);
@@ -478,9 +478,22 @@ bool LoginServer::processLoginAttempt(IncomingConnection &connection, const Auth
 			usernameToPlayerSession.emplace(std::pair<std::string, const PlayerSession *>(back->username, back.get()));
 		}
 
+		t.commit();
+
+		{
+			odb::transaction loginUpdate(db->begin());
+
+			auto player = std::unique_ptr<Player>(db->load<Player>(playerID));
+
+			player->lastLogin = boost::posix_time::second_clock::universal_time();
+
+			db->update(*player);
+
+			loginUpdate.commit();
+		}
+
 		connection.state = IncomingConnectionState::DONE;
 
-		t.commit();
 		return true;
 	} else {
 		t.commit();

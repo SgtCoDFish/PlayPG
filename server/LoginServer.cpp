@@ -156,6 +156,7 @@ void LoginServer::initDB(el::Logger * const logger) {
 
 		Player superUser(suID, pwdString, saltString);
 		superUser.id = 1;
+		superUser.joinDate = superUser.lastLogin = boost::posix_time::second_clock::universal_time();
 
 		db->persist(superUser);
 

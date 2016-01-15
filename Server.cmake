@@ -1,7 +1,7 @@
 add_definitions(-DPLAYPG_BUILD_SERVER -DDATABASE_MYSQL)
 
-find_package(Boost REQUIRED COMPONENTS program_options filesystem system)
-find_package(ODB REQUIRED COMPONENTS mysql)
+find_package(Boost REQUIRED COMPONENTS program_options filesystem system date_time)
+find_package(ODB REQUIRED COMPONENTS mysql boost)
 
 include(${ODB_USE_FILE})
 
@@ -11,6 +11,7 @@ set(PlayPG_ODB_SOURCES "")
 
 odb_compile(PlayPG_ODB FILES ${PlayPG_ODB_HEADERS} ${PlayPG_ODB_SOURCES}
             DB mysql STANDARD c++14
+            PROFILE boost/date-time
             INCLUDE
                 ${PROJECT_SOURCE_DIR}/include
                 ${PROJECT_SOURCE_DIR}/include/data
