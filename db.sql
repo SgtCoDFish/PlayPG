@@ -27,8 +27,8 @@ CREATE TABLE `players` (
 
   `locked` tinyint(1) NOT NULL DEFAULT 0, -- Indicates that a player has been banned/temporarily disabled
 
-  `joinDate` DATETIME NOT NULL DEFAULT NOW(),
-  `lastLogin` DATETIME NOT NULL DEFAULT NOW(),
+  `joinDate` DATETIME NOT NULL,
+  `lastLogin` DATETIME NOT NULL,
 
   PRIMARY KEY (`id`),
 
