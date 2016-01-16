@@ -138,7 +138,8 @@ void LoginServer::processMaps(el::Logger * const logger) {
 
 		odb::transaction t(db->begin());
 
-		odb::query<Location> q(odb::query<Location>::locationName == odb::query<Location>::_ref(loadedLocation.locationName));
+		odb::query<Location> q(
+		        odb::query<Location>::locationName == odb::query<Location>::_ref(loadedLocation.locationName));
 
 		auto results = db->query<Location>(q);
 
@@ -159,6 +160,8 @@ void LoginServer::processMaps(el::Logger * const logger) {
 			// Existing map, need to check its integrity
 			auto locIterator = results.begin();
 			Location databaseLocation = *locIterator;
+
+			loadedLocation.id = databaseLocation.id;
 
 			if (loadedLocation.version == databaseLocation.version) {
 				if (locIterator->knownMD5Hash != loadedLocation.knownMD5Hash) {
@@ -182,7 +185,7 @@ void LoginServer::processMaps(el::Logger * const logger) {
 
 					db->update<Location>(databaseLocation);
 					logger->verbose(1, "Updated map %v to new version %v in the database.", loadedLocation.locationName,
-							loadedLocation.version);
+					        loadedLocation.version);
 				} else {
 					logger->error(
 					        "Map %v is outdated according to the database. Try replacing it with the newer version \"%v\".",
@@ -198,6 +201,11 @@ void LoginServer::processMaps(el::Logger * const logger) {
 
 		t.commit();
 		allMaps.emplace_back(std::move(loadedLocation));
+
+		const auto &justAdded = allMaps.back();
+
+		mapIDToName.emplace(std::pair<uint64_t, std::string>(justAdded.id, justAdded.locationName));
+		logger->info("Added map %v -> %v", justAdded.id, justAdded.locationName);
 	}
 
 	mapServers.reserve(allMaps.size());

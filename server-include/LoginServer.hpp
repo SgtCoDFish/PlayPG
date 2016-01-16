@@ -171,6 +171,7 @@ private:
 
 	// A list of connected map servers
 	std::vector<MapServerConnection> mapServers;
+	std::unordered_map<uint64_t, std::string> mapIDToName;
 	std::unordered_map<std::string, const MapServerConnection *> mapNameToConnection;
 
 	std::mutex mapServersMutex;

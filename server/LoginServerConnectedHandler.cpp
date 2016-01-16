@@ -193,19 +193,56 @@ void LoginServer::processCharacterSelect(const std::unique_ptr<PlayerSession> &s
 		session->socket->clear();
 		session->socket->disconnect();
 
-		logger->verbose(1, "Player %v tried to log into a non-owned character (char id %v)", session->playerID, theirCharacterID);
+		logger->verbose(1, "Player %v tried to log into a non-owned character (char id %v)", session->playerID,
+		        theirCharacterID);
 
 		return;
 	}
 
-	session->characterID = theirCharacterID;
-
 	logger->verbose(9, "Player %v chose character %v.", session->playerID, session->characterID);
 
+	bool failed = true;
 	auto character = queryResult.begin();
+	auto locationNameIt = mapIDToName.find(character->locationID);
 
+	if (locationNameIt == mapIDToName.end()) {
+		logger->verbose(1, "Player character \"%v\" tried to log into map %v which isn't recognised.", character->name,
+		        character->locationID);
+
+		// TODO: Send error/handle error
+	} else {
+		auto mapIt = mapNameToConnection.find(locationNameIt->second);
+
+		if (mapIt == mapNameToConnection.end()) {
+			// no handler registered
+			logger->verbose(1,
+			        "Player character \"%v\" tried to log into map %v which isn't currently handled by a map server.",
+			        character->name, character->locationID);
+
+			// TODO: Send error/handle error
+		} else {
+			// Success, send details!
+			const auto mapConnectionPtr = mapIt->second;
+
+			MapServerConnectionInstructions msci(mapConnectionPtr->friendlyName, mapConnectionPtr->hostname,
+			        mapConnectionPtr->port);
+			session->socket->clear();
+			session->socket->put(&msci.buffer);
+			if (session->socket->send() == 0) {
+				logger->error("Failed to send map server connection instructions.");
+			} else {
+				failed = false;
+				logger->verbose(9, "Character %v was sent connection instructions for map %v", character->name, locationNameIt->second);
+			}
+
+		}
+	}
 
 	t.commit();
+
+	if (!failed) {
+		session->characterID = theirCharacterID;
+	}
 }
 
 }
