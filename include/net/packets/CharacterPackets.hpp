@@ -71,6 +71,20 @@ public:
 	const uint64_t characterID;
 };
 
+class NoMapServerError final : public ServerPacket {
+public:
+	explicit NoMapServerError(const std::string &message_) :
+			        ServerPacket(ServerOpcode::NO_MAP_SERVER_ERROR),
+			        messageLength { static_cast<uint16_t>(message_.length()) },
+			        message { message_ } {
+		buffer.putShort(messageLength);
+		buffer.putString(message);
+	}
+
+	const uint16_t messageLength;
+	const std::string message;
+};
+
 }
 
 namespace APG {

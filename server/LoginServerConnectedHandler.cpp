@@ -209,7 +209,15 @@ void LoginServer::processCharacterSelect(const std::unique_ptr<PlayerSession> &s
 		logger->verbose(1, "Player character \"%v\" tried to log into map %v which isn't recognised.", character->name,
 		        character->locationID);
 
-		// TODO: Send error/handle error
+		NoMapServerError nmse(
+		        "That character's current map is not recognised by this server. Are you connecting to the correct server?");
+
+		session->socket->clear();
+		session->socket->put(&nmse.buffer);
+
+		if(session->socket->send() == 0) {
+			logger->error("Couldn't send map not recognised error.");
+		}
 	} else {
 		auto mapIt = mapNameToConnection.find(locationNameIt->second);
 
@@ -219,7 +227,15 @@ void LoginServer::processCharacterSelect(const std::unique_ptr<PlayerSession> &s
 			        "Player character \"%v\" tried to log into map %v which isn't currently handled by a map server.",
 			        character->name, character->locationID);
 
-			// TODO: Send error/handle error
+			NoMapServerError nmse(
+			        "That character's current map doesn't currently have a connected map server. Please try again later.");
+
+			session->socket->clear();
+			session->socket->put(&nmse.buffer);
+
+			if(session->socket->send() == 0) {
+				logger->error("Couldn't send map server not available error.");
+			}
 		} else {
 			// Success, send details!
 			const auto mapConnectionPtr = mapIt->second;
@@ -232,7 +248,8 @@ void LoginServer::processCharacterSelect(const std::unique_ptr<PlayerSession> &s
 				logger->error("Failed to send map server connection instructions.");
 			} else {
 				failed = false;
-				logger->verbose(9, "Character %v was sent connection instructions for map %v", character->name, locationNameIt->second);
+				logger->verbose(9, "Character %v was sent connection instructions for map %v", character->name,
+				        locationNameIt->second);
 			}
 
 		}

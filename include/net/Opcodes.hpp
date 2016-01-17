@@ -65,8 +65,9 @@ enum class ServerOpcode
 	MAP_SERVER_ACK = 0xFFF8,
 	MAP_SERVER_CONNECTION_INSTRUCTIONS = 0xFFF7,
 	PLAYER_CHARACTERS = 0xFFF6,
-	SERVER_PUBKEY = 0xFFF5,
-	MALFORMED_PACKET = 0xFFF4,
+	NO_MAP_SERVER_ERROR = 0xFFF5,
+	SERVER_PUBKEY = 0xFFF4,
+	MALFORMED_PACKET = 0xFFF3,
 };
 
 static_assert(std::is_same<std::underlying_type<ClientOpcode>::type, std::underlying_type<ServerOpcode>::type>::value, "ClientOpcodes and ServerOpcodes must have the same underlying type.");
