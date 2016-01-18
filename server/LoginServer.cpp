@@ -224,9 +224,9 @@ void LoginServer::initDB(el::Logger * const logger) {
 		logger->info("DB is empty, creating super-user \"%v\".", suID);
 
 		const auto salt = hasher.generateSalt();
-		const auto hashedPassword = hasher.hashPasswordSHA512(suPWD, salt);
+		const auto hashedPassword = hasher.hashPasswordSHA256(suPWD, salt);
 
-		const auto pwdString = hasher.sha512ToString(hashedPassword);
+		const auto pwdString = hasher.sha256ToString(hashedPassword);
 		const auto saltString = hasher.saltToString(salt);
 
 		Player superUser(suID, pwdString, saltString);

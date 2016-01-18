@@ -45,15 +45,15 @@ SHACrypto::SHACrypto(uint64_t iterationCount) :
 	}
 }
 
-std::array<uint8_t, 64> SHACrypto::hashPasswordSHA512(const std::string &password, const std::vector<uint8_t> &salt) {
+std::array<uint8_t, SHACrypto::DIGEST_BYTES> SHACrypto::hashPasswordSHA256(const std::string &password, const std::vector<uint8_t> &salt) {
 	if (salt.size() < 16) {
 		el::Loggers::getLogger("PlayPG")->warn(
-		        "Salt used for SHA512 hash with length %v; minimum of 16 bytes is reccommended.", salt.size());
+		        "Salt used for SHA256 hash with length %v; minimum of 16 bytes is reccommended.", salt.size());
 	}
 
-	std::array<uint8_t, 64> ret;
+	std::array<uint8_t, SHACrypto::DIGEST_BYTES> ret;
 
-	::PKCS5_PBKDF2_HMAC(password.c_str(), password.size(), salt.data(), salt.size(), iterationCount_, ::EVP_sha512(),
+	::PKCS5_PBKDF2_HMAC(password.c_str(), password.size(), salt.data(), salt.size(), iterationCount_, ::EVP_sha256(),
 	        ret.size(), ret.data());
 
 	return ret;
@@ -80,12 +80,12 @@ std::vector<uint8_t> SHACrypto::generateSalt(uint32_t bytes) {
 	return ret;
 }
 
-std::array<uint8_t, 64> SHACrypto::stringToSHA512(const std::string &str) {
-	std::array<uint8_t, 64> ret;
+std::array<uint8_t, SHACrypto::DIGEST_BYTES> SHACrypto::stringToSHA256(const std::string &str) {
+	std::array<uint8_t, DIGEST_BYTES> ret;
 
-	if (str.size() < 64u * 2u) {
-		// 2 characters per hex byte, 64 bytes
-		el::Loggers::getLogger("PlayPG")->fatal("Can't convert string to SHA512 array; insufficient length string.");
+	if (str.size() < DIGEST_BYTES * 2u) {
+		// 2 characters per hex byte, 32 bytes
+		el::Loggers::getLogger("PlayPG")->fatal("Can't convert string to SHA256 array; insufficient length string.");
 		return ret;
 	}
 
@@ -102,7 +102,7 @@ std::vector<uint8_t> SHACrypto::stringToSalt(const std::string &str) {
 	std::vector<uint8_t> ret;
 
 	if (str.size() % 2 != 0) {
-		// 2 characters per hex byte, 64 bytes
+		// 2 characters per hex byte, 32 bytes
 		el::Loggers::getLogger("PlayPG")->fatal("Can't convert string to salt array; must have length divisible by 2.");
 		return ret;
 	}

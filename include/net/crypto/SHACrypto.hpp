@@ -47,30 +47,31 @@ namespace PlayPG {
 
 class SHACrypto final {
 public:
+	constexpr static const uint16_t DIGEST_BYTES = 32;
 	constexpr static const uint32_t DEFAULT_SALT_BYTES = 16;
 
 	explicit SHACrypto(uint64_t iterationCount);
 	~SHACrypto() = default;
 
 	/**
-	 * Hash a given password into a SHA512 array, using the given salt.
+	 * Hash a given password into a SHA256 array, using the given salt.
 	 *
 	 * Hashing is repeated iterationCount_ times.
 	 *
 	 * @return the hashed password.
 	 */
-	std::array<uint8_t, 64> hashPasswordSHA512(const std::string &password, const std::vector<uint8_t> &salt);
+	std::array<uint8_t, DIGEST_BYTES> hashPasswordSHA256(const std::string &password, const std::vector<uint8_t> &salt);
 
 	/**
 	 * Generates a secure random salt of the given length and returns it as a vector.
 	 */
 	std::vector<uint8_t> generateSalt(uint32_t bytes = DEFAULT_SALT_BYTES);
 
-	std::array<uint8_t, 64> stringToSHA512(const std::string &str);
+	std::array<uint8_t, DIGEST_BYTES> stringToSHA256(const std::string &str);
 	std::vector<uint8_t> stringToSalt(const std::string &str);
 
-	std::string sha512ToString(const std::array<uint8_t, 64> &sha512) {
-		return bytesToString(sha512.cbegin(), sha512.cend());
+	std::string sha256ToString(const std::array<uint8_t, DIGEST_BYTES> &sha256) {
+		return bytesToString(sha256.cbegin(), sha256.cend());
 	}
 
 	std::string saltToString(const std::vector<uint8_t> &salt) {

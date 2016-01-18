@@ -70,7 +70,7 @@ cd boost_1_59_0
 
 ### Raspberry Pi (Raspbian/DietPi Jessie)
 #### General
-It is _not reccommended_ to run a login server on a Raspberry Pi. This is because the cryptographic code relating to login is much better handled on a 64-bit system as many of the operations relating to SHA and RSA encryption rely on 64-bit integers which are considerably slower on 32-bit processors like those in the Pi.
+~~It is _not reccommended_ to run a login server on a Raspberry Pi. This is because the cryptographic code relating to login is much better handled on a 64-bit system as many of the operations relating to SHA and RSA encryption rely on 64-bit integers which are considerably slower on 32-bit processors like those in the Pi.~~ UPDATE: After changing to use SHA-256 this is not so true as SHA256 requires mainly 32-bit operations.
 
 The long and short of this is that you'd likely have to choose a lower standard of encryption to be able to process login attempts on a Pi feasibly, as with the defaults it can take half a second or more to decrypt an RSA password and hash it, which with concurrent login attempts could lead to long delays for login. Map servers should run much more efficiently, however.
 

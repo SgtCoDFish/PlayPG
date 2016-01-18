@@ -466,9 +466,9 @@ bool LoginServer::processLoginAttempt(IncomingConnection &connection, const Auth
 		return false;
 	}
 
-	const auto hashedPass = hasher.hashPasswordSHA512(decPass, dbSalt);
+	const auto hashedPass = hasher.hashPasswordSHA256(decPass, dbSalt);
 
-	const std::string hashString = hasher.sha512ToString(hashedPass);
+	const std::string hashString = hasher.sha256ToString(hashedPass);
 
 	if (sha512 == hashString) {
 		AuthenticationResponse response(true, connection.getAttemptsRemaining(), "Authentication successful.");
