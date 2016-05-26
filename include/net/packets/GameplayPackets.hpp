@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 See AUTHORS file.
+ * Copyright (c) 2015 - 2016 See AUTHORS file.
  * All rights reserved.
 
  * Redistribution and use in source and binary forms, with or without
@@ -25,27 +25,30 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "systems/NetworkDispatchSystem.hpp"
+#ifndef INCLUDE_NET_PACKETS_GAMEPLAYPACKETS_HPP_
+#define INCLUDE_NET_PACKETS_GAMEPLAYPACKETS_HPP_
+
+#include "net/Packet.hpp"
 
 namespace PlayPG {
 
-NetworkDispatchSystem::NetworkDispatchSystem(APG::SDLSocket &socket, int64_t priority) :
-		        EntitySystem(priority),
-		        socket_ { socket } {
-
-}
-
-void NetworkDispatchSystem::queuePacket(Packet &&packet) {
-	packetQueue.emplace_back(std::move(packet));
-}
-
-void NetworkDispatchSystem::update(float deltaTime) {
-	for (auto &packet : packetQueue) {
-		socket_.put(&packet.buffer);
-		socket_.send();
+/**
+ * Sent by a client to the server to signal a move request. Note that this could be rejected.
+ */
+class MovementPacket final : public ClientPacket {
+public:
+	explicit MovementPacket(uint64_t entityID_, int32_t xTiles_, int32_t yTiles_) :
+			        ClientPacket(ClientOpcode::MOVE),
+			        entityID { entityID_ },
+			        xTiles { xTiles_ },
+			        yTiles { yTiles_ } {
 	}
 
-	packetQueue.clear();
-}
+	const uint64_t entityID;
+	const int32_t xTiles;
+	const int32_t yTiles;
+};
 
 }
+
+#endif /* INCLUDE_NET_PACKETS_GAMEPLAYPACKETS_HPP_ */

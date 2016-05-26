@@ -37,6 +37,7 @@
 #include "components/Position.hpp"
 #include "systems/MovementSystem.hpp"
 #include "net/Packet.hpp"
+#include "net/packets/GameplayPackets.hpp"
 #include "systems/NetworkDispatchSystem.hpp"
 #include "Map.hpp"
 
@@ -63,6 +64,10 @@ void MovementSystem::update(float deltaTime) {
 
 		if (!map_->isSolidAtCoord(destination)) {
 			position->p = destination;
+		}
+
+		if(networkDispatchSystem_ != nullptr) {
+			networkDispatchSystem_->queuePacket(MovementPacket(0xDEADBEEF, move.xTiles, move.yTiles));
 		}
 	}
 
