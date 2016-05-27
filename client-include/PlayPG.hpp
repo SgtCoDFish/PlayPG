@@ -54,6 +54,7 @@ namespace PlayPG {
 enum class GameState {
 	LOGIN,
 	CHARACTER_SELECT,
+	MAP_SERVER_CONNECT,
 	PLAYING
 };
 

@@ -67,7 +67,7 @@ void MovementSystem::update(float deltaTime) {
 		}
 
 		if(networkDispatchSystem_ != nullptr) {
-			networkDispatchSystem_->queuePacket(MovementPacket(0xDEADBEEF, move.xTiles, move.yTiles));
+			networkDispatchSystem_->queuePacket(MovementPacket(move));
 		}
 	}
 

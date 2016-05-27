@@ -199,7 +199,7 @@ void LoginServer::processCharacterSelect(const std::unique_ptr<PlayerSession> &s
 		return;
 	}
 
-	logger->verbose(9, "Player %v chose character %v.", session->playerID, session->characterID);
+	logger->verbose(9, "Player %v chose character %v.", session->playerID, theirCharacterID);
 
 	bool failed = true;
 	auto character = queryResult.begin();

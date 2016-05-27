@@ -37,16 +37,23 @@ namespace PlayPG {
  */
 class MovementPacket final : public ClientPacket {
 public:
-	explicit MovementPacket(uint64_t entityID_, int32_t xTiles_, int32_t yTiles_) :
-			        ClientPacket(ClientOpcode::MOVE),
-			        entityID { entityID_ },
-			        xTiles { xTiles_ },
-			        yTiles { yTiles_ } {
+	/**
+	 * Create a MovementPacket by copying an existing move.
+	 */
+	explicit MovementPacket(const Move &move_) :
+			        MovementPacket(std::move(Move(move_))) {
 	}
 
-	const uint64_t entityID;
-	const int32_t xTiles;
-	const int32_t yTiles;
+	/**
+	 * Create a MovementPacket by moving from an existing move.
+	 */
+	explicit MovementPacket(Move &&move_) :
+			        ClientPacket(ClientOpcode::MOVE),
+			        move { std::move(move_) } {
+
+	}
+
+	const Move move;
 };
 
 }

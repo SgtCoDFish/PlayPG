@@ -268,7 +268,7 @@ void PlayPG::render(float deltaTime) {
 			APG::JSONSerializer<PlayerCharacters> charS11N;
 			const auto charList = charS11N.fromJSON(json.c_str());
 
-			if(charList.characters.size() == 0) {
+			if (charList.characters.size() == 0) {
 				logger->fatal("Server has no characters for this account. Exiting.");
 				break;
 			}
@@ -280,8 +280,56 @@ void PlayPG::render(float deltaTime) {
 			socket.put(&selectPacket.buffer);
 			socket.send();
 
-			gameState = GameState::PLAYING;
+			gameState = GameState::MAP_SERVER_CONNECT;
 		}
+
+		break;
+	}
+
+	case GameState::MAP_SERVER_CONNECT: {
+		socket.clear();
+		socket.waitForActivity();
+
+		const auto bytesRec = socket.recv();
+
+		if(bytesRec == 0) {
+			break;
+		}
+
+		const auto opcode = socket.getShort();
+		switch (opcode) {
+		case util::to_integral(ServerOpcode::NO_MAP_SERVER_ERROR): {
+			const auto messageLength = socket.getShort();
+			const auto message = socket.getStringByLength(messageLength);
+			logger->error("Couldn't find an appropriate map server for that character. Error: %v", message);
+			gameState = GameState::CHARACTER_SELECT;
+			break;
+		}
+
+		case util::to_integral(ServerOpcode::MAP_SERVER_CONNECTION_INSTRUCTIONS): {
+			// success; read the JSON provided
+
+			const auto jsonLength = socket.getShort();
+			const auto jsonString = socket.getStringByLength(jsonLength);
+
+			APG::JSONSerializer<MapServerConnectionInstructions> msciJSON;
+
+			const MapServerConnectionInstructions msci = msciJSON.fromJSON(jsonString.c_str());
+
+			logger->info("Got map server details: %v:%v", msci.hostName, msci.port);
+			gameState = GameState::PLAYING;
+
+			break;
+		}
+
+		default: {
+			logger->error("Invalid response from server for that character.");
+			gameState = GameState::CHARACTER_SELECT;
+			break;
+		}
+		}
+
+		socket.clear();
 
 		break;
 	}
