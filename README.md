@@ -5,7 +5,7 @@ An MMO client/server architecture with RPG elements to gameplay. Servers are des
 
 Each server should run functionally on a Raspberry Pi 2 for a small number of players, meaning that testing and early deployment is very cheap. Each type of server also supports IPv4 and IPv6 as standard.
 
-Setup should be as simple as installing dependencies, running:
+Setup should be as simple as installing dependencies, checking out the submodules (`git submodule --init --recursive`) running:
 
 ```
 mkdir build && cd build
@@ -30,7 +30,7 @@ Tested on Ubuntu using proprietary graphics drivers. Would be nice to run on a P
 The server only targets Linux flavours for deployment, although at the time of writing runs fine on Windows with the caveat that some native winsock2 features fail (SDL2_net seems to work fine). It would be nice, but isn't essential, for this to continue.
 
 ### Other Platforms
-The code should be easily portable: any areas where cross-platform differences appear should be clearly marked and easy to change in the future, meaning that while *BSD/OS X are not supported, they should be easy enough to do in theory. Likely this would also require changes to [APG](https://github.com/SgtCoDFish/APG), espcially for native POSIX sockets.
+The code should be easily portable: any areas where cross-platform differences appear should be clearly marked and easy to change in the future, meaning that while \*BSD/OS X are not supported, they should be easy enough to do in theory. Likely this would also require changes to [APG](https://github.com/SgtCoDFish/APG), espcially for native POSIX sockets.
 
 Getting Started with Development
 ================================

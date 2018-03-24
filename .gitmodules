@@ -1,0 +1,3 @@
+[submodule "vendor/monocypher"]
+	path = vendor/monocypher
+	url = git@github.com:LoupVaillant/Monocypher.git

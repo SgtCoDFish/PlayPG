@@ -41,7 +41,7 @@ public:
 	 * Create a MovementPacket by copying an existing move.
 	 */
 	explicit MovementPacket(const Move &move_) :
-			        MovementPacket(std::move(Move(move_))) {
+			        MovementPacket(Move(move_)) {
 	}
 
 	/**

@@ -27,18 +27,18 @@ if ( PlayPG_VERSION_EXTRA )
 	set(PlayPG_VERSION "${PlayPG_VERSION}-${PlayPG_VERSION_EXTRA}")
 endif ()
 
-if ( CMAKE_BUILD_TYPE MATCHES "Release")
-	message("Building in release mode.")
-	set (PlayPG_DEBUG FALSE)
-else ()
+if ( CMAKE_BUILD_TYPE MATCHES "Debug" )
 	message("Building in debug mode.")
 	set (PlayPG_DEBUG TRUE)
 	set (PlayPG_VERSION "${PlayPG_VERSION}-d")
+else ()
+	message("Building in release mode.")
+	set (PlayPG_DEBUG FALSE)
 endif ()
 
 if ( NOT EXCLUDE_GIT )
 	find_package(Git REQUIRED)
-	
+
 	execute_process(
 		COMMAND "${GIT_EXECUTABLE}" rev-parse HEAD
 		WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
@@ -65,7 +65,7 @@ if ( NOT APG_NO_SDL )
     find_package(SDL2_mixer REQUIRED)
     find_package(SDL2_ttf REQUIRED)
 	find_package(SDL2_net REQUIRED)
-    
+
     find_package(OpenGL REQUIRED)
     find_package(GLEW REQUIRED)
 endif ()
@@ -90,7 +90,7 @@ file(GLOB_RECURSE PlayPG_TEST_ASSETS ${PROJECT_SOURCE_DIR}/assets/*)
 file(GLOB_RECURSE PlayPG_HEADERS ${PROJECT_SOURCE_DIR}/include/*.hpp)
 file(GLOB PlayPG_ODB_HEADERS ${PROJECT_SOURCE_DIR}/ODB/*.hpp)
 
-message (${PlayPG_ODB_HEADERS})
+#message (${PlayPG_ODB_HEADERS})
 
 set(PlayPG_NON_ODB_HEADERS ${PlayPG_HEADERS})
 set(PlayPG_ALL_HEADERS ${PlayPG_NON_DATA_HEADERS} ${PlayPG_ODB_HEADERS})
@@ -104,7 +104,7 @@ endif ()
 if ( NOT MSVC )
 	set(CMAKE_CXX_COMPILER_ARG1 "-std=c++1y")
 	set(CMAKE_CXX_FLAGS_BASE "-Wall -Wextra -Wno-unused-parameter -Wno-unknown-pragmas -Wno-deprecated-declarations -pthread")
-	
+
 	set(PlayPG_DEBUG_FLAGS "-g3 -O0")
 	set(PlayPG_RELEASE_FLAGS "-g0 -O3")
 else ()
@@ -115,63 +115,64 @@ else ()
 		set(OS_LIBS ${OS_LIBS} legacy_stdio_definitions)
 		set(PlayPG_SOURCES ${PlayPG_SOURCES} ${PROJECT_SOURCE_DIR}/MSVC/vs2015_io_fix.cpp)
 	endif()
-	
+
 	# /wd4005 = silence macro redefinition warnings we get from SDL
 	# /EHsc = enable exceptions
 	# /MP = multiprocessor compilation
 	set(CMAKE_CXX_FLAGS_BASE "${CMAKE_CXX_FLAGS_BASE} /EHsc /MP /wd4005")
-	
+
 	set(PlayPG_DEBUG_FLAGS "/Od /Gs")
 	set(PlayPG_RELEASE_FLAGS "/Ox")
 endif ()
 
-include_directories("include"
-                    ${GLM_INCLUDE_DIRS}
-                    
-                    ${AshleyCPP_INCLUDE_DIR}
-                    ${APG_INCLUDE_DIR}
-                    
-                    ${TMXPARSER_INCLUDE_DIR}
-                    ${TINYXML2_INCLUDE_DIR}
-                    ${ZLIB_INCLUDE_DIR}
-                    
-                    ${RAPIDJSON_INCLUDE_DIRS}
-                    
-                    ${OPENSSL_INCLUDE_DIR}
-                    
-                    ${PROJECT_BINARY_DIR}
-                    )
+include_directories(
+	"include"
+	${GLM_INCLUDE_DIRS}
+
+	${AshleyCPP_INCLUDE_DIR}
+	${APG_INCLUDE_DIR}
+
+	${TMXPARSER_INCLUDE_DIR}
+	${TINYXML2_INCLUDE_DIR}
+	${ZLIB_INCLUDE_DIR}
+
+	${RAPIDJSON_INCLUDE_DIRS}
+
+	${OPENSSL_INCLUDE_DIR}
+
+	${PROJECT_BINARY_DIR}
+)
 
 set(PlayPG_LIBS ${OS_LIBS}
 
                 ${TMXPARSER_LIBRARY}
                 ${TINYXML2_LIBRARIES}
                 ${ZLIB_LIBRARIES}
-                
+
                 ${OPENSSL_LIBRARIES}
                 )
-                
+
 if ( NOT APG_NO_SDL )
     include_directories(${SDL2_IMAGE_INCLUDE_DIR}
                         ${SDL2_INCLUDE_DIR}
                         ${SDL2_TTF_INCLUDE_DIR}
                         ${SDL2_MIXER_INCLUDE_DIR}
                         ${SDL2_NET_INCLUDE_DIR}
-    
+
                         ${OPENGL_INCLUDE_DIR}
                         ${GLEW_INCLUDE_DIRS}
                         )
-                        
+
     set(PlayPG_LIBS ${PlayPG_LIBS}
                     ${SDL2_LIBRARY}
                     ${SDL2_IMAGE_LIBRARY}
                     ${SDL2_TTF_LIBRARIES}
                     ${SDL2_MIXER_LIBRARY}
                     ${SDL2_NET_LIBRARY}
-                    
+
                     ${OPENGL_LIBRARIES}
                     ${GLEW_LIBRARIES}
-                    
+
                     ${ZLIB_LIBRARIES}
                     )
 else ()
