@@ -72,7 +72,7 @@ endif ()
 
 find_package(APG REQUIRED)
 
-find_package(OpenSSL REQUIRED)
+# find_package(OpenSSL REQUIRED)
 
 find_package(GLM REQUIRED)
 find_package(AshleyCPP REQUIRED)
@@ -89,6 +89,11 @@ file(GLOB_RECURSE PlayPG_TEST_ASSETS ${PROJECT_SOURCE_DIR}/assets/*)
 
 file(GLOB_RECURSE PlayPG_HEADERS ${PROJECT_SOURCE_DIR}/include/*.hpp)
 file(GLOB PlayPG_ODB_HEADERS ${PROJECT_SOURCE_DIR}/ODB/*.hpp)
+
+set(MONOCYPHER_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/vendor/monocypher/src)
+set(MONOCYPHER_SOURCES ${PROJECT_SOURCE_DIR}/vendor/monocypher/src/monocypher.c ${PROJECT_SOURCE_DIR}/vendor/monocypher/src/monocypher.h)
+
+set(PlayPG_SOURCES "${PlayPG_SOURCES} ${MONOCYPHER_SOURCES}")
 
 #message (${PlayPG_ODB_HEADERS})
 
@@ -138,7 +143,7 @@ include_directories(
 
 	${RAPIDJSON_INCLUDE_DIRS}
 
-	${OPENSSL_INCLUDE_DIR}
+	${MONOCYPHER_INCLUDE_DIR}
 
 	${PROJECT_BINARY_DIR}
 )
@@ -148,8 +153,6 @@ set(PlayPG_LIBS ${OS_LIBS}
                 ${TMXPARSER_LIBRARY}
                 ${TINYXML2_LIBRARIES}
                 ${ZLIB_LIBRARIES}
-
-                ${OPENSSL_LIBRARIES}
                 )
 
 if ( NOT APG_NO_SDL )

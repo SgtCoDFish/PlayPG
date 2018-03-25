@@ -112,7 +112,7 @@ bool PlayPG::doLogin() {
 		logger->info("Got %v bytes, opcode %v.", read, opcode);
 
 		if (opcode != static_cast<opcode_type_t>(ServerOpcode::LOGIN_AUTHENTICATION_CHALLENGE)) {
-			logger->info("Got opcode %v which doesn't match the expected value. Ignoring.");
+			logger->info("Got opcode %v which doesn't match the expected value. Ignoring.", opcode);
 			socket.clear();
 			return false;
 		}
