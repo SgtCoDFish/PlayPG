@@ -90,11 +90,6 @@ file(GLOB_RECURSE PlayPG_TEST_ASSETS ${PROJECT_SOURCE_DIR}/assets/*)
 file(GLOB_RECURSE PlayPG_HEADERS ${PROJECT_SOURCE_DIR}/include/*.hpp)
 file(GLOB PlayPG_ODB_HEADERS ${PROJECT_SOURCE_DIR}/ODB/*.hpp)
 
-set(MONOCYPHER_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/vendor/monocypher/src)
-set(MONOCYPHER_SOURCES ${PROJECT_SOURCE_DIR}/vendor/monocypher/src/monocypher.c ${PROJECT_SOURCE_DIR}/vendor/monocypher/src/monocypher.h)
-
-set(PlayPG_SOURCES "${PlayPG_SOURCES} ${MONOCYPHER_SOURCES}")
-
 #message (${PlayPG_ODB_HEADERS})
 
 set(PlayPG_NON_ODB_HEADERS ${PlayPG_HEADERS})
@@ -142,8 +137,6 @@ include_directories(
 	${ZLIB_INCLUDE_DIR}
 
 	${RAPIDJSON_INCLUDE_DIRS}
-
-	${MONOCYPHER_INCLUDE_DIR}
 
 	${PROJECT_BINARY_DIR}
 )
